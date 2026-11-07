@@ -23,8 +23,10 @@ export async function listDir(dir) {
 export async function loadState(file) {
   try { return await (await fetch('/api/state?file=' + encodeURIComponent(file))).json(); } catch { return null; }
 }
-export function saveState(file, obj) {
-  return fetch('/api/state?file=' + encodeURIComponent(file), { method: 'POST', body: JSON.stringify(obj) });
+let saveSeq = 0;
+export function saveState(file, obj) { // con número de orden (ver /api/state en el servidor)
+  const seq = Date.now() * 1000 + (++saveSeq % 1000);
+  return fetch('/api/state?file=' + encodeURIComponent(file) + '&seq=' + seq, { method: 'POST', body: JSON.stringify(obj) });
 }
 export async function loadImage(url) {
   const img = new Image();
@@ -397,6 +399,7 @@ const ICONS = {
   mosaic: '<rect x="3" y="4" width="9" height="11" rx="1" transform="rotate(-10 7.5 9.5)"/><rect x="11" y="7" width="10" height="12" rx="1" transform="rotate(12 16 13)"/><rect x="6" y="13" width="8" height="8" rx="1"/>',
   rotateL: '<path d="M3 12a9 9 0 1 0 9-9c-2.5 0-4.9 1-6.7 2.7L3 8"/><path d="M3 3v5h5"/>',
   gear: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   check: '<path d="M20 6L9 17l-5-5"/>',
   x: '<path d="M18 6L6 18M6 6l12 12"/>',
   chev: '<path d="M9 6l6 6-6 6"/>',
@@ -656,6 +659,7 @@ export class Mesa {
   down(e) {
     const { sx, sy } = this.pos(e), w = this.toWorld(sx, sy), ctrl = e.ctrlKey || e.metaKey;
     this.c.setPointerCapture(e.pointerId);
+    if (e.pointerType === 'touch' && this.touchDown(e)) return;
     const pan = extra => { this.drag = { mode: 'pan', sx, sy, cx: this.cam.x, cy: this.cam.y, ...extra }; this.cursor(); };
     if (e.button === 1) e.preventDefault(); // la ruedita: sin el autodesplazamiento del navegador
     // lupa: clic izquierdo acerca, clic derecho (o Alt+clic) aleja, hacia donde apunta el mouse
@@ -697,6 +701,7 @@ export class Mesa {
     if (!p && !ctrl && !e.shiftKey && this.h.grabEmpty?.(w)) return this.startMove(null, w);
     // Ctrl/Shift + clic en algo vacío que la app reconoce (la etiqueta de un lienzo): sumarlo a la selección
     if (!p && (ctrl || e.shiftKey) && this.h.toggleEmpty?.(w)) return this.invalidate();
+    if (!p && e.pointerType === 'touch') return pan(); // con el dedo, lo vacío mueve la vista
     if (!p) { // recuadro de selección
       const base = ctrl || e.shiftKey ? new Set(this.selection) : new Set();
       if (!ctrl && !e.shiftKey) this.sel = null;
@@ -755,6 +760,7 @@ export class Mesa {
     return { shift: best.dd, guides };
   }
   move(e) {
+    if (e.pointerType === 'touch' && this.touchMove(e)) return;
     const { sx, sy } = this.pos(e);
     this.mouse = this.toWorld(sx, sy);
     const d = this.drag;
@@ -828,7 +834,8 @@ export class Mesa {
     }
     this.invalidate();
   }
-  up() {
+  up(e) {
+    if (e?.pointerType === 'touch' && this.touchUp(e)) return;
     const d = this.drag;
     this.drag = null;
     this.guides = [];
@@ -852,6 +859,57 @@ export class Mesa {
       this.h.onContext(null, d.cx0, d.cy0, this.toWorld(d.sx, d.sy)); // clic derecho en el mat vacío
     }
     this.cursor(); this.invalidate();
+  }
+  // --- tacto ---
+  touchPts() { const r = this.c.getBoundingClientRect(), [a, b] = [...this.touches.values()]; return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2 - r.left, my: (a.y + b.y) / 2 - r.top }; }
+  touchDown(e) {
+    this.touches ||= new Map();
+    this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    clearTimeout(this.lpT);
+    if (this.touches.size >= 2) { // segundo dedo: lo que se estaba haciendo termina y empieza el zoom
+      const d = this.drag;
+      if (d?.mode === 'move') d.moved ? this.h.commit(d.items.map(i => i.ref)) : this.h.cancel();
+      else if (d?.mode === 'rot') d.moved ? this.h.commit(d.items.map(i => i.r)) : this.h.cancel();
+      else if (d?.mode === 'custom') d.ctl.end();
+      const t = this.touchPts();
+      this.drag = { mode: 'pinch', d0: t.d, z0: this.cam.z, w0: this.toWorld(t.mx, t.my) };
+      this.invalidate();
+      return true;
+    }
+    // mantener apretado (sin mover): el menú, como el clic derecho
+    this.lp = { x: e.clientX, y: e.clientY, fired: false };
+    this.lpT = setTimeout(() => {
+      const d = this.drag;
+      if (d?.moved) return;
+      if (d?.mode === 'move' || d?.mode === 'rot') this.h.cancel();
+      this.drag = null; this.lp.fired = true;
+      const { sx, sy } = this.pos(e), w = this.toWorld(sx, sy), p = this.hit(w.x, w.y);
+      if (p) { if (!this.selection.has(p.ref)) this.sel = p.ref; this.h.onContext?.(this.targets(p.ref), e.clientX, e.clientY, w); }
+      else this.h.onContext?.(null, e.clientX, e.clientY, w);
+      navigator.vibrate?.(15);
+      this.invalidate();
+    }, 550);
+    return false;
+  }
+  touchMove(e) {
+    if (!this.touches?.has(e.pointerId)) return false;
+    this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (this.lp && Math.hypot(e.clientX - this.lp.x, e.clientY - this.lp.y) > 8) clearTimeout(this.lpT);
+    const d = this.drag;
+    if (d?.mode !== 'pinch') return !!this.lp?.fired;
+    if (this.touches.size < 2) return true;
+    const t = this.touchPts();
+    this.cam.z = Math.min(40, Math.max(0.03, d.z0 * t.d / d.d0));
+    this.cam.x = d.w0.x - (t.mx - this.W / 2) / this.cam.z; this.cam.y = d.w0.y - (t.my - this.H / 2) / this.cam.z;
+    this.invalidate();
+    return true;
+  }
+  touchUp(e) {
+    this.touches?.delete(e.pointerId);
+    clearTimeout(this.lpT);
+    if (this.drag?.mode === 'pinch') { if (!this.touches.size) this.drag = null; return true; }
+    if (this.lp?.fired) { this.lp = null; this.drag = null; this.cursor(); return true; }
+    return false;
   }
   // ¿mouse o trackpad? El trackpad manda movimientos chicos, con decimales o de costado; la ruedita, saltos grandes y parejos.
   isTrackpad(e) {

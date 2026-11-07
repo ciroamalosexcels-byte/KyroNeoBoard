@@ -6,10 +6,10 @@ Mesa para armar fotos en tamaños A3 a A7 con marco blanco, acomodarlas en lienz
 
 **Descargas:** carpeta [instalaciones](instalaciones/) o la [página de descargas](https://github.com/ciroamalosexcels-byte/KyroNeoBoard/releases/latest).
 
-Ejecutá `Kyro-Neo-Board-Setup-1.2.0.exe`. Si Windows muestra **"Windows protegió su PC"**, tocá *Más información → Ejecutar de todas formas*. Aparece porque el programa no tiene firma digital paga; no es un virus.
+Ejecutá `Kyro-Neo-Board-Setup-1.3.0.exe`. Si Windows muestra **"Windows protegió su PC"**, tocá *Más información → Ejecutar de todas formas*. Aparece porque el programa no tiene firma digital paga; no es un virus.
 
-- Windows 10 y 11: `Kyro-Neo-Board-Setup-1.2.0.exe`
-- Windows 7 / 8.1: `Kyro-Neo-Board-Setup-1.2.0-Windows7.exe`. Usa un motor más viejo, sin actualizaciones de seguridad.
+- Windows 10 y 11: `Kyro-Neo-Board-Setup-1.3.0.exe`
+- Windows 7 / 8.1: `Kyro-Neo-Board-Setup-1.3.0-Windows7.exe`. Usa un motor más viejo, sin actualizaciones de seguridad.
 - Windows XP: no se puede, ningún motor actual corre ahí.
 
 ## Usar
@@ -22,6 +22,8 @@ Ejecutá `Kyro-Neo-Board-Setup-1.2.0.exe`. Si Windows muestra **"Windows protegi
 En la mesa se ve una vista previa liviana; al exportar se usa la foto completa (hasta 20 o 40 MP, según la Configuración ⚙).
 
 **Trackpad**: con dos dedos se mueve la vista y pellizcando se hace zoom. Con el mouse, la ruedita hace zoom. En Configuración ⚙ se puede elegir mouse, trackpad o automático, y si Ctrl+Z guarda 20 o 40 pasos.
+
+**En equipo** (botón de personas): abrí una sala y los que estén en tu misma red (wifi o cable) entran a tu mesa desde su compu, celu o tablet, con un enlace o un QR. Trabajan todos al mismo tiempo, ven los cursores de los demás y pueden mandarse mensajes. La primera vez, Windows pregunta si el programa puede usar la red: aceptá en **redes privadas**.
 
 La mesa se guarda sola, con el historial de Ctrl+Z, dentro de la carpeta del proyecto.
 

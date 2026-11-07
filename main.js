@@ -50,7 +50,8 @@ function createWindow(neo) {
     icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, spellcheck: false },
   });
-  const own = u => u.startsWith(`http://127.0.0.1:${port}/`);
+  // la mesa propia, o la sala de otra compu de la misma red (en equipo)
+  const own = u => u.startsWith(`http://127.0.0.1:${port}/`) || /^http:\/\/(10\.\d+|192\.168|172\.(1[6-9]|2\d|3[01]))\.\d+\.\d+:\d+\//.test(u);
   // links de afuera: en el navegador de siempre; nunca ventanas nuevas dentro del programa
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/i.test(url) && !own(url)) shell.openExternal(url); return { action: 'deny' }; });
   // soltar un archivo fuera de la mesa no tiene que "navegar" hacia él

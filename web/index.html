@@ -134,6 +134,7 @@
     <button class="ib" id="night" data-tip="Fondo del mat|Tocá para cambiar: verde → negro → gris con puntitos"></button>
   </div>
   <div class="spacer"></div>
+  <button class="round" id="collabBtn" data-icon="users" data-tip="En equipo|Trabajar de a varios en esta mesa, en tu misma red|Desde otra compu, el celu o una tablet, con un enlace o un QR"></button>
   <div class="drop proj-drop">
     <button class="round" id="projBtn" data-icon="folder" data-tip="Proyecto|Guardar o abrir el proyecto (.neo)|Ctrl+S guardar · Ctrl+O abrir"></button>
     <div class="menu" id="projMenu">
@@ -150,6 +151,8 @@
 </div>
 
 <div class="stats floating" id="stats">Cargando…</div>
+<aside class="collab-panel" id="collab" aria-label="En equipo"></aside>
+<div class="cb-gate" id="cbGate"><div class="cb-box"></div></div>
 
 <aside class="layers" id="layers">
   <div class="layers-head"><span>Lienzos</span><button class="lz-btn" id="newLz" data-icon="plus" data-tip="Lienzo nuevo · D|Dibujá la forma a mano alzada|Si hay fotos seleccionadas, entran esas|Si no, queda vacío y arrastrás las fotos adentro"></button></div>
@@ -205,6 +208,7 @@
       <p><b>Clic derecho</b><span>menú: tamaño A3–A7, recortar, rotar, cortar, copiar, pegar, duplicar, borrar</span></p>
       <p><b>Rotar (R)</b><span>arrastrar: giro libre · Shift: de a 90° · clic derecho: 90° a la izquierda / derecha</span></p>
       <p><b>Ctrl+C · X · V</b><span>copiar · cortar · pegar donde está el mouse (también fotos copiadas de internet)</span></p>
+      <p><b>En equipo</b><span>botón de personas: abrir una sala en tu red y trabajar de a varios (compu, celu o tablet)</span></p>
       <p><b>Alt + clic · Alt + clic der.</b><span>subir o bajar un lugar lo que está encima (fotos, piezas de mosaico y lienzos)</span></p>
       <p><b>Agrandar un lienzo</b><span>seleccionalo y arrastrá los cuadraditos · Shift: proporción · Alt: desde el centro</span></p>
       <p><b>Mosaico</b><span>clic derecho en una foto → Partir en mosaico (como el ojo) · botón Mosaico: Derecho/Libre, caos, piezas</span></p>
@@ -283,14 +287,21 @@
   </div>
 </div>
 
+<script src="_app/qrcode.js"></script>
 <script type="module">
 import { A, SIZES, LIENZO, Mesa, History, prefs, savePrefs, mountIcons, icon, extent, clampXY, isOutside, spansInBand, pieceInPoly, pointInPoly, listDir, loadState, saveState, loadPreview, loadImage, fileUrl, cfg, PREVIEW_PX, packSheets, exportSheets, exportMap, showSheets, safeName, inlineEdit, matMode, cycleMat, MAT_NAME, MAT_ICON, winDialog, revealFolder, serverIsCurrent, SERVER_OLD_MSG } from './_app/mesa.js';
+import { createCollab } from './_app/collab.js';
 
 const CYCLE = ['A7', 'A6', 'A5', 'A4']; // tamaños del clic con la herramienta Tamaño (A3 desde el menú)
 // ?p=<carpeta>: proyecto en su propia carpeta (fotos, armado e historial adentro) · ?nuevo: bienvenida
 const QS = new URLSearchParams(location.search), PROJ = QS.get('p'), WELCOME = !PROJ; // sin proyecto abierto: bienvenida
 const DIR = PROJ || 'Fotos MDP';
 const STATE = PROJ ? PROJ + '\\mesa.json' : 'mesa-fotos.json', HIST = PROJ ? PROJ + '\\mesa.historial.json' : 'mesa-fotos.historial.json';
+// invitado de una sala (entró con el enlace / QR de otra compu): no guarda, no exporta; la mesa es de quien abrió la sala
+const GUEST = /^[A-Z0-9]{4,12}$/.test(QS.get('sala') || '') ? QS.get('sala') : '';
+if (GUEST) document.documentElement.classList.add('guest');
+let collab = null;
+const loading = new Set(); // fotos que se están cargando
 const imgUrl = f => PROJ ? '/api/img?path=' + encodeURIComponent(PROJ + '\\' + f) : fileUrl(DIR, f); // (la de siempre)
 const prevUrl = f => imgUrl(f) + (PROJ ? `&w=${PREVIEW_PX[cfg().preview]}&cap=${cfg().cap}` : '');   // la que se ve en la mesa
 const fullUrl = f => imgUrl(f) + (PROJ ? `&full=1&cap=${cfg().cap}` : '');                           // la que se exporta
@@ -811,8 +822,8 @@ function sortBy(name, keep = false) {
 }
 
 // --- guardado automático: el estado y el historial de Ctrl+Z ---
-const saveAll = () => { saveState(STATE, S); saveState(HIST, hist.dump()); };
-const hist = new History(() => JSON.stringify(S), s => { S = normalize(JSON.parse(s)); mesa.sel = null; syncUI(); }, () => { dirty(); saveAll(); renderLayers(); }, cfg().steps);
+const saveAll = () => { if (GUEST) return; saveState(STATE, S); saveState(HIST, hist.dump()); };
+const hist = new History(() => JSON.stringify(S), s => { S = normalize(JSON.parse(s)); mesa.sel = null; syncUI(); }, () => { dirty(); saveAll(); renderLayers(); collab?.local(true); }, cfg().steps);
 
 const mesa = new Mesa($('mesa'), {
   list, images, bounds, snap: 5, boundsLabel: () => baseName().toUpperCase(),
@@ -847,7 +858,7 @@ const mesa = new Mesa($('mesa'), {
     if (msgs.length) toast(msgs.join(' · ') + '.', 3500);
   },
   undo: () => hist.undo(), redo: () => hist.redo(),
-  changed: () => { cache = null; },
+  changed: () => { cache = null; collab?.local(false); },
   onSize(refs, back) { hist.run(() => refs.forEach(it => { const i = CYCLE.indexOf(it.size), n = CYCLE.length; it.size = CYCLE[((i < 0 ? 0 : i) + (back ? n - 1 : 1)) % n]; keepInside(it); })); },
   onRotate(refs, dir) { rot90(refs, dir); },
   onWheelRotate(refs, dir) { const ms = refs.filter(r => r.mos); if (ms.length) hist.run(() => ms.forEach(it => { it.ang = (it.ang || 0) + dir * 3 * Math.PI / 180; })); },
@@ -867,7 +878,7 @@ const mesa = new Mesa($('mesa'), {
   // el imán también se pega a los bordes y al centro de los lienzos (menos los que se están moviendo)
   snapTargets: () => S.lienzos.filter(l => !selLz.has(l.id) && !l.hidden).map(lzBox),
   // la selección de lienzos se mantiene si se suma/saca con Ctrl o Shift; un clic común la limpia
-  onSelect: () => { if (!keepLz && !modClick && (selLz.size || active)) clearLz(); updateStats(); markRows(); },
+  onSelect: () => { if (!keepLz && !modClick && (selLz.size || active)) clearLz(); updateStats(); markRows(); collab?.selChanged(); },
   onDeselect: () => clearLz(),
   // Ctrl/Shift + clic en la etiqueta ✥ de un lienzo: sumarlo o sacarlo de la selección (sin tocar las fotos)
   toggleEmpty(w) {
@@ -898,7 +909,7 @@ const mesa = new Mesa($('mesa'), {
   // tiradores del lienzo seleccionado
   grabHandle: (w, e) => grabLzHandle(w, e),
   handleCursor: w => { const hd = handleAt(w); return hd ? HANDLE_CURSOR[hd.kind] : null; },
-  over(ctx, z) { drawLzHandles(ctx, z); },
+  over(ctx, z) { drawLzHandles(ctx, z); collab?.draw(ctx, z, list()); },
   onDraw(pts) {
     if ((prefs.drawMode || 'rect') === 'mosaic') { // mosaico: la foto seleccionada, partida adentro del rectángulo
       const ph = mesa.selRefs().find(r => !r.mos);
@@ -1942,32 +1953,75 @@ $('wOpenNeo').onclick = () => openNeo();
 $('emptyAdd').onclick = () => $('filePick').click();
 $('filePick').onchange = e => { const fl = [...e.target.files].filter(isImgFile); e.target.value = ''; if (fl.length) importImages(fl.map(file => ({ file })), { x: mesa.cam.x, y: mesa.cam.y }); };
 
+// --- en equipo (red local) ---
+async function ensureImages() { // fotos que trajo la sala y todavía no están cargadas (p. ej. una que subió otro)
+  const need = new Set([...S.items.map(it => it.file), ...S.lienzos.filter(l => l.src?.file).map(l => l.src.file)]);
+  const todo = [...need].filter(f => f && !images.has(f) && !loading.has(f));
+  if (!todo.length) return;
+  todo.forEach(f => loading.add(f));
+  await Promise.all(todo.map(async f => {
+    try { const { bmp, meta: m } = await loadPrev(f); images.set(f, bmp); meta.set(f, m); looks.set(f, analyze(bmp)); thumbs.set(f, makeThumb(bmp)); } catch {}
+    loading.delete(f); cache = null; mesa.invalidate();
+  }));
+  renderLayers(); updateStats();
+  fetch('/api/exif?dir=' + encodeURIComponent(DIR)).then(r => r.json()).then(x => { exif = x; }).catch(() => {});
+}
+let layersT = 0, saveT = 0;
+function afterRemote(op) {
+  cache = null;
+  if (op.del) for (const r of [...mesa.selection]) if (!S.items.includes(r)) mesa.selection.delete(r);
+  if (op.lzDel) for (const id of op.lzDel) { selLz.delete(id); if (active === id) active = null; }
+  if (op.meta && 'title' in op.meta) syncUI();
+  $('empty').classList.toggle('show', !S.items.length && !images.size);
+  ensureImages(); dirty();
+  clearTimeout(layersT); layersT = setTimeout(renderLayers, 120);
+  if (!GUEST) { clearTimeout(saveT); saveT = setTimeout(saveAll, 600); } // quien abrió la sala guarda todo
+}
+function replaceS(st) { // entrar a una sala: la mesa de quien la abrió
+  S = normalize(st); cache = null;
+  mesa.sel = null; clearLz();
+  hist.undos = []; hist.redos = []; hist.pending = null;
+  $('empty').classList.toggle('show', !S.items.length);
+  syncUI(); dirty(); renderLayers(); ensureImages(); mesa.fit();
+}
+if (PROJ) collab = createCollab({ el: $('collab'), btn: $('collabBtn'), gate: $('cbGate'), getS: () => S, replaceS, afterRemote, hist, mesa, proj: PROJ,
+  projName: () => S.title || projName, toast, guestCode: GUEST, back: /^http:\/\/127\.0\.0\.1:\d+\/$/.test(QS.get('volver') || '') ? QS.get('volver') : '' });
+else $('collabBtn').hidden = true;
+if (QS.has('kyrotest')) globalThis.__mesa = { mesa, state: () => S, hist, list, collab: () => collab, images }; // solo para las pruebas automáticas
+
 serverIsCurrent().then(ok => { if (!ok) toast(SERVER_OLD_MSG, 30000); }); // ¿quedó un servidor viejo corriendo?
 (async () => {
   syncUI();
   if (WELCOME && QS.get('neo')) return openNeoFromWelcome(QS.get('neo')); // se abrió un .neo
   if (WELCOME) return showWelcome();
-  if (PROJ) { fetch('/api/projects?path=' + encodeURIComponent(PROJ), { method: 'POST' }).catch(() => {}); S.title = projName; syncUI(); }
+  if (PROJ) { if (!GUEST) fetch('/api/projects?path=' + encodeURIComponent(PROJ), { method: 'POST' }).catch(() => {}); S.title = projName; syncUI(); }
   const files = await listDir(DIR);
   if (!files.length) {
     $('emptyTitle').textContent = QS.has('creado') ? `Listo: se creó la carpeta "${projName}"` : 'Arrastrá tus fotos acá para empezar';
     $('emptyText').textContent = QS.has('creado') ? 'Ahora arrastrá tus fotos acá (o tocá el +). Se van a guardar en esa carpeta.' : `O tocá el + para elegirlas. Se guardan en "${PROJ ? projName : 'Fotos MDP'}".`;
     $('empty').classList.add('show'); $('stats').textContent = '0 fotos';
-    if (PROJ) { const saved = await loadState(STATE); if (saved?.title) { S.title = saved.title; syncUI(); } }
+    if (PROJ && !GUEST) { const saved = await loadState(STATE); if (saved?.title) { S.title = saved.title; syncUI(); } }
     placeLayers(); renderLayers(); return;
   }
   let done = 0;
+  files.forEach(f => loading.add(f));
   const queue = [...files];
   await Promise.all(Array.from({ length: 4 }, async () => {
     while (queue.length) {
       const f = queue.shift();
       try { const { bmp, meta: m } = await loadPrev(f); images.set(f, bmp); meta.set(f, m); looks.set(f, analyze(bmp)); thumbs.set(f, makeThumb(bmp)); }
       catch { console.warn('No se pudo leer', f); }
+      loading.delete(f);
       toast(`Cargando fotos ${++done}/${files.length}…`);
       mesa.invalidate();
     }
   }));
   toast('');
+  if (GUEST) { // la mesa llega por la sala
+    exif = await fetch('/api/exif?dir=' + encodeURIComponent(DIR)).then(r => r.json()).catch(() => ({}));
+    syncUI(); dirty(); placeLayers(); renderLayers(); if (S.items.length) mesa.fit();
+    return;
+  }
   const [saved, savedHist, ex] = await Promise.all([loadState(STATE), loadState(HIST), fetch('/api/exif?dir=' + encodeURIComponent(DIR)).then(r => r.json()).catch(() => ({}))]);
   exif = ex;
   // (un proyecto guardado sin la marca "migrated1m" todavía tiene el lienzo de 1 m viejo: se convierte)

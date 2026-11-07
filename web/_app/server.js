@@ -68,11 +68,28 @@ function winDialog(kind, { name = '', start = '' } = {}) {
   });
 }
 // guardar sin dejar archivos a medias (si se corta la luz o se cierra en el medio)
+// En Windows, si otro programa tiene el archivo abierto justo en ese momento (OneDrive, el antivirus),
+// reemplazarlo falla: se reintenta unas veces antes de rendirse.
+writeSafe.n = 0;
+const lastSeq = new Map();   // último guardado escrito de cada archivo
+const writeQueue = new Map(); // los guardados del mismo archivo, en fila: nunca uno viejo pisa a uno nuevo
 function writeSafe(f, data) {
-  const tmp = f + '.tmp-' + process.pid;
+  const run = (writeQueue.get(f) || Promise.resolve()).then(() => writeNow(f, data));
+  const tail = run.catch(() => {}); writeQueue.set(f, tail);
+  tail.then(() => { if (writeQueue.get(f) === tail) writeQueue.delete(f); });
+  return run;
+}
+async function writeNow(f, data) {
+  const tmp = `${f}.tmp-${process.pid}-${++writeSafe.n}`; // uno distinto por guardado (pueden coincidir dos)
   fs.writeFileSync(tmp, data);
-  try { fs.renameSync(tmp, f); } // OneDrive o el antivirus a veces traban el archivo: entonces se escribe directo
-  catch { fs.writeFileSync(f, data); try { fs.unlinkSync(tmp); } catch {} }
+  for (let i = 0; ; i++) {
+    try { fs.renameSync(tmp, f); return; }
+    catch (e) {
+      if (i < 12) { await new Promise(r => setTimeout(r, 40 + i * 30)); continue; }
+      try { fs.writeFileSync(f, data); } finally { try { fs.unlinkSync(tmp); } catch {} } // último intento: directo
+      return;
+    }
+  }
 }
 function body(req) {
   return new Promise((ok, ko) => {
@@ -178,11 +195,11 @@ function parseTiff(b, t, out) {
   });
 }
 
-const srv = http.createServer(async (req, res) => {
+const handler = async (req, res) => {
   try {
     // solo la propia mesa puede usar el servidor (ni otras páginas web ni otros sitios disfrazados de localhost)
     const host = String(req.headers.host || '').replace(/:\d+$/, ''), origin = req.headers.origin;
-    if (!/^(127\.0\.0\.1|localhost)$/.test(host)) return send(res, 403, { error: 'acceso no permitido' });
+    if (!req.lan && !/^(127\.0\.0\.1|localhost)$/.test(host)) return send(res, 403, { error: 'acceso no permitido' }); // (lo que viene de la red pasa por la puerta de lan.js)
     if (origin && origin !== 'null') { let oh = ''; try { oh = new URL(origin).host; } catch {} if (oh !== req.headers.host) return send(res, 403, { error: 'acceso no permitido' }); }
     const u = new URL(req.url, 'http://x');
     const q = k => u.searchParams.get(k);
@@ -228,6 +245,11 @@ const srv = http.createServer(async (req, res) => {
       res.writeHead(200, head);
       return fs.createReadStream(f).pipe(res);
     }
+    // --- sala en la red local (solo desde esta compu: la red no llega hasta acá) ---
+    if (u.pathname === '/api/lan/start' && req.method === 'POST') return send(res, 200, await lan.start(safe(q('dir')), q('name') || ''));
+    if (u.pathname === '/api/lan/stop' && req.method === 'POST') return send(res, 200, lan.stop());
+    if (u.pathname === '/api/lan/info') return send(res, 200, lan.info());
+    if (u.pathname === '/api/lan/peers') return send(res, 200, lan.peers());
     if (u.pathname === '/api/formats') return send(res, 200, { label: imaging.extsLabel, all: imaging.hasSharp });
     if (u.pathname === '/api/dialog' && req.method === 'POST') { // explorador de Windows
       const kind = q('kind'), p = await winDialog(kind, { name: q('name') || '', start: q('start') || '' });
@@ -238,7 +260,7 @@ const srv = http.createServer(async (req, res) => {
     if (u.pathname === '/api/file') { // leer / escribir un archivo elegido (proyecto .neo)
       const p = safe(q('path'));
       if (!/\.neo$/i.test(p)) throw new Error('solo archivos .neo');
-      if (req.method === 'POST') { writeSafe(p, await body(req)); return send(res, 200, { ok: true }); }
+      if (req.method === 'POST') { await writeSafe(p, await body(req)); return send(res, 200, { ok: true }); }
       return send(res, 200, fs.readFileSync(p));
     }
     if (u.pathname === '/api/reveal' && req.method === 'POST') { // abrir una carpeta en el explorador
@@ -288,7 +310,13 @@ const srv = http.createServer(async (req, res) => {
     }
     if (u.pathname === '/api/state') {
       const f = safe(q('file'));
-      if (req.method === 'POST') { writeSafe(f, await body(req)); return send(res, 200, { ok: true }); }
+      if (req.method === 'POST') {
+        // cada guardado trae su número de orden: si llega tarde uno viejo, no pisa a uno más nuevo
+        const seq = Number(q('seq')) || 0, b = await body(req);
+        if (seq && seq <= (lastSeq.get(f) || 0)) return send(res, 200, { ok: true, viejo: true });
+        if (seq) lastSeq.set(f, seq);
+        await writeSafe(f, b); return send(res, 200, { ok: true });
+      }
       return fs.existsSync(f) ? send(res, 200, fs.readFileSync(f)) : send(res, 200, 'null');
     }
     if (u.pathname === '/api/save' && req.method === 'POST') {
@@ -320,6 +348,13 @@ const srv = http.createServer(async (req, res) => {
   } catch (e) {
     send(res, 500, { error: String(e.message || e) });
   }
+};
+const srv = http.createServer(handler);
+// sala en la red local: puerta para los de afuera + relevo en vivo (también para esta compu)
+const lan = require('./lan.js').createLan({ handler, safe: { root: ROOT } });
+srv.on('upgrade', (req, socket, head) => {
+  if (!/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(req.headers.host || '')) return socket.destroy();
+  lan.upgrade(req, socket, head, false);
 });
 if (require.main === module) srv.listen(PORT, '127.0.0.1', () => console.log(`Kyro Neo Board en http://localhost:${PORT}/`));
 module.exports = {
