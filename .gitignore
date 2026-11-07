@@ -1,0 +1,5 @@
+node_modules/
+dist/
+dist-win7/
+web/_app/proyectos.json
+*.tmp-*

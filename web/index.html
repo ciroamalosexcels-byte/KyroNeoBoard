@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kyro Neo Board</title>
+<link rel="icon" href="_app/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="_app/fonts/archivo.css">
+<link rel="stylesheet" href="_app/mesa.css">
+</head>
+<body>
+<canvas id="mesa"></canvas>
+
+<div class="bar">
+  <div class="logo"><span class="title" id="title" data-tip="Nombre de la exportación|Doble clic para cambiarlo|Es el nombre de la carpeta y de los archivos al exportar">Proyecto nuevo</span><small>Kyro Neo Board</small></div>
+  <div class="group center">
+    <button class="ib on" data-tool="move" data-icon="move" data-tip="Seleccionar · V|Clic: elegir una · arrastrar: mover (Alt: sin imán)|Arrastrar en el mat vacío: recuadro para elegir varias|Ctrl + clic: sumar o sacar · Shift + clic: todas las del medio|Ctrl+A: todas · Esc: ninguna"></button>
+    <button class="ib" data-tool="pan" data-icon="hand" data-tip="Mano · H|Arrastrá para mover la vista|Mantené apretado Espacio: es la mano mientras la apretás, y al soltar vuelve tu herramienta|También: ruedita apretada o arrastrar con clic derecho"></button>
+    <button class="ib" data-tool="size" data-icon="size" data-tip="Tamaño · S|Clic en una foto: A7 → A6 → A5 → A4|Shift + clic: al revés|A3 y los demás: clic derecho en la foto"></button>
+    <button class="ib" data-tool="rotate" data-icon="rotate" data-tip="Rotar · R|Arrastrá sobre una foto para girarla libre|Shift: de a 90°|Clic derecho → Rotar 90° a la izquierda / derecha"></button>
+    <div class="drop">
+      <button class="ib" data-tool="draw" id="drawBtn" data-tip="Lienzo nuevo · D|Clic: dibujar con la forma elegida|Clic derecho: rectángulo, círculo, pluma o mano alzada|Si hay fotos seleccionadas, entran esas"></button>
+      <div class="menu" id="drawMenu">
+        <div class="menu-title">Forma del lienzo</div>
+        <button data-shape="rect" data-icon="shapeRect"><span>Rectángulo<small>Arrastrá de esquina a esquina · Shift: cuadrado</small></span></button>
+        <button data-shape="circle" data-icon="shapeCircle"><span>Círculo<small>Arrastrá · Shift: redondo perfecto</small></span></button>
+        <button data-shape="pen" data-icon="shapePen"><span>Pluma<small>Un clic por punto · se cierra en el primero, con doble clic o Enter</small></span></button>
+        <button data-shape="mosaic" data-icon="mosaic"><span>Mosaico<small>Arrastrá el rectángulo: la foto seleccionada se parte en piezas</small></span></button>
+        <button data-shape="free" data-icon="shapeFree"><span>Mano alzada<small>Dibujá con el mouse o la tableta</small></span></button>
+      </div>
+    </div>
+    <button class="ib" data-tool="zoom" data-icon="lupa" data-tip="Lupa · Z|Clic: acercar · clic derecho (o Alt+clic): alejar|Siempre: ruedita del mouse, + y −"></button>
+    <button class="ib" id="magnetBtn" data-icon="magnet" data-tip="Imán · I|Al arrastrar, se pega a bordes y centros de otras fotos y de los lienzos|Una línea roja muestra con qué quedó alineada|Alt mientras arrastrás: mover libre"></button>
+    <span class="sep"></span>
+    <button class="ib" id="fit" data-icon="fit" data-tip="Ver todo · F|Encuadra el lienzo y todas las fotos"></button>
+    <span class="sep"></span>
+    <button class="ib" id="undo" data-icon="undo" data-tip="Deshacer · Ctrl+Z|Queda guardado aunque cierres"></button>
+    <button class="ib" id="redo" data-icon="redo" data-tip="Rehacer · Ctrl+Y|También Ctrl+Shift+Z"></button>
+    <span class="sep"></span>
+    <div class="drop">
+      <button class="ib" id="sortBtn" data-icon="filter" data-tip="Acomodar por…|Color, fecha, tamaño, luz, orientación o cámara|Tocar dos veces la misma opción invierte el orden"></button>
+      <div class="menu" id="sortMenu">
+        <div class="menu-title">Acomodar por</div>
+        <button data-sort="color" data-icon="color"><span>Color<small>Como un arcoíris · las grises aparte</small></span><span class="dir"></span></button>
+        <button class="co-toggle" id="coToggle" data-icon="chev"><span>Opciones de color</span></button>
+        <div class="copts" id="coBody">
+          <div class="co-row"><span>Mira el color</span><div class="seg">
+            <button data-co="mode" data-v="dom" data-tip="Dominante|El tono que más hay en la foto">Dominante</button>
+            <button data-co="mode" data-v="avg" data-tip="Promedio|La mezcla de todos los colores de la foto">Promedio</button></div></div>
+          <div class="co-row col"><span>El arcoíris empieza en</span><div class="chips" id="coStart"></div></div>
+          <div class="co-row col"><span>Disposición</span><div class="seg">
+            <button data-co="layout" data-v="flow" data-tip="Seguido|Una atrás de otra, en filas">Seguido</button>
+            <button data-co="layout" data-v="zigzag" data-tip="Zigzag|Una fila va y la siguiente vuelve: el color no salta">Zigzag</button>
+            <button data-co="layout" data-v="groups" data-tip="Fila por color|Cada familia (rojos, naranjas…) arranca su fila">Fila por color</button></div></div>
+          <div class="co-row col"><span>Dentro de cada color</span><div class="seg">
+            <button data-co="inner" data-v="light" data-tip="Por luz|De la más clara a la más oscura">Claras primero</button>
+            <button data-co="inner" data-v="sat" data-tip="Por intensidad|Las de color más fuerte primero">Más intensas</button>
+            <button data-co="inner" data-v="none" data-tip="Arcoíris puro|Solo por tono, sin agrupar">Solo tono</button></div></div>
+          <div class="co-row"><span>Grises y B/N</span><div class="seg">
+            <button data-co="grays" data-v="end">Al final</button>
+            <button data-co="grays" data-v="start">Al principio</button></div></div>
+          <label class="co-row col" data-tip="Qué cuenta como gris|Si la foto tiene menos color que esto, va con las grises">
+            <span>Es gris si tiene menos de <b id="coGrayVal"></b> de color</span><input type="range" id="coGray" min="1" max="40" step="1"></label>
+        </div>
+        <button data-sort="date" data-icon="date"><span>Fecha<small>De la más vieja a la más nueva</small></span><span class="dir"></span></button>
+        <button data-sort="size" data-icon="size"><span>Tamaño<small>A4, después A5, después A6</small></span><span class="dir"></span></button>
+        <button data-sort="light" data-icon="light"><span>Luz<small>De la más clara a la más oscura</small></span><span class="dir"></span></button>
+        <button data-sort="orient" data-icon="orient"><span>Orientación<small>Verticales primero, después horizontales</small></span><span class="dir"></span></button>
+        <button data-sort="camera" data-icon="camera"><span>Cámara<small>Agrupadas por cámara, y por fecha dentro</small></span><span class="dir"></span></button>
+        <button data-sort="zoom" data-icon="focal"><span>Zoom<small>Distancia focal: de gran angular a teleobjetivo</small></span><span class="dir"></span></button>
+        <button data-sort="flash" data-icon="zap"><span>Flash<small>Con flash primero, después sin flash</small></span><span class="dir"></span></button>
+        <button data-sort="name" data-icon="az"><span>Nombre<small>Alfabético, de la A a la Z</small></span><span class="dir"></span></button>
+        <button data-sort="number" data-icon="hash"><span>Número<small>El número del archivo, de menor a mayor</small></span><span class="dir"></span></button>
+      </div>
+    </div>
+    <div class="drop">
+      <button class="ib" id="colorBtn" data-icon="wheel" data-tip="Seleccionar por color|Elegí un color en la rueda y estirá el umbral|Se seleccionan las fotos que tienen ese color"></button>
+      <div class="menu cpanel" id="colorPanel">
+        <div class="menu-title">Seleccionar por color</div>
+        <svg id="wheel" viewBox="0 0 220 220" width="220" height="220" aria-label="Rueda de color"></svg>
+        <div class="crow"><span>Umbral</span><b id="cwVal">±30°</b></div>
+        <label class="crow" data-tip="Presencia|Cuánto de la foto tiene que ser de ese color">Presencia <input type="range" id="cPres" min="5" max="80" step="5"><b id="cPresVal">20%</b></label>
+        <div class="crow"><b id="cCount" style="text-align:left">0 fotos</b><button class="mbtn" id="cDone">Listo</button></div>
+      </div>
+    </div>
+    <div class="drop">
+      <button class="ib dim" id="alignBtn" data-icon="alignHC" data-tip="Alinear|Entre sí: 2 o más fotos|Contra un lienzo: seleccionalo también (Ctrl+clic en su etiqueta ✥)|Alt+H centrar en columna · Alt+V centrar en fila · Alt+A/D/W/S bordes"></button>
+      <div class="menu" id="alignMenu">
+        <div class="co-row" style="padding:.3rem .6rem 0"><span>Referencia</span><b id="alignRef" style="font-weight:800"></b></div>
+        <div class="lz-empty" id="alignHint" style="padding:.2rem .6rem .35rem">Para alinear contra un lienzo: Ctrl+clic en su etiqueta ✥ (o en su capa) para sumarlo a la selección.</div>
+        <div class="menu-title">Horizontal</div>
+        <div class="align-grid">
+          <button data-align="left" data-icon="alignLeft" data-tip="Bordes izquierdos · Alt+A"><small>Izquierda</small></button>
+          <button data-align="hc" data-icon="alignHC" data-tip="Centrar en columna · Alt+H|Todas con el mismo centro horizontal"><small>Centro</small></button>
+          <button data-align="right" data-icon="alignRight" data-tip="Bordes derechos · Alt+D"><small>Derecha</small></button>
+        </div>
+        <div class="menu-title">Vertical</div>
+        <div class="align-grid">
+          <button data-align="top" data-icon="alignTop" data-tip="Bordes de arriba · Alt+W"><small>Arriba</small></button>
+          <button data-align="vc" data-icon="alignVC" data-tip="Centrar en fila · Alt+V|Todas con el mismo centro vertical"><small>Medio</small></button>
+          <button data-align="bottom" data-icon="alignBottom" data-tip="Bordes de abajo · Alt+S"><small>Abajo</small></button>
+        </div>
+        <div class="menu-title">Repartir parejo</div>
+        <div class="align-grid two">
+          <button data-align="distH" data-icon="distH" data-tip="Repartir en horizontal|El mismo espacio entre cada una · 3 o más fotos"><small>Horizontal</small></button>
+          <button data-align="distV" data-icon="distV" data-tip="Repartir en vertical|El mismo espacio entre cada una · 3 o más fotos"><small>Vertical</small></button>
+        </div>
+      </div>
+    </div>
+    <div class="drop">
+      <button class="ib dim" id="mosBtn" data-icon="mosaic" data-tip="Mosaico|Una foto partida en piezas, como el ojo|Para crear uno: clic derecho en una foto → Partir en mosaico"></button>
+      <div class="menu eye-panel" id="mosPanel">
+        <div class="menu-title" id="mosTitle">Mosaico</div>
+        <div class="co-row col"><div class="seg">
+          <button data-mosgen="recto" data-tip="Derecho|Piezas derechas o acostadas, adentro de la foto">Derecho</button>
+          <button data-mosgen="semi" data-tip="Semilibre|Ángulos al azar, siempre adentro de la foto|No se fuerza a cubrir todo: pueden quedar huecos">Semilibre</button>
+          <button data-mosgen="libre" data-tip="Libre|En diagonal y saliéndose de la foto">Libre</button></div></div>
+        <label class="co-row col" id="mosChaosField" data-tip="Caos (Semilibre y Libre)|Más caos: más piezas torcidas (y en Libre, más desparramadas)|Al soltar, se vuelve a mezclar"><span>Caos <b id="mosChaosVal"></b></span><input type="range" id="mosChaos" min="0" max="100" step="5"></label>
+        <div class="co-row" data-tip="Resolución|Píxeles de la foto por pulgada al ancho elegido|Menos de 200 dpi: puede verse pixelada"><span>Resolución</span><b id="mosDpi"></b></div>
+        <label class="co-row"><span>Ancho de la foto</span><span><input type="number" id="mosW" min="10" max="500" step="5" class="eye-num"> cm</span></label>
+        <label class="co-row"><span>Piezas</span><input type="number" id="mosCount" min="1" max="300" step="1" class="eye-num"></label>
+        <div class="co-row"><span>Tamaños</span><div class="seg">
+          <button data-mossize="A4">A4</button><button data-mossize="A5">A5</button><button data-mossize="A6">A6</button><button data-mossize="A7">A7</button></div></div>
+        <label class="co-row col" data-tip="Ver la foto|Opacidad de las piezas: más bajo, más se ve la foto entera debajo|100 % = normal · solo en pantalla, no se imprime"><span>Ver la foto · piezas al <b id="mosOpVal"></b></span><input type="range" id="mosOp" min="1" max="100" step="1"></label>
+        <button class="mbtn eye-mix" id="mosMix" data-icon="dice">Mezclar de nuevo</button>
+      </div>
+    </div>
+    <button class="ib dim" id="flow" data-icon="rows" data-tip="Acomodar en filas|Con 2 o más fotos seleccionadas, o un lienzo con fotos seleccionado|Ordena las fotos del lienzo adentro de su forma · sin lienzo activo: ordena las fotos sueltas en filas"></button>
+    <div class="fold" id="frameFold">
+      <button class="ib" id="frameBtn" data-icon="frame" data-tip="Marco blanco|Tocá para abrir o cerrar el ajuste|Doble clic en el número para escribirlo"></button>
+      <div class="fold-body"><input type="range" id="frame" min="0" max="20" step="0.5" aria-label="Marco en milímetros"><span class="fold-val" id="frameVal" data-tip="Marco en mm|Doble clic para escribir el número"></span></div>
+    </div>
+    <span class="sep"></span>
+    <button class="ib" id="night" data-tip="Fondo del mat|Tocá para cambiar: verde → negro → gris con puntitos"></button>
+  </div>
+  <div class="spacer"></div>
+  <div class="drop proj-drop">
+    <button class="round" id="projBtn" data-icon="folder" data-tip="Proyecto|Guardar o abrir el proyecto (.neo)|Ctrl+S guardar · Ctrl+O abrir"></button>
+    <div class="menu" id="projMenu">
+      <div class="menu-title">Proyecto</div>
+      <button data-proj="save" data-icon="save"><span>Guardar proyecto<small id="projWhere">Todavía no se guardó como .neo</small></span><span class="kbd">Ctrl+S</span></button>
+      <button data-proj="saveAs" data-icon="save"><span>Guardar como…<small>Elegir dónde y con qué nombre</small></span><span class="kbd">Ctrl+Shift+S</span></button>
+      <button data-proj="open" data-icon="folderOpen"><span>Abrir proyecto…<small>Cargar un .neo guardado</small></span><span class="kbd">Ctrl+O</span></button>
+      <button data-proj="home" data-icon="folder"><span>Inicio<small>Proyecto nuevo o uno reciente</small></span></button>
+    </div>
+  </div>
+  <button class="stamp icon" id="export" data-icon="print" aria-label="Exportar" data-tip="Exportar|Primero muestra la vista previa de cómo sale|Hojas A3 en JPG 300 dpi + PDF + mapa de armado|Van a una carpeta con el nombre del título"></button>
+  <button class="round" id="cfgBtn" data-icon="gear" data-tip="Configuración|Calidad de la vista previa, resolución al exportar|Pasos de Ctrl+Z, mouse o trackpad"></button>
+  <button class="round" id="helpBtn" data-icon="help" data-tip="Atajos|Muestra u oculta la lista de atajos"></button>
+</div>
+
+<div class="stats floating" id="stats">Cargando…</div>
+
+<aside class="layers" id="layers">
+  <div class="layers-head"><span>Lienzos</span><button class="lz-btn" id="newLz" data-icon="plus" data-tip="Lienzo nuevo · D|Dibujá la forma a mano alzada|Si hay fotos seleccionadas, entran esas|Si no, queda vacío y arrastrás las fotos adentro"></button></div>
+  <div id="lzList" style="display:flex;flex-direction:column;gap:9px"></div>
+</aside>
+
+<div class="help-bg" id="cfgBg"></div>
+<div class="help cfg" id="cfg" role="dialog" aria-label="Configuración">
+  <div class="help-head"><h4>Configuración</h4><button class="round" id="cfgClose" data-icon="x" aria-label="Cerrar" data-tip="Cerrar · Esc"></button></div>
+  <div class="cfg-row"><div><b>Vista previa en la mesa</b><small>Solo cambia cómo se ve en pantalla. Al exportar se usa siempre la foto completa.</small></div>
+    <div class="seg" data-cfg="preview"><button data-v="liviana">Liviana</button><button data-v="normal">Normal</button><button data-v="alta">Alta</button></div></div>
+  <div class="cfg-row"><div><b>Resolución máxima al exportar</b><small>Una hoja A3 a 300 dpi usa 17 MP: con 20 MP alcanza y exporta más rápido. Las fotos más grandes se achican solo al exportar; las originales no se tocan.</small></div>
+    <div class="seg" data-cfg="cap"><button data-v="20">20 MP</button><button data-v="40">40 MP</button></div></div>
+  <div class="cfg-row"><div><b>Pasos para deshacer (Ctrl+Z)</b><small>Cuántos cambios se pueden volver atrás. Menos pasos: el proyecto pesa menos.</small></div>
+    <div class="seg" data-cfg="steps"><button data-v="20">20</button><button data-v="40">40</button></div></div>
+  <div class="cfg-row"><div><b>Mouse o trackpad</b><small>Trackpad: dos dedos mueven la vista y pellizcar hace zoom. Mouse: la ruedita hace zoom. Automático: se da cuenta solo.</small></div>
+    <div class="seg" data-cfg="pointer"><button data-v="auto">Automático</button><button data-v="mouse">Mouse</button><button data-v="trackpad">Trackpad</button></div></div>
+  <div class="help-foot">Fotos que se pueden usar: JPG, PNG, WebP, TIFF, HEIC (iPhone) y RAW de cámara (NEF, CR2, CR3, ARW, DNG, RAF, ORF, RW2, PEF…). Del RAW se usa la foto de tamaño completo que guarda la cámara adentro.</div>
+</div>
+<div class="help-bg" id="helpBg"></div>
+<div class="help" id="help" role="dialog" aria-label="Atajos">
+  <div class="help-head"><h4>Atajos</h4><button class="round" id="helpClose" data-icon="x" aria-label="Cerrar" data-tip="Cerrar · Esc"></button></div>
+  <div class="help-cols">
+    <section><h5>Herramientas</h5>
+      <p><b>V · H · S · R · D</b><span>seleccionar · mano · tamaño · rotar · lienzo</span></p>
+      <p><b>I</b><span>imán: al arrastrar se pega a bordes y centros (línea roja) · Alt: libre</span></p>
+      <p><b>Clic derecho en el lápiz</b><span>rectángulo · círculo · pluma · mano alzada (Shift: cuadrado / redondo)</span></p>
+      <p><b>Pluma</b><span>clic por punta · cerrar: tocar la primera, doble clic o Enter · Retroceso borra la última</span></p>
+    </section>
+    <section><h5>Selección</h5>
+      <p><b>Clic · arrastrar</b><span>elegir una · moverla con las seleccionadas (Alt: sin imán)</span></p>
+      <p><b>Arrastrar en vacío</b><span>recuadro para elegir varias</span></p>
+      <p><b>Ctrl + clic</b><span>sumar o sacar de la selección</span></p>
+      <p><b>Shift + clic</b><span>todas las del medio, dentro del mismo lienzo (o entre las sueltas)</span></p>
+      <p><b>Ctrl+A · Ctrl+D · Esc</b><span>todas · deseleccionar todo · ninguna</span></p>
+      <p><b>Rueda de color</b><span>punto del medio = color · puntas = umbral</span></p>
+    </section>
+    <section><h5>Lienzos</h5>
+      <p><b>Etiqueta ✥</b><span>clic: elige el lienzo con sus fotos · arrastrarla: lo mueve entero</span></p>
+      <p><b>Ctrl + clic en la etiqueta</b><span>suma el lienzo a la selección (para alinear contra él)</span></p>
+      <p><b>Doble clic</b><span>en la capa o en el lienzo del mat: renombrar</span></p>
+      <p><b>Ojito (panel)</b><span>ocultar / mostrar · lo oculto no se imprime</span></p>
+      <p><b>Sacar fotos</b><span>arrastralas afuera de la forma y soltalas</span></p>
+      <p><b>Supr</b><span>con un lienzo seleccionado: lo borra (sus fotos quedan sueltas)</span></p>
+    </section>
+    <section><h5>Acomodar y alinear</h5>
+      <p><b>Alinear</b><span>entre sí (2+ fotos) · contra un lienzo si también está seleccionado</span></p>
+      <p><b>Alt+H · Alt+V</b><span>centrar en columna · centrar en fila</span></p>
+      <p><b>Alt+A · D · W · S</b><span>bordes izquierdo · derecho · arriba · abajo</span></p>
+      <p><b>Flechas</b><span>mover lo seleccionado 1 mm (Shift: 10 mm)</span></p>
+    </section>
+    <section><h5>Editar</h5>
+      <p><b>Clic derecho</b><span>menú: tamaño A3–A7, recortar, rotar, cortar, copiar, pegar, duplicar, borrar</span></p>
+      <p><b>Rotar (R)</b><span>arrastrar: giro libre · Shift: de a 90° · clic derecho: 90° a la izquierda / derecha</span></p>
+      <p><b>Ctrl+C · X · V</b><span>copiar · cortar · pegar donde está el mouse (también fotos copiadas de internet)</span></p>
+      <p><b>Alt + clic · Alt + clic der.</b><span>subir o bajar un lugar lo que está encima (fotos, piezas de mosaico y lienzos)</span></p>
+      <p><b>Agrandar un lienzo</b><span>seleccionalo y arrastrá los cuadraditos · Shift: proporción · Alt: desde el centro</span></p>
+      <p><b>Mosaico</b><span>clic derecho en una foto → Partir en mosaico (como el ojo) · botón Mosaico: Derecho/Libre, caos, piezas</span></p>
+      <p><b>Arrastrar fotos</b><span>desde el explorador, el escritorio o Drive: quedan donde las soltás (adentro de un lienzo, son de ese lienzo)</span></p>
+      <p><b>Ctrl+Shift+V (o P)</b><span>pegar en el mismo lugar, mismo tamaño</span></p>
+      <p><b>Ctrl+J · Supr</b><span>duplicar · sacar del mat</span></p>
+      <p><b>Ctrl+Z · Ctrl+Y</b><span>deshacer · rehacer (también dentro del recorte)</span></p>
+      <p><b>Ctrl+S · Ctrl+O</b><span>guardar · abrir el proyecto (.neo) · Ctrl+Shift+S: guardar como</span></p>
+      <p><b>Recorte</b><span>Alt: desde el centro · Shift: invertir el candado · L: candado</span></p>
+    </section>
+    <section><h5>Vista</h5>
+      <p><b>Z · ruedita · + · −</b><span>lupa: clic acerca, clic derecho aleja · zoom</span></p>
+      <p><b>Espacio</b><span>mano mientras lo apretás · al soltar vuelve tu herramienta</span></p>
+      <p><b>Ruedita apretada</b><span>mover la vista (también arrastrando con clic derecho)</span></p>
+      <p><b>Doble clic ruedita</b><span>encuadra el último lienzo que tocaste</span></p>
+      <p><b>F · flechas</b><span>ver todo · sin selección, las flechas mueven la vista</span></p>
+    </section>
+  </div>
+  <div class="help-foot">Filas: de arriba a abajo = 1, 2, 3… · dentro de la fila, de izquierda a derecha = A, B, C… · Punto rojo = la foto queda por debajo de 200 dpi en ese tamaño · Borde rojo = afuera de su lienzo · Todo se guarda solo, también el historial de Ctrl+Z.</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-head">
+    <div class="logo" id="ovTitle">Hojas A3</div>
+    <div class="spacer"></div>
+    <button class="stamp" id="ovExport" data-icon="print">Exportar</button>
+    <button class="round" id="ovClose" data-icon="x" aria-label="Cerrar" data-tip="Cerrar · Esc"></button>
+  </div>
+  <div class="ov-body">
+    <aside class="pv-side" id="pvSide"></aside>
+    <div class="ov-main">
+      <div class="ov-note" id="ovNote"></div>
+      <div class="sheets" id="sheets"></div>
+    </div>
+  </div>
+</div>
+<!-- menú de clic derecho -->
+<div class="drop ctx-wrap"><div class="menu" id="ctxMenu"></div></div>
+<!-- editor de recorte -->
+<div class="overlay" id="cropOv">
+  <div class="overlay-head">
+    <div class="logo">Recortar <small id="cropName"></small></div>
+    <button class="crop-lock" id="cropLock" data-tip="Mantener proporción · L|Prendido: el recorte no se deforma|Shift mientras arrastrás: lo invierte por un momento|Alt: agrandar o achicar desde el centro"></button>
+    <div class="crop-seg" id="cropSeg">
+      <button data-ratio="free" data-tip="Libre|Cualquier proporción">Libre</button>
+      <button data-ratio="orig" data-tip="Original|La proporción de la foto">Original</button>
+      <button data-ratio="A" data-tip="Hoja A|La proporción de A3, A4, A5 y A6: sin blanco de más">Hoja A</button>
+      <button data-ratio="sq" data-tip="Cuadrado|1 × 1">Cuadrado</button>
+    </div>
+    <div class="spacer"></div>
+    <button class="pill" id="cropReset">Sin recorte</button>
+    <button class="pill" id="cropCancel">Cancelar</button>
+    <button class="stamp" id="cropOk">Listo</button>
+  </div>
+  <div class="crop-stage"><canvas id="cropCv"></canvas></div>
+  <div class="ov-note" id="cropNote" style="padding-bottom:16px"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="empty" id="empty"><div class="empty-card">
+  <button class="w-plus" id="emptyAdd" data-icon="plus" aria-label="Agregar fotos" data-tip="Agregar fotos|Elegilas con el explorador"></button>
+  <b id="emptyTitle">Arrastrá tus fotos acá para empezar</b>
+  <span id="emptyText">O tocá el + para elegirlas.</span>
+</div></div>
+<input type="file" id="filePick" accept="image/jpeg,image/png,image/webp,image/tiff,image/heic,image/heif,.heic,.heif,.tif,.tiff,.avif,.nef,.nrw,.cr2,.cr3,.crw,.arw,.srf,.sr2,.dng,.raf,.orf,.rw2,.pef,.srw,.3fr,.erf,.kdc,.mos,.mrw,.iiq,.x3f,.rwl" multiple hidden>
+<div class="welcome" id="welcome">
+  <div class="welcome-card">
+    <div class="logo">Kyro Neo Board <small>proyecto nuevo</small></div>
+    <h1>Empezá un proyecto</h1>
+    <p>Elegís dónde crear la carpeta del proyecto. Ahí se van a guardar las fotos que arrastres o elijas, el armado y el historial.</p>
+    <label class="w-name">Nombre <input id="wName" value="Proyecto nuevo" maxlength="60"></label>
+    <button class="w-new" id="wNew"><span class="w-plus" data-icon="plus"></span><span><b>Apretá acá para iniciar un nuevo proyecto</b><small>Se abre el explorador para elegir dónde crear la carpeta</small></span></button>
+    <div class="w-row">
+      <button class="pill" id="wOpenNeo" data-icon="folderOpen">Abrir proyecto .neo…</button>
+    </div>
+    <div class="w-recent" id="wRecent"></div>
+  </div>
+</div>
+
+<script type="module">
+import { A, SIZES, LIENZO, Mesa, History, prefs, savePrefs, mountIcons, icon, extent, clampXY, isOutside, spansInBand, pieceInPoly, pointInPoly, listDir, loadState, saveState, loadPreview, loadImage, fileUrl, cfg, PREVIEW_PX, packSheets, exportSheets, exportMap, showSheets, safeName, inlineEdit, matMode, cycleMat, MAT_NAME, MAT_ICON, winDialog, revealFolder, serverIsCurrent, SERVER_OLD_MSG } from './_app/mesa.js';
+
+const CYCLE = ['A7', 'A6', 'A5', 'A4']; // tamaños del clic con la herramienta Tamaño (A3 desde el menú)
+// ?p=<carpeta>: proyecto en su propia carpeta (fotos, armado e historial adentro) · ?nuevo: bienvenida
+const QS = new URLSearchParams(location.search), PROJ = QS.get('p'), WELCOME = !PROJ; // sin proyecto abierto: bienvenida
+const DIR = PROJ || 'Fotos MDP';
+const STATE = PROJ ? PROJ + '\\mesa.json' : 'mesa-fotos.json', HIST = PROJ ? PROJ + '\\mesa.historial.json' : 'mesa-fotos.historial.json';
+const imgUrl = f => PROJ ? '/api/img?path=' + encodeURIComponent(PROJ + '\\' + f) : fileUrl(DIR, f); // (la de siempre)
+const prevUrl = f => imgUrl(f) + (PROJ ? `&w=${PREVIEW_PX[cfg().preview]}&cap=${cfg().cap}` : '');   // la que se ve en la mesa
+const fullUrl = f => imgUrl(f) + (PROJ ? `&full=1&cap=${cfg().cap}` : '');                           // la que se exporta
+const loadPrev = f => loadPreview(prevUrl(f), PREVIEW_PX[cfg().preview]);
+const projName = PROJ ? PROJ.replace(/[\\/]+$/, '').split(/[\\/]/).pop() : '';
+let S = { title: 'Proyecto nuevo', frame: 6, items: [], lienzos: [], hidden: [], base: { x: 0, y: 0 }, migrated1m: true };
+const outDir = () => safeName(S.title);   // la exportación va a una carpeta con el nombre del título // items: { file, x, y, size, rot, lienzo } · lienzos: { id, name, pts }
+let active = null;                            // lienzo activo (el que se acomoda / ordena)
+let selLz = new Set(), keepLz = false;         // lienzos seleccionados: se mueven con sus fotos
+let dragOrig = [];                            // formas al empezar a arrastrar
+let labelRects = [];
+let lzHandles = [];                           // tiradores del lienzo seleccionado (se dibujan desde el primer cuadro)                          // etiquetas de nombre en el mat (manijas)
+let baseOrig = null;                          // posición del lienzo de 1 m al empezar a arrastrarlo
+let modClick = false;
+let lastPillClick = { id: null, t: 0 }; // para el doble clic en la píldora de un lienzo
+let lastLz = null, lastMid = 0, midAt = [0, 0]; // último lienzo tocado · doble clic con la ruedita                         // el clic actual viene con Ctrl/Shift (suma a la selección)
+function clearLz() { selLz = new Set(); active = null; renderLayers(); updateStats(); mesa.invalidate(); }
+function toggleLz(id) {
+  const lz = S.lienzos.find(l => l.id === id);
+  if (!lz) return;
+  selLz = new Set(selLz); selLz.has(id) ? selLz.delete(id) : selLz.add(id);
+  if (selLz.has(id)) { active = id; lastLz = id; }
+  renderLayers(); updateStats(); mesa.invalidate();
+  if (selLz.has(id)) toast(`"${lz.name}" seleccionado junto con las fotos: Alinear las acomoda contra él.`, 3000);
+}
+let clip = null;                              // portapapeles: copias de fotos
+
+// --- alinear entre sí (referencia: el recuadro que forman las seleccionadas) ---
+const ALIGN_NAME = { left: 'a la izquierda', hc: 'centradas en columna', right: 'a la derecha', top: 'arriba', vc: 'centradas en fila', bottom: 'abajo', distH: 'repartidas en horizontal', distV: 'repartidas en vertical' };
+// Referencia: con 1 foto, su lienzo; con varias, "entre sí" (el recuadro que forman) o "lienzo"
+// (cada una contra su propio lienzo). En formas libres, la caja va de punta a punta de la forma.
+const lzBox = lz => { const xs = lz.pts.map(p => p[0]), ys = lz.pts.map(p => p[1]); return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) }; };
+function alignSel(kind) {
+  const refs = mesa.selRefs();
+  // Contra el lienzo SOLO si el lienzo también está seleccionado (clic o Ctrl+clic en su etiqueta ✥ o su capa).
+  // Si no, entre sí (2 o más fotos).
+  const lzSel = S.lienzos.filter(l => selLz.has(l.id));
+  const toLz = lzSel.length > 0;
+  if (!refs.length) return toast('Seleccioná una o más fotos para alinear.', 2500);
+  if (!toLz && refs.length < 2) return toast('Para alinear esta foto con su lienzo, seleccioná también el lienzo: Ctrl+clic en su etiqueta ✥ (o en su capa del panel).', 5000);
+  const dist = kind === 'distH' || kind === 'distV';
+  const byRef = new Map(list().map(p => [p.ref, p]));
+  // cada foto va contra su lienzo si está seleccionado; si hay un solo lienzo seleccionado, todas contra ese
+  const refLz = r => { const own = lzOf(r); return own && selLz.has(own.id) ? own : lzSel.length === 1 ? lzSel[0] : null; };
+  let B = refs.map(r => { const p = byRef.get(r), [hw, hh] = extent(p.w, p.h, p.ang); return { r, hw, hh, lz: toLz ? refLz(r) : null }; });
+  let loose = 0;
+  if (toLz) {
+    loose = B.filter(b => !b.lz).length;
+    B = B.filter(b => b.lz);
+    if (!B.length) return toast('Ninguna de estas fotos es de los lienzos seleccionados.', 3500);
+  }
+  // grupos: cada uno con su caja de referencia
+  const groups = new Map();
+  if (toLz) B.forEach(b => { if (!groups.has(b.lz)) groups.set(b.lz, { box: lzBox(b.lz), items: [] }); groups.get(b.lz).items.push(b); });
+  else groups.set('sel', { box: { x0: Math.min(...B.map(b => b.r.x - b.hw)), x1: Math.max(...B.map(b => b.r.x + b.hw)), y0: Math.min(...B.map(b => b.r.y - b.hh)), y1: Math.max(...B.map(b => b.r.y + b.hh)) }, items: B });
+  if (dist && ![...groups.values()].some(g => g.items.length >= (toLz ? 2 : 3))) return toast(toLz ? 'Para repartir en el lienzo hacen falta 2 o más fotos del mismo lienzo.' : 'Para repartir parejo hacen falta 3 o más fotos.', 3000);
+  const rnd = v => Math.round(v * 10) / 10;
+  hist.run(() => {
+    for (const { box: X, items } of groups.values()) {
+      for (const b of items) {
+        if (kind === 'left') b.r.x = rnd(X.x0 + b.hw);
+        if (kind === 'hc') b.r.x = rnd((X.x0 + X.x1) / 2);
+        if (kind === 'right') b.r.x = rnd(X.x1 - b.hw);
+        if (kind === 'top') b.r.y = rnd(X.y0 + b.hh);
+        if (kind === 'vc') b.r.y = rnd((X.y0 + X.y1) / 2);
+        if (kind === 'bottom') b.r.y = rnd(X.y1 - b.hh);
+      }
+      if (dist && items.length >= 2) { // mismo espacio entre cada una, de punta a punta de la caja
+        const H = kind === 'distH', s = [...items].sort((a, b) => H ? a.r.x - b.r.x : a.r.y - b.r.y);
+        const total = s.reduce((t, b) => t + 2 * (H ? b.hw : b.hh), 0);
+        const gap = ((H ? X.x1 - X.x0 : X.y1 - X.y0) - total) / (s.length - 1);
+        let cur = H ? X.x0 : X.y0;
+        for (const b of s) { const half = H ? b.hw : b.hh; if (H) b.r.x = rnd(cur + half); else b.r.y = rnd(cur + half); cur += 2 * half + gap; }
+      }
+    }
+    if (!toLz && !selLz.size) refs.forEach(assignByPos); // entre sí: si quedaron en otro lienzo, pasan a ser de ese
+  });
+  const n = B.length;
+  const where = toLz ? (lzSel.length === 1 ? `en "${lzSel[0].name}"` : 'en su lienzo') : 'entre sí';
+  toast(`${n} foto${n === 1 ? '' : 's'} ${ALIGN_NAME[kind]} ${where}.` + (loose ? ` ${loose} de otro lienzo quedaron quietas.` : ''), 2800);
+}
+function syncAlign() {
+  const ns = mesa.selection.size, lzSel = S.lienzos.filter(l => selLz.has(l.id));
+  $('alignBtn').classList.toggle('dim', !(ns >= 2 || (ns >= 1 && lzSel.length)));
+  $('alignRef').textContent = lzSel.length ? (lzSel.length === 1 ? `Contra "${lzSel[0].name}"` : 'Contra su lienzo') : ns >= 2 ? 'Entre sí' : '—';
+  $('alignHint').style.display = lzSel.length ? 'none' : '';
+}
+
+// --- copiar / cortar / pegar ---
+function copySel(cut) {
+  const refs = mesa.selRefs();
+  if (!refs.length) return toast('Primero seleccioná fotos.', 2500);
+  clip = refs.map(it => ({ file: it.file, x: it.x, y: it.y, size: it.size, rot: it.rot, ...(it.crop ? { crop: { ...it.crop } } : {}), ...(it.mos ? { mos: it.mos } : {}), ...(it.ang ? { ang: it.ang } : {}) }));
+  if (cut) { removeSel(true); toast(`${refs.length} foto${refs.length === 1 ? '' : 's'} cortada${refs.length === 1 ? '' : 's'}. Ctrl+V para pegar.`, 3000); }
+  else toast(`${refs.length} foto${refs.length === 1 ? '' : 's'} copiada${refs.length === 1 ? '' : 's'}. Ctrl+V pega donde está el mouse · Ctrl+Shift+V en el mismo lugar.`, 3500);
+}
+function paste(inPlace, m) {
+  if (!clip?.length) return toast('No hay nada copiado. Seleccioná fotos y apretá Ctrl+C.', 3000);
+  let dx = 0, dy = 0;
+  if (!inPlace) { // el centro del grupo va donde está el mouse
+    const cx = clip.reduce((s, c) => s + c.x, 0) / clip.length, cy = clip.reduce((s, c) => s + c.y, 0) / clip.length;
+    dx = Math.round(m.x - cx); dy = Math.round(m.y - cy);
+  }
+  const added = clip.map(c => ({ ...c, id: uid(), x: c.x + dx, y: c.y + dy }));
+  hist.run(() => {
+    added.forEach(assignByPos);
+    S.items.push(...added);
+    const files = new Set(added.map(a => a.file));
+    S.hidden = S.hidden.filter(f => !files.has(f));
+  });
+  mesa.selection = new Set(added); mesa.anchor = null; mesa.selChanged(); renderLayers();
+  toast(`${added.length} foto${added.length === 1 ? '' : 's'} pegada${added.length === 1 ? '' : 's'}${inPlace ? ' en el mismo lugar' : ''}.`, 2500);
+}
+// borrar lienzos (Supr con el lienzo seleccionado): sus fotos quedan sueltas en su lugar
+function deleteLienzos(ids) {
+  const set = new Set(ids), names = S.lienzos.filter(l => set.has(l.id)).map(l => `"${l.name}"`);
+  hist.run(() => {
+    S.items.forEach(it => { if (set.has(it.lienzo)) it.lienzo = null; });
+    S.lienzos = S.lienzos.filter(l => !set.has(l.id));
+  });
+  if (set.has(active)) active = null;
+  selLz = new Set(); mesa.sel = null; renderLayers();
+  toast(`${names.join(', ')} borrado${ids.length === 1 ? '' : 's'}: sus fotos quedaron sueltas. Ctrl+Z para volver.`, 3500);
+}
+// sacar del mat (Supr o cortar): se puede volver con Ctrl+Z o pegando
+function removeSel(quiet) {
+  const refs = new Set(mesa.selRefs());
+  if (!refs.size) return;
+  hist.run(() => {
+    S.items = S.items.filter(it => !refs.has(it));
+    for (const it of refs) if (!S.items.some(o => o.file === it.file) && !S.hidden.includes(it.file)) S.hidden.push(it.file);
+  });
+  mesa.sel = null;
+  if (!quiet) toast(`${refs.size} foto${refs.size === 1 ? '' : 's'} fuera del mat. Ctrl+Z para volver.`, 3000);
+}
+// elegir un lienzo: queda activo, seleccionado, y con todas sus fotos seleccionadas
+// '__none' = "Sin lienzo": selecciona solo las fotos sueltas (visibles), sin ningún lienzo.
+function selectLienzo(id) {
+  const vis = it => !isHidden(it);
+  keepLz = true;
+  mesa.selection = new Set(S.items.filter(it => vis(it) && (id === '__none' ? !lzOf(it) : it.lienzo === id))); mesa.anchor = null; mesa.selChanged();
+  keepLz = false;
+  selLz = id === '__none' ? new Set() : new Set([id]); active = id === '__none' ? null : id;
+  if (id !== '__none') lastLz = id;
+  renderLayers(); mesa.invalidate();
+}
+// capas ocultas (ojito): no se ven, no se tocan y no se imprimen
+const isHidden = it => { const lz = lzOf(it); return lz ? !!lz.hidden : !!S.looseHidden; };
+const openLz = new Set();                     // lienzos desplegados en el panel
+const thumbs = new Map();                     // miniaturas para el panel
+// pasa el formato viejo (una sola forma) a lienzos
+const uid = () => Math.random().toString(36).slice(2, 9);
+function normalize(s) {
+  s.lienzos ||= [];
+  s.hidden ||= [];                              // fotos sacadas del mat (cortar / Supr): no vuelven solas
+  s.base ||= { x: 0, y: 0 };                    // origen de las filas de fotos sueltas
+  // El viejo "lienzo de 1 × 1 m" (que se prendía con un botón) pasa a ser un lienzo
+  // rectangular común guardado en el proyecto, con su nombre y sus fotos.
+  if (!s.migrated1m) {
+    const o = s.base, lz = { id: 'l1m', name: s.baseName || 'Lienzo 1 × 1 m', pts: [[o.x, o.y], [o.x + LIENZO, o.y], [o.x + LIENZO, o.y + LIENZO], [o.x, o.y + LIENZO]] };
+    s.lienzos.unshift(lz);
+    s.items.forEach(it => { if (!s.lienzos.some(l => l.id === it.lienzo) && pointInPoly(it.x, it.y, lz.pts)) it.lienzo = lz.id; });
+    delete s.baseName;
+    s.migrated1m = true;
+  }
+  s.items.forEach(it => { it.id ||= uid(); });  // cada foto en el mat tiene su id (puede haber copias)
+  if (s.shape) {
+    const lz = { id: 'l' + Date.now().toString(36), name: 'Lienzo 1', pts: s.shape };
+    s.lienzos.push(lz);
+    s.items.forEach(it => { if (pointInPoly(it.x, it.y, lz.pts)) it.lienzo = lz.id; });
+    delete s.shape;
+  }
+  return s;
+}
+const lzOf = it => S.lienzos.find(l => l.id === it.lienzo) || null;
+// piezas de un mosaico: ocupan la celda entera de su formato A
+const MOS_DIM = { A3: [297, 420], A4: [210, 297], A5: [148.5, 210], A6: [105, 148.5], A7: [74.25, 105] };
+const mosLz = it => S.lienzos.find(l => l.id === it.mos && l.kind === 'mosaico') || null;
+const baseName = () => 'Libre'; // las fotos sueltas (no se renombra)
+// en qué lienzo cae una foto al soltarla (el de más arriba si se superponen)
+function assignByPos(it) {
+  if (it.mos) { it.lienzo = it.mos; return; }
+  const lz = [...S.lienzos].reverse().find(l => l.kind !== 'mosaico' && pointInPoly(it.x, it.y, l.pts));
+  it.lienzo = lz ? lz.id : null;
+}
+// qué fotos se acomodan: las del lienzo activo, o las sueltas
+function scope() {
+  const sel = typeof mesa === 'undefined' ? [] : mesa.selRefs(), same = sel.length && sel.every(r => r.lienzo && r.lienzo === sel[0].lienzo) ? sel[0].lienzo : null;
+  const lz = S.lienzos.find(l => l.id === (active || same)) || null;
+  if (lz?.kind === 'mosaico') return { lz: null, items: [], mosaic: lz };
+  if (lz) return { lz, items: S.items.filter(it => it.lienzo === lz.id) };
+  // sin lienzo: si hay fotos sueltas seleccionadas, solo esas; si no, todas las sueltas
+  const looseSel = sel.filter(r => !lzOf(r));
+  return { lz: null, items: looseSel.length ? looseSel : S.items.filter(it => !lzOf(it) && !isHidden(it)) };
+}
+const images = new Map(), meta = new Map();
+const $ = id => document.getElementById(id);
+const toast = (msg, ms) => { const t = $('toast'); t.textContent = msg; t.classList.toggle('show', !!msg); clearTimeout(t._h); if (ms) t._h = setTimeout(() => t.classList.remove('show'), ms); };
+const bounds = () => null; // ya no hay lienzo fijo de 1 m: los lienzos se dibujan (rectángulo, círculo, pluma, mano alzada)
+
+// --- medidas: la foto entra completa en el formato A con un marco parejo ---
+function dims(it) {
+  if (it.mos) { // pieza de mosaico
+    const [w, h] = MOS_DIM[it.size] || MOS_DIM.A5, f = S.frame, lz = mosLz(it), m = meta.get(it.file);
+    return { w, h, iw: w - 2 * f, ih: h - 2 * f, dpi: lz && m ? m.w / (lz.src.w / 25.4) : 300 };
+  }
+  const m = meta.get(it.file) || { w: 3, h: 4 };
+  const c = it.crop; // recorte
+  let pw = m.w * (c ? c.w : 1), ph = m.h * (c ? c.h : 1);
+  if (it.rot % 2) [pw, ph] = [ph, pw];
+  const [s0, l0] = A[it.size], f = S.frame;
+  const ar = Math.max(pw, ph) / Math.min(pw, ph);
+  const pl = Math.min(l0 - 2 * f, (s0 - 2 * f) * ar), ps = pl / ar;
+  const iw = pw >= ph ? pl : ps, ih = pw >= ph ? ps : pl;
+  const dpi = Math.max(pw, ph) / (Math.max(iw, ih) / 25.4);
+  return { w: iw + 2 * f, h: ih + 2 * f, iw, ih, dpi };
+}
+const letters = j => (j >= 26 ? letters(Math.floor(j / 26) - 1) : '') + String.fromCharCode(65 + (j % 26));
+
+// --- filas (1, 2, 3…) y orden dentro de la fila (A, B, C…) según dónde están en el mat ---
+function build() {
+  const ps = S.items.map(it => ({ it, ...dims(it) }));
+  const rows = [];
+  for (const p of [...ps].filter(p => !p.it.mos).sort((a, b) => (a.it.y - a.h / 2) - (b.it.y - b.h / 2))) {
+    const top = p.it.y - p.h / 2, r = rows[rows.length - 1];
+    if (r && top < r.bottom - 10) { r.list.push(p); r.bottom = Math.min(r.bottom, p.it.y + p.h / 2); }
+    else rows.push({ list: [p], bottom: p.it.y + p.h / 2 });
+  }
+  rows.forEach((r, i) => r.list.sort((a, b) => a.it.x - b.it.x).forEach((p, j) => { p.code = `${i + 1}${letters(j)}`; p.order = i * 1000 + j; }));
+  { const cnt = {}; for (const p of ps) if (p.it.mos) { cnt[p.it.mos] = (cnt[p.it.mos] || 0) + 1; p.code = String(cnt[p.it.mos]).padStart(2, '0'); p.order = 1e6 + cnt[p.it.mos]; } }
+  const b = bounds();
+  return ps.map(p => {
+    const { it, w, h, iw, ih } = p;
+    const ang = it.ang || 0, box = { x: it.x, y: it.y, w, h, ang }; // giro sobre el mat (en la hoja sale derecha)
+    return {
+      ref: it, x: it.x, y: it.y, ang, w, h, f: S.frame, label: p.code, order: p.order, key: it.file, size: it.size,
+      tag: `${it.size} – ${it.file.replace(/\.[^.]+$/, '').slice(0, 30)}`, // al pasar el mouse: tamaño – nombre
+      alpha: it.mos && (mosLz(it)?.op ?? 100) < 100 ? mosLz(it).op / 100 : undefined, // opacidad de las piezas del mosaico
+      warn: !it.mos && p.dpi < 200,
+      hidden: isHidden(it),
+      out: lzOf(it) ? !pieceInPoly(box, lzOf(it).pts) : !!(b && isOutside(box, b)),
+      draw(ctx, imgs) {
+        if (it.mos) { // pieza de mosaico: el pedazo de la foto entera que le toca
+          const lz = mosLz(it), im = imgs.get(it.file); if (!lz || !im) return;
+          const s = lz.src; ctx.rotate(-(it.ang || 0)); ctx.translate(-it.x, -it.y); ctx.drawImage(im, s.x - s.w / 2, s.y - s.h / 2, s.w, s.h); return;
+        }
+        const img = imgs.get(it.file);
+        if (!img) { ctx.fillStyle = '#ddd'; ctx.fillRect(-w / 2, -h / 2, w, h); return; }
+        ctx.rotate(it.rot * Math.PI / 2);
+        const odd = it.rot % 2;
+        const dw = odd ? ih : iw, dh = odd ? iw : ih, c = it.crop;
+        if (c) { const W = img.naturalWidth || img.width, H = img.naturalHeight || img.height; ctx.drawImage(img, c.x * W, c.y * H, c.w * W, c.h * H, -dw / 2, -dh / 2, dw, dh); }
+        else ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+      },
+    };
+  });
+}
+let cache = null;
+const list = () => cache || (cache = build());
+const dirty = () => { cache = null; mesa.invalidate(); updateStats(); };
+function keepInside(it) {
+  const b = null; // el lienzo de 1 m ya no empuja las fotos: solo las marca en rojo si quedan afuera
+  if (!b) return;
+  const { w, h } = dims(it);
+  [it.x, it.y] = clampXY(it.x, it.y, w, h, 0, b);
+}
+
+// --- acomodar en filas prolijas, respetando el orden actual ---
+// opt.breaks: fotos que arrancan fila nueva (p. ej. una fila por familia de color)
+// opt.zigzag: una fila va y la siguiente vuelve, para que el orden fluya sin saltos
+// startY = null (lo normal): las sueltas se acomodan en un bloque casi cuadrado, centrado en el
+// medio del espacio que ocupaban. Con un número: filas desde el origen (solo para fotos nuevas).
+function flow(items, startY = null, keepOrder = false, lz = null, opt = {}) {
+  const order = new Map(list().map(p => [p.ref, p.order]));
+  const sorted = keepOrder ? items : [...items].sort((a, b) => (order.get(a) ?? 1e9) - (order.get(b) ?? 1e9));
+  if (lz) return flowShape(sorted, lz, opt);
+  if (!sorted.length) return 0;
+  const gap = 10, D = sorted.map(dims), centered = startY === null;
+  const area = D.reduce((t, d) => t + (d.w + gap) * (d.h + gap), 0);
+  const maxW = centered ? Math.max(Math.sqrt(area) * 1.4, ...D.map(d => d.w)) : Math.max(900, Math.sqrt(sorted.length) * 130);
+  // dónde estaban: el centro del recuadro que ocupaban
+  const cx0 = (Math.min(...sorted.map((it, i) => it.x - D[i].w / 2)) + Math.max(...sorted.map((it, i) => it.x + D[i].w / 2))) / 2;
+  const cy0 = (Math.min(...sorted.map((it, i) => it.y - D[i].h / 2)) + Math.max(...sorted.map((it, i) => it.y + D[i].h / 2))) / 2;
+  // armar las filas desde 0,0
+  let x = 0, y = 0, rowH = 0, right = 0;
+  const rows = [[]], rel = [];
+  sorted.forEach((it, i) => {
+    const { w, h } = D[i];
+    if (x > 0 && (x + w > maxW || opt.breaks?.has(it))) { x = 0; y += rowH + gap; rowH = 0; rows.push([]); }
+    rel.push([x + w / 2, y + h / 2]); right = Math.max(right, x + w);
+    x += w + gap; rowH = Math.max(rowH, h); rows.at(-1).push(it);
+  });
+  const blockH = y + rowH;
+  const ox = centered ? cx0 - right / 2 : (S.base?.x || 0), oy = centered ? cy0 - blockH / 2 : (S.base?.y || 0) + startY;
+  sorted.forEach((it, i) => { it.x = Math.round((ox + rel[i][0]) * 10) / 10; it.y = Math.round((oy + rel[i][1]) * 10) / 10; delete it.ang; });
+  if (opt.zigzag) rows.forEach((r, i) => { if (i % 2) mirrorRow(r); });
+  return blockH;
+}
+// da vuelta el orden de una fila sin moverla de su lugar (si check falla, la deja como estaba)
+function mirrorRow(r, check) {
+  if (r.length < 2) return;
+  const L = Math.min(...r.map(it => it.x - dims(it).w / 2)), R = Math.max(...r.map(it => it.x + dims(it).w / 2));
+  const old = r.map(it => it.x);
+  r.forEach(it => { it.x = Math.round((L + R - it.x) * 10) / 10; });
+  if (check && !check(r)) r.forEach((it, i) => { it.x = old[i]; });
+}
+
+// --- acomodar adentro de la forma a mano alzada: filas que siguen el contorno ---
+function flowShape(sorted, lz, opt = {}) {
+  const poly = lz.pts, gap = 8;
+  sorted.forEach(it => { it.lienzo = lz.id; delete it.ang; }); // acomodar: derechas
+  const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  let y = minY + 2, cursor = minX, rowH = 0;
+  const left = [], rows = new Map(); // filas: y de arriba → fotos
+  for (const it of sorted) {
+    const { w, h } = dims(it);
+    if (opt.breaks?.has(it) && rowH) { y += rowH + gap; rowH = 0; cursor = minX; } // fila nueva por color
+    let placed = false;
+    while (y + h <= maxY) {
+      let x = null;
+      for (const [a, b] of spansInBand(y, y + h, poly)) { const s = Math.max(a + 1, cursor); if (s + w <= b - 1) { x = s; break; } }
+      if (x !== null) {
+        it.x = Math.round((x + w / 2) * 10) / 10; it.y = Math.round((y + h / 2) * 10) / 10;
+        cursor = x + w + gap; rowH = Math.max(rowH, h); placed = true;
+        if (!rows.has(y)) rows.set(y, []); rows.get(y).push(it);
+        break;
+      }
+      y += rowH ? rowH + gap : 4; rowH = 0; cursor = minX;
+    }
+    if (!placed) left.push(it);
+  }
+  if (opt.zigzag) { // en una forma, solo se da vuelta la fila si sigue entrando entera
+    const fits = r => r.every(it => { const d = dims(it); return pieceInPoly({ x: it.x, y: it.y, w: d.w, h: d.h, ang: 0 }, poly); });
+    [...rows.keys()].sort((a, b) => a - b).forEach((k, i) => { if (i % 2) mirrorRow(rows.get(k), fits); });
+  }
+  // las que no entran quedan abajo de la forma (marcadas en rojo)
+  let x = minX, yy = maxY + 20, rh = 0;
+  for (const it of left) {
+    const { w, h } = dims(it);
+    if (x > minX && x + w > Math.max(maxX, minX + 600)) { x = minX; yy += rh + gap; rh = 0; }
+    it.x = Math.round(x + w / 2); it.y = Math.round(yy + h / 2); x += w + gap; rh = Math.max(rh, h);
+  }
+  return left.length;
+}
+
+// --- seleccionar por color: rueda cromática con umbral ---
+const CS = (() => { let c = { h: 20, w: 30, p: 20 }; try { c = { ...c, ...JSON.parse(localStorage.getItem('ojo-mdp-color') || '{}') }; } catch {} return c; })();
+const hueDist = (a, b) => { const d = Math.abs(((a - b) % 360 + 360) % 360); return Math.min(d, 360 - d); };
+function colorShare(file) { // qué parte de la foto cae dentro del arco elegido
+  const bins = looks.get(file)?.bins;
+  if (!bins) return 0;
+  let s = 0;
+  for (let i = 0; i < 72; i++) if (hueDist(i * 5 + 2.5, CS.h) <= CS.w + 2.5) s += bins[i];
+  return s;
+}
+const polar = (a, r) => [110 + r * Math.sin(a * Math.PI / 180), 110 - r * Math.cos(a * Math.PI / 180)];
+function arc(a1, a2, r) {
+  if (a2 - a1 >= 359.9) { const [x1, y1] = polar(a1, r), [x2, y2] = polar(a1 + 180, r); return `M${x1} ${y1}A${r} ${r} 0 1 1 ${x2} ${y2}A${r} ${r} 0 1 1 ${x1} ${y1}`; }
+  const [x1, y1] = polar(a1, r), [x2, y2] = polar(a2, r);
+  return `M${x1} ${y1}A${r} ${r} 0 ${a2 - a1 > 180 ? 1 : 0} 1 ${x2} ${y2}`;
+}
+// Rueda con el lenguaje de la marca: carta de color impresa en 24 gajos con
+// separación de papel, sombra dura de tinta, contornos negros, manijas de papel.
+const R1 = 64, R2 = 98, RM = (R1 + R2) / 2, INK = '#16130f', PAPER = '#fffaf0';
+function sector(a1, a2, r1, r2) {
+  if (a2 - a1 >= 359.9) return `M${110 - r2} 110a${r2} ${r2} 0 1 0 ${2 * r2} 0a${r2} ${r2} 0 1 0 ${-2 * r2} 0ZM${110 - r1} 110a${r1} ${r1} 0 1 1 ${2 * r1} 0a${r1} ${r1} 0 1 1 ${-2 * r1} 0Z`;
+  const L = a2 - a1 > 180 ? 1 : 0, [ax, ay] = polar(a1, r2), [bx, by] = polar(a2, r2), [cx, cy] = polar(a2, r1), [dx, dy] = polar(a1, r1);
+  return `M${ax} ${ay}A${r2} ${r2} 0 ${L} 1 ${bx} ${by}L${cx} ${cy}A${r1} ${r1} 0 ${L} 0 ${dx} ${dy}Z`;
+}
+const knob = (x, y, r, fill, sw) => `<circle cx="${x + 2.5}" cy="${y + 2.5}" r="${r}" fill="${INK}"/><circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${INK}" stroke-width="${sw}"/>`;
+function drawWheel() {
+  const svg = $('wheel');
+  if (!svg.dataset.ring) {
+    let ring = `<path d="${sector(0, 360, R1, R2)}" fill="${INK}" fill-rule="evenodd" transform="translate(4 4)"/>`;
+    for (let i = 0; i < 24; i++) ring += `<path d="${sector(i * 15, i * 15 + 15, R1, R2)}" fill="hsl(${i * 15 + 7.5},78%,56%)" stroke="${PAPER}" stroke-width="2.2" stroke-linejoin="round"/>`;
+    ring += `<path d="${sector(0, 360, R1, R2)}" fill="none" stroke="${INK}" stroke-width="2.5" fill-rule="evenodd"/>`;
+    svg.innerHTML = `<g>${ring}</g><g id="wDyn" style="pointer-events:none"></g>`;
+    svg.dataset.ring = '1';
+  }
+  const { h, w } = CS, sel = `hsl(${h},78%,56%)`;
+  const [ex1, ey1] = polar(h - w, RM), [ex2, ey2] = polar(h + w, RM), [hx, hy] = polar(h, RM);
+  const n = mesa.selection.size;
+  svg.querySelector('#wDyn').innerHTML =
+    (w < 180 ? `<path d="${sector(h + w, h - w + 360, R1, R2)}" fill="${PAPER}" fill-opacity=".74"/>` : '') +
+    `<path d="${sector(h - w, h + w, R1 - 1, R2 + 1)}" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round" fill-rule="evenodd"/>` +
+    `<circle cx="114" cy="114" r="${R1 - 12}" fill="${INK}"/><circle cx="110" cy="110" r="${R1 - 12}" fill="${PAPER}" stroke="${INK}" stroke-width="2.5"/>` +
+    `<rect x="92" y="79" width="36" height="13" rx="6.5" fill="${sel}" stroke="${INK}" stroke-width="2"/>` +
+    `<text x="110" y="119" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="800" font-size="27" fill="${INK}">${n}</text>` +
+    `<text x="110" y="135" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="700" font-size="11" fill="#5f5849">${n === 1 ? 'foto' : 'fotos'}</text>` +
+    (w < 180 ? knob(ex1, ey1, 7.5, PAPER, 2.5) + knob(ex2, ey2, 7.5, PAPER, 2.5) : '') +
+    knob(hx, hy, 11, sel, 3);
+  $('cwVal').textContent = w >= 180 ? 'todos' : `±${Math.round(w)}°`;
+  $('cPres').value = CS.p; $('cPresVal').textContent = CS.p + '%';
+  $('cCount').textContent = `${n} foto${n === 1 ? '' : 's'} seleccionada${n === 1 ? '' : 's'}`;
+}
+function applyColor() {
+  mesa.selection = new Set(S.items.filter(it => !it.mos && colorShare(it.file) * 100 >= CS.p));
+  mesa.anchor = null; mesa.selChanged(); drawWheel();
+  try { localStorage.setItem('ojo-mdp-color', JSON.stringify(CS)); } catch {}
+}
+(() => {
+  const svg = $('wheel');
+  let mode = null;
+  const ang = e => { const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) * 220 / r.width - 110, y = (e.clientY - r.top) * 220 / r.height - 110; return [(Math.atan2(x, -y) * 180 / Math.PI + 360) % 360, Math.hypot(x, y)]; };
+  svg.addEventListener('pointerdown', e => {
+    const [a, dist] = ang(e);
+    if (dist < R1 - 14) return;
+    e.preventDefault();
+    svg.setPointerCapture(e.pointerId);
+    const nearEnd = Math.min(hueDist(a, CS.h - CS.w), hueDist(a, CS.h + CS.w)) < 12 && hueDist(a, CS.h) > 6;
+    mode = nearEnd ? 'end' : 'center';
+    if (mode === 'center') CS.h = Math.round(a);
+    applyColor();
+  });
+  svg.addEventListener('pointermove', e => {
+    if (!mode) return;
+    const [a] = ang(e);
+    if (mode === 'center') CS.h = Math.round(a); else CS.w = Math.max(3, Math.min(180, Math.round(hueDist(a, CS.h))));
+    applyColor();
+  });
+  svg.addEventListener('pointerup', () => { mode = null; });
+})();
+
+// --- acomodar por color / fecha / tamaño / luz / orientación / cámara ---
+const looks = new Map();   // file -> { hue, chroma, light } sacado de la foto
+let exif = {};             // file -> { date, camera, exif }
+function analyze(bmp) {
+  const c = document.createElement('canvas'); c.width = c.height = 32;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.drawImage(bmp, 0, 0, 32, 32);
+  const d = x.getImageData(0, 0, 32, 32).data;
+  let sx = 0, sy = 0, L = 0, n = 0;
+  const bins = new Float32Array(72); // cuánto de la foto hay en cada tramo de 5° de la rueda
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), ch = mx - mn;
+    L += 0.2126 * r + 0.7152 * g + 0.0722 * b; n++;
+    if (ch > 0) {
+      let h = mx === r ? ((g - b) / ch) % 6 : mx === g ? (b - r) / ch + 2 : (r - g) / ch + 4;
+      const deg = (h * 60 + 360) % 360;
+      if (ch > 0.12) bins[Math.floor(deg / 5) % 72]++;
+      h *= Math.PI / 3; sx += Math.cos(h) * ch; sy += Math.sin(h) * ch;
+    }
+  }
+  for (let i = 0; i < 72; i++) bins[i] /= n;
+  return { hue: (Math.atan2(sy, sx) * 180 / Math.PI + 360) % 360, chroma: Math.hypot(sx, sy) / n, light: L / n, bins };
+}
+const look = f => looks.get(f) || { hue: 0, chroma: 0, light: 0.5 };
+const isVertical = it => { const m = meta.get(it.file) || { w: 3, h: 4 }; return it.rot % 2 ? m.w > m.h : m.h > m.w; };
+// --- opciones de "Acomodar por color" ---
+const CO_DEF = { mode: 'dom', start: 345, layout: 'flow', inner: 'light', grays: 'end', grayCut: 8 };
+const CO = (() => { try { return { ...CO_DEF, ...JSON.parse(localStorage.getItem('ojo-mdp-colorsort') || '{}') }; } catch { return { ...CO_DEF }; } })();
+// familias de color (dónde empieza cada una en la rueda)
+const FAMS = [[345, 'rojos'], [15, 'naranjas'], [45, 'amarillos'], [70, 'verdes'], [160, 'celestes'], [200, 'azules'], [255, 'violetas'], [290, 'magentas']];
+const famOf = h => { let f = 0; FAMS.forEach(([a], i) => { if (((h - a + 360) % 360) < ((h - FAMS[f][0] + 360) % 360)) f = i; }); return f; };
+const famRank = h => (famOf(h) - famOf(CO.start) + 8) % 8;
+function colorInfo(file) {
+  const s = look(file), b = s.bins;
+  const share = b ? b.reduce((a, v) => a + v, 0) : s.chroma; // qué parte de la foto tiene color de verdad
+  let hue = s.hue;
+  if (CO.mode === 'dom' && b) { // el tono que más hay (suavizado con los vecinos)
+    let best = -1, bi = 0;
+    for (let i = 0; i < 72; i++) { const v = b[(i + 71) % 72] + b[i] * 2 + b[(i + 1) % 72]; if (v > best) { best = v; bi = i; } }
+    hue = bi * 5 + 2.5;
+  }
+  return { hue, share, light: s.light, gray: share * 100 < CO.grayCut };
+}
+function colorKey(it) {
+  const c = colorInfo(it.file);
+  if (c.gray) return [CO.grays === 'end' ? 1 : -1, 0, -c.light, 0]; // grises: de claro a oscuro
+  const rel = (c.hue - CO.start + 360) % 360;
+  const inner = CO.inner === 'light' ? -c.light : CO.inner === 'sat' ? -c.share : 0;
+  return CO.inner === 'none' && CO.layout !== 'groups' ? [0, 0, rel, 0] : [0, famRank(c.hue), inner, rel];
+}
+const colorFamily = it => { const c = colorInfo(it.file); return c.gray ? 'gris' : famOf(c.hue); };
+const SORTS = {
+  color:  { name: 'color', key: colorKey },
+  date:   { name: 'fecha', key: it => [exif[it.file]?.date || ''] },
+  size:   { name: 'tamaño', key: it => [['A3', 'A4', 'A5', 'A6', 'A7'].indexOf(it.size)] },
+  light:  { name: 'luz', key: it => [-look(it.file).light] },
+  orient: { name: 'orientación', key: it => [isVertical(it) ? 0 : 1, exif[it.file]?.date || ''] },
+  camera: { name: 'cámara', key: it => [exif[it.file]?.camera || 'zzz', exif[it.file]?.date || ''] },
+  zoom:   { name: 'zoom', key: it => [exif[it.file]?.focal ?? 1e9, exif[it.file]?.date || ''] },
+  flash:  { name: 'flash', key: it => [exif[it.file]?.flash === true ? 0 : exif[it.file]?.flash === false ? 1 : 2, exif[it.file]?.date || ''] },
+  name:   { name: 'nombre', key: it => [it.file.toLocaleLowerCase('es')] },
+  number: { name: 'número', key: it => { const n = it.file.replace(/\.[^.]+$/, '').match(/\d+/g); return [n ? parseInt(n.at(-1), 10) : 1e12, it.file]; } },
+};
+const cmp = (a, b) => { for (let i = 0; i < a.length; i++) { if (a[i] < b[i]) return -1; if (a[i] > b[i]) return 1; } return 0; };
+function sortBy(name, keep = false) {
+  if (scope().mosaic) { $('sortMenu').classList.remove('show'); return toast('Es un mosaico: se reacomoda con el botón Mosaico → Mezclar.', 3500); } // keep: reacomodar con las opciones nuevas, sin invertir ni cerrar el menú
+  const dir = keep ? (S.sort?.dir || 1) : S.sort?.key === name ? -S.sort.dir : 1;
+  const { lz, items } = scope();
+  if (!items.length) { $('sortMenu').classList.remove('show'); return toast(lz ? `"${lz.name}" no tiene fotos todavía: arrastralas adentro.` : 'No hay fotos sueltas para acomodar. Tocá un lienzo en el panel para acomodar el suyo.', 4500); }
+  let groups = 0;
+  hist.run(() => {
+    const order = new Map(list().map(p => [p.ref, p.order]));
+    const arr = [...items].sort((a, b) => order.get(a) - order.get(b));
+    const keys = new Map(arr.map(it => [it, SORTS[name].key(it)]));
+    arr.sort((a, b) => dir * cmp(keys.get(a), keys.get(b)));
+    const opt = {};
+    if (name === 'color') {
+      if (CO.layout === 'zigzag') opt.zigzag = true;
+      if (CO.layout === 'groups') { // cada familia de color arranca fila
+        opt.breaks = new Set();
+        arr.forEach((it, i) => { if (i && colorFamily(it) !== colorFamily(arr[i - 1])) opt.breaks.add(it); });
+        groups = opt.breaks.size + 1;
+      }
+    }
+    flow(arr, null, true, lz, opt);
+    S.sort = { key: name, dir };
+  });
+  if (!keep) $('sortMenu').classList.remove('show');
+  syncUI();
+  let msg = `${lz ? `"${lz.name}": a` : 'Fotos sueltas: a'}comodadas por ${SORTS[name].name}${dir < 0 ? ' (al revés)' : ''}${groups ? ` · ${groups} familias de color` : ''}.`;
+  const noExif = S.items.filter(it => exif[it.file] && !exif[it.file].exif).length;
+  if ((name === 'date' || name === 'camera') && noExif) msg += ` ${noExif} no tienen fecha de cámara: uso la del archivo.`;
+  toast(msg, 4000);
+}
+
+// --- guardado automático: el estado y el historial de Ctrl+Z ---
+const saveAll = () => { saveState(STATE, S); saveState(HIST, hist.dump()); };
+const hist = new History(() => JSON.stringify(S), s => { S = normalize(JSON.parse(s)); mesa.sel = null; syncUI(); }, () => { dirty(); saveAll(); renderLayers(); }, cfg().steps);
+
+const mesa = new Mesa($('mesa'), {
+  list, images, bounds, snap: 5, boundsLabel: () => baseName().toUpperCase(),
+  clampToBounds: false, // el lienzo de 1 m no frena: lo que queda afuera se marca en rojo
+  onCopy: () => copySel(false),
+  onCut: () => copySel(true),
+  onPaste: (inPlace, m) => paste(inPlace, m),
+  onKey(e) {
+    if (e.altKey) { // alinear, como en Figma
+      const k = { a: 'left', h: 'hc', d: 'right', w: 'top', v: 'vc', s: 'bottom' }[e.key.toLowerCase()];
+      if (k) { e.preventDefault(); alignSel(k); }
+      return;
+    }
+    if (e.key === 'i' || e.key === 'I') return toggleMagnet();
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const lzs = S.lienzos.filter(l => selLz.has(l.id));
+      if (lzs.length) return deleteLienzos(lzs.map(l => l.id)); // Supr con un lienzo seleccionado: se borra el lienzo
+      if (mesa.selection.size) removeSel();
+    }
+  },
+  begin: () => hist.begin(), cancel: () => hist.cancel(),
+  commit: moved => {
+    if (selLz.size) return hist.commit(); // se movió un lienzo entero: sus fotos siguen siendo suyas
+    const before = new Map((moved || []).map(it => [it, it.lienzo || null]));
+    (moved || []).forEach(assignByPos);
+    hist.commit();
+    // avisar si las fotos cambiaron de lienzo
+    const name = id => id ? (S.lienzos.find(l => l.id === id)?.name || 'un lienzo') : baseName();
+    const changes = new Map();
+    for (const [it, was] of before) if ((it.lienzo || null) !== was) { const k = `${was}>${it.lienzo || null}`; changes.set(k, (changes.get(k) || 0) + 1); }
+    const msgs = [...changes].map(([k, n]) => { const [a, b] = k.split('>').map(x => x === 'null' ? null : x); return `${n} foto${n === 1 ? '' : 's'} ${b ? `pasaron a "${name(b)}"` : `salieron de "${name(a)}"`}`; });
+    if (msgs.length) toast(msgs.join(' · ') + '.', 3500);
+  },
+  undo: () => hist.undo(), redo: () => hist.redo(),
+  changed: () => { cache = null; },
+  onSize(refs, back) { hist.run(() => refs.forEach(it => { const i = CYCLE.indexOf(it.size), n = CYCLE.length; it.size = CYCLE[((i < 0 ? 0 : i) + (back ? n - 1 : 1)) % n]; keepInside(it); })); },
+  onRotate(refs, dir) { rot90(refs, dir); },
+  onWheelRotate(refs, dir) { const ms = refs.filter(r => r.mos); if (ms.length) hist.run(() => ms.forEach(it => { it.ang = (it.ang || 0) + dir * 3 * Math.PI / 180; })); },
+  drawMode: () => prefs.drawMode || 'rect',
+  onContext: (refs, cx, cy, w) => openCtx(refs, cx, cy, w), // clic derecho: menú
+  onDuplicate: () => duplicate(),
+  onRestack: (it, dir) => restackItem(it, dir),
+  restackEmpty(w, dir) { // Alt + clic en un lienzo (su etiqueta ✥ o una parte vacía de su forma)
+    const lab = labelRects.find(r => w.x >= r.x0 && w.x <= r.x1 && w.y >= r.y0 && w.y <= r.y1 && r.id !== '__none');
+    const lz = lab ? S.lienzos.find(l => l.id === lab.id) : [...S.lienzos].reverse().find(l => !l.hidden && pointInPoly(w.x, w.y, l.pts));
+    if (!lz) return false;
+    restackLienzo(lz, dir); return true;
+  },
+  // Shift + clic: el rango solo entre fotos del mismo grupo (el mismo lienzo, o todas sueltas)
+  sameGroup: (a, b) => (lzOf(a)?.id || null) === (lzOf(b)?.id || null),
+  magnet: () => prefs.magnet !== false,
+  // el imán también se pega a los bordes y al centro de los lienzos (menos los que se están moviendo)
+  snapTargets: () => S.lienzos.filter(l => !selLz.has(l.id) && !l.hidden).map(lzBox),
+  // la selección de lienzos se mantiene si se suma/saca con Ctrl o Shift; un clic común la limpia
+  onSelect: () => { if (!keepLz && !modClick && (selLz.size || active)) clearLz(); updateStats(); markRows(); },
+  onDeselect: () => clearLz(),
+  // Ctrl/Shift + clic en la etiqueta ✥ de un lienzo: sumarlo o sacarlo de la selección (sin tocar las fotos)
+  toggleEmpty(w) {
+    const lab = labelRects.find(r => w.x >= r.x0 && w.x <= r.x1 && w.y >= r.y0 && w.y <= r.y1 && r.id !== '__none');
+    if (!lab) return false;
+    toggleLz(lab.id);
+    return true;
+  },
+  // agarrar un lienzo por una parte vacía de su forma
+  grabEmpty(w) {
+    const lab = labelRects.find(r => w.x >= r.x0 && w.x <= r.x1 && w.y >= r.y0 && w.y <= r.y1); // la etiqueta del nombre
+    if (lab?.id === '__none') { selectLienzo('__none'); return true; } // la manija del lienzo de 1 m
+    const lz = lab ? S.lienzos.find(l => l.id === lab.id) : null; // solo la etiqueta ✥ agarra el lienzo
+    if (!lz) return false;
+    selectLienzo(lz.id);
+    return true;
+  },
+  dragStart() {
+    dragOrig = S.lienzos.filter(l => selLz.has(l.id)).map(l => [l, l.pts.map(p => [...p]), l.src ? { ...l.src } : null]);
+    baseOrig = selLz.has('__none') ? { ...S.base } : null;
+  },
+  dragMove(dx, dy) {
+    for (const [l, pts, src] of dragOrig) { l.pts = pts.map(([x, y]) => [Math.round((x + dx) * 10) / 10, Math.round((y + dy) * 10) / 10]); if (src) { l.src.x = src.x + dx; l.src.y = src.y + dy; } }
+    if (baseOrig) S.base = { x: Math.round(baseOrig.x + dx), y: Math.round(baseOrig.y + dy) };
+  },
+  ownBoundsLabel: true, // la etiqueta del lienzo de 1 m la dibuja la app (es una manija)
+  isOut: p => p.out,
+  // tiradores del lienzo seleccionado
+  grabHandle: (w, e) => grabLzHandle(w, e),
+  handleCursor: w => { const hd = handleAt(w); return hd ? HANDLE_CURSOR[hd.kind] : null; },
+  over(ctx, z) { drawLzHandles(ctx, z); },
+  onDraw(pts) {
+    if ((prefs.drawMode || 'rect') === 'mosaic') { // mosaico: la foto seleccionada, partida adentro del rectángulo
+      const ph = mesa.selRefs().find(r => !r.mos);
+      mesa.setTool('move');
+      if (!ph) return toast('Para el mosaico, primero seleccioná la foto que querés partir y después dibujá el rectángulo.', 5000);
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+      return createMosaic(ph.file, { x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 }, ph);
+    }
+    const lz = { id: 'l' + Date.now().toString(36), name: `Lienzo ${S.lienzos.length + 1}`, pts: pts.map(([x, y]) => [Math.round(x * 10) / 10, Math.round(y * 10) / 10]) };
+    const chosen = mesa.selRefs();
+    let left = 0;
+    hist.run(() => {
+      S.lienzos.push(lz); cache = null;
+      if (chosen.length) left = flow(chosen, null, false, lz);
+    });
+    active = lz.id; lastLz = lz.id; openLz.add(lz.id);
+    mesa.setTool('move'); renderLayers(); mesa.invalidate();
+    toast(!chosen.length ? `"${lz.name}" listo y vacío: arrastrá fotos adentro.`
+      : left ? `"${lz.name}": entraron ${chosen.length - left} de ${chosen.length}; las otras quedan abajo, en rojo.` : `"${lz.name}": entraron las ${chosen.length} fotos seleccionadas.`, 5000);
+  },
+  under(ctx, z, m) {
+    // lienzo fantasmal: casi transparente; amarillo si está activo/seleccionado;
+    // mientras arrastrás fotos, se ilumina el lienzo donde van a caer
+    labelRects = [];
+    // manija del lienzo de 1 × 1 m: etiqueta ✥ arriba a la izquierda; seleccionado = borde amarillo lleno
+    const bd = bounds();
+    if (bd) {
+      const picked = selLz.has('__none');
+      if (picked) { ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 2.5 / z; ctx.strokeRect(bd.x0, bd.y0, bd.x1 - bd.x0, bd.y1 - bd.y0); }
+      ctx.font = `800 ${11 / z}px Archivo, "Segoe UI", Arial, sans-serif`;
+      const txt = '✥ ' + baseName().toUpperCase(), tw = ctx.measureText(txt).width + 14 / z, th = 20 / z, ty = bd.y0 - th - 6 / z;
+      ctx.fillStyle = picked ? '#ffe14d' : 'rgba(22,19,15,.45)';
+      ctx.beginPath(); ctx.roundRect(bd.x0, ty, tw, th, th / 2); ctx.fill();
+      ctx.fillStyle = picked ? '#16130f' : 'rgba(255,250,240,.85)';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, bd.x0 + 7 / z, ty + th / 2 + 0.5 / z);
+      labelRects.push({ id: '__none', x0: bd.x0, y0: ty, x1: bd.x0 + tw, y1: ty + th });
+    }
+    const tgt = m.drag?.mode === 'move' && !selLz.size ? [...S.lienzos].reverse().find(l => pointInPoly(m.mouse.x, m.mouse.y, l.pts)) : null;
+    for (const lz of S.lienzos) {
+      if (lz.hidden) continue; // capa oculta: no se dibuja ni se puede agarrar
+      if (lz.kind === 'mosaico' && lz.src) {
+        const sr = lz.src, im = images.get(sr.file);
+        if ((lz.op ?? 100) < 100 && im) ctx.drawImage(im, sr.x - sr.w / 2, sr.y - sr.h / 2, sr.w, sr.h); // la foto entera debajo
+        ctx.setLineDash([4 / z, 4 / z]); ctx.strokeStyle = 'rgba(255,225,77,.55)'; ctx.lineWidth = 1.2 / z; ctx.strokeRect(sr.x - sr.w / 2, sr.y - sr.h / 2, sr.w, sr.h); ctx.setLineDash([]);
+      }
+      const on = lz.id === active, picked = selLz.has(lz.id), drop = lz === tgt;
+      ctx.beginPath(); lz.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath();
+      ctx.fillStyle = drop ? 'rgba(255,250,240,.12)' : picked ? 'rgba(255,225,77,.10)' : on ? 'rgba(255,225,77,.05)' : 'rgba(255,255,255,.025)'; ctx.fill();
+      if (!picked && !drop) ctx.setLineDash([7 / z, 7 / z]); // seleccionado o destino: línea llena
+      ctx.strokeStyle = drop ? 'rgba(255,250,240,.95)' : on || picked ? '#ffe14d' : 'rgba(255,250,240,.38)';
+      ctx.lineWidth = (picked || drop ? 2.5 : on ? 2 : 1.4) / z; ctx.lineJoin = 'round'; ctx.stroke(); ctx.setLineDash([]);
+      // etiqueta con el nombre: también es la manija para arrastrar el lienzo entero
+      const x0 = Math.min(...lz.pts.map(p => p[0])), y0 = Math.min(...lz.pts.map(p => p[1]));
+      ctx.font = `800 ${11 / z}px Archivo, "Segoe UI", Arial, sans-serif`;
+      const txt = '✥ ' + lz.name.toUpperCase(), tw = ctx.measureText(txt).width + 14 / z, th = 20 / z, ty = y0 - th - 6 / z;
+      ctx.fillStyle = on || picked ? '#ffe14d' : 'rgba(22,19,15,.45)';
+      ctx.beginPath(); ctx.roundRect(x0, ty, tw, th, th / 2); ctx.fill();
+      ctx.fillStyle = on || picked ? '#16130f' : 'rgba(255,250,240,.8)';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, x0 + 7 / z, ty + th / 2 + 0.5 / z);
+      labelRects.push({ id: lz.id, x0, y0: ty, x1: x0 + tw, y1: ty + th });
+    }
+  },
+  onTool: t => document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t)),
+});
+// recordar si el clic en el mat viene con Ctrl/Shift (para no perder el lienzo seleccionado al sumar fotos)
+$('mesa').addEventListener('pointerdown', e => {
+  modClick = e.ctrlKey || e.metaKey || e.shiftKey;
+  // recordar el último lienzo tocado: el de la foto que se agarra
+  const r = $('mesa').getBoundingClientRect(), w = mesa.toWorld(e.clientX - r.left, e.clientY - r.top), p = mesa.hit(w.x, w.y);
+  if (p) lastLz = lzOf(p.ref)?.id || '__none'; // el lienzo de la foto que se toca ('__none' = sin lienzo)
+  // doble clic con la ruedita: encuadrar ese lienzo
+  if (e.button === 1) {
+    const now = performance.now();
+    if (now - lastMid < 400 && Math.hypot(e.clientX - midAt[0], e.clientY - midAt[1]) < 12) { e.preventDefault(); e.stopImmediatePropagation(); lastMid = 0; return frameLastLz(); }
+    lastMid = now; midAt = [e.clientX, e.clientY];
+  }
+}, true);
+// encuadra una caja del mundo (mm) en la pantalla, dejando lugar para la barra y el panel
+function frameBox(b, pad = 50) {
+  const top = 90, left = 190, W = mesa.W - left - pad * 2, H = mesa.H - top - pad * 2;
+  mesa.cam.z = Math.min(40, Math.max(0.03, Math.min(W / Math.max(1, b.x1 - b.x0), H / Math.max(1, b.y1 - b.y0))));
+  mesa.cam.x = (b.x0 + b.x1) / 2 - (left / 2) / mesa.cam.z;
+  mesa.cam.y = (b.y0 + b.y1) / 2 - (top / 2) / mesa.cam.z;
+  mesa.invalidate();
+}
+function frameLastLz() {
+  if (lastLz === '__none') { // sin lienzo: encuadrar las fotos sueltas
+    const loose = mesa.h.list().filter(p => !p.hidden && !lzOf(p.ref));
+    if (!loose.length) { mesa.fit(); return toast('Vista completa.', 1500); }
+    const b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    for (const p of loose) { const [hw, hh] = extent(p.w, p.h, p.ang); b.x0 = Math.min(b.x0, p.x - hw); b.x1 = Math.max(b.x1, p.x + hw); b.y0 = Math.min(b.y0, p.y - hh); b.y1 = Math.max(b.y1, p.y + hh); }
+    frameBox(b); return toast(`Vista en "${baseName()}".`, 1500);
+  }
+  const lz = S.lienzos.find(l => l.id === lastLz && !l.hidden);
+  if (!lz) { mesa.fit(); return toast('Vista completa (todavía no tocaste ningún lienzo).', 2000); }
+  const b = lzBox(lz);
+  for (const p of mesa.h.list()) if (p.ref.lienzo === lz.id && !p.hidden) { // incluye sus fotos aunque se salgan de la forma
+    const [hw, hh] = extent(p.w, p.h, p.ang);
+    b.x0 = Math.min(b.x0, p.x - hw); b.x1 = Math.max(b.x1, p.x + hw); b.y0 = Math.min(b.y0, p.y - hh); b.y1 = Math.max(b.y1, p.y + hh);
+  }
+  frameBox(b);
+  toast(`Vista en "${lz.name}".`, 1500);
+}
+addEventListener('pointerup', () => { modClick = false; });
+const _move = mesa.move.bind(mesa);
+mesa.move = e => { _move(e); if (mesa.drag?.mode === 'move') dirty(); };
+
+function updateStats() {
+  // lo que se mira: el lienzo seleccionado, las fotos seleccionadas, o todo
+  const all = list().filter(p => !p.hidden), lzs = S.lienzos.filter(l => selLz.has(l.id)), sel = mesa?.selection || new Set();
+  let L = all, head = '';
+  if (lzs.length) { const ids = new Set(lzs.map(l => l.id)); L = all.filter(p => ids.has(p.ref.lienzo)); head = lzs.map(l => l.name).join(' + ') + ' · '; }
+  else if (sel.size) { L = all.filter(p => sel.has(p.ref)); }
+  const fmt = sheetFmt(), n = packSheets(L, fmt).length, low = L.filter(p => p.warn).length, out = L.filter(p => p.out).length;
+  syncAlign();
+  syncMos();
+  $('flow').classList.toggle('dim', !canFlow());
+  $('stats').innerHTML = head + `${L.length} foto${L.length === 1 ? '' : 's'}${!lzs.length && sel.size ? ` seleccionada${L.length === 1 ? '' : 's'}` : ''} · ${n} hoja${n === 1 ? '' : 's'} ${fmt}` +
+    (low ? ` · ${low} con baja resolución` : '') + (out ? ` · <span style="color:var(--stamp)">${out} afuera</span>` : '');
+  $('undo').disabled = !hist.undos.length; $('redo').disabled = !hist.redos.length;
+}
+function syncUI() {
+  if ($('title').contentEditable !== 'true') $('title').textContent = S.title;
+  document.title = `${S.title} · Kyro Neo Board`;
+  $('frame').value = S.frame;
+  if ($('frameVal').contentEditable !== 'true') $('frameVal').textContent = String(S.frame).replace('.', ',') + ' mm';
+ 
+  $('magnetBtn').classList.toggle('on', prefs.magnet !== false);
+  document.querySelectorAll('[data-sort]').forEach(b => {
+    const on = S.sort?.key === b.dataset.sort;
+    b.classList.toggle('on', on);
+    b.querySelector('.dir').textContent = on ? (S.sort.dir > 0 ? '↓' : '↑') : '';
+  });
+}
+
+// --- UI ---
+mountIcons();
+document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => mesa.setTool(b.dataset.tool));
+$('fit').onclick = () => mesa.fit();
+$('undo').onclick = () => hist.undo();
+$('redo').onclick = () => hist.redo();
+// Acomodar en filas: solo con 2 o más fotos seleccionadas, o con un lienzo (con fotos) seleccionado
+function canFlow() {
+  const fotos = mesa.selRefs().filter(r => !r.mos);
+  const lzs = S.lienzos.filter(l => selLz.has(l.id) && l.kind !== 'mosaico' && !l.hidden);
+  return fotos.length >= 2 || lzs.some(l => S.items.some(i => i.lienzo === l.id && !i.mos));
+}
+$('flow').onclick = () => { if (!canFlow()) return toast('Para acomodar en filas, seleccioná 2 o más fotos, o un lienzo con fotos (tocá su etiqueta ✥).', 4000); if (scope().mosaic) return toast('Es un mosaico: se reacomoda con el botón Mosaico → Mezclar.', 3500); const { lz, items } = scope(); if (!items.length) return toast('No hay fotos para acomodar.', 2000); hist.run(() => flow(items, null, false, lz)); toast(`${items.length} foto${items.length === 1 ? '' : 's'} acomodada${items.length === 1 ? '' : 's'}.`, 2000); };
+
+// --- panel de lienzos ---
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+function renderLayers() {
+  const L = list(), byRef = new Map(L.map(p => [p.ref, p]));
+  // primero el lienzo base de 1 × 1 m (las fotos sueltas), después los dibujados a mano alzada
+  const base = { id: '__none', name: baseName(), lz: null, items: S.items.filter(it => !lzOf(it)) };
+  const groups = [base, ...S.lienzos.map(lz => ({ id: lz.id, name: lz.name, lz, items: S.items.filter(it => it.lienzo === lz.id) }))];
+  $('lzList').innerHTML = groups.filter(g => g.lz || g.items.length).map(g => {
+    const rows = g.items.map(it => byRef.get(it)).filter(Boolean).sort((a, b) => a.order - b.order);
+    const bad = rows.filter(p => p.out).length;
+    const isActive = g.lz ? g.id === active : false;
+    const hid = g.lz ? !!g.lz.hidden : !!S.looseHidden;
+    return `<div class="lz${isActive ? ' active' : ''}${openLz.has(g.id) ? ' open' : ''}${hid ? ' hidden' : ''}" data-id="${g.id}">
+      <div class="lz-pill">
+        <button class="lz-btn lz-chev" data-act="open" title="Ver fotos">${icon('chev')}</button>
+        <span class="lz-swatch${g.lz ? '' : ' base'}"></span>
+        <span class="lz-name" title="${esc(g.name)}${g.lz ? ' · doble clic para renombrar · Supr para borrar' : ''}">${esc(g.name)}</span>
+        <span class="lz-count${bad ? ' bad' : ''}" title="${bad ? bad + ' afuera' : ''}">${rows.length}</span>
+        <button class="lz-btn lz-eye" data-act="eye" data-tip="${hid ? 'Mostrar' : 'Ocultar'}|${hid ? 'Vuelve a verse en el mat y en la impresión' : 'No se ve, no se puede tocar y no se imprime'}">${icon(hid ? 'eyeOff' : 'eye')}</button>
+      </div>
+      <div class="lz-items">${rows.length ? rows.map(p => `<div class="lz-row${mesa.selection.has(p.ref) ? ' sel' : ''}${p.out ? ' out' : ''}" data-id="${p.ref.id}" title="${esc(p.ref.file)}">
+          <img src="${thumbs.get(p.ref.file) || ''}" alt=""><b>${p.label}</b><span class="nm">${esc(p.ref.file.replace(/\.[^.]+$/, ''))} · ${p.size}</span></div>`).join('')
+        : `<div class="lz-empty">${g.lz ? 'Vacío. Arrastrá fotos adentro de la forma, o seleccioná fotos y dibujá un lienzo nuevo.' : ''}</div>`}</div>
+    </div>`;
+  }).join('');
+}
+function makeThumb(bmp) { // miniatura cuadrada de 80 px para el panel
+  const c = document.createElement('canvas'); c.width = c.height = 80;
+  const s = Math.min(bmp.width, bmp.height);
+  c.getContext('2d').drawImage(bmp, (bmp.width - s) / 2, (bmp.height - s) / 2, s, s, 0, 0, 80, 80);
+  return c.toDataURL('image/jpeg', 0.75);
+}
+function markRows() {
+  document.querySelectorAll('.lz-row').forEach(r => { const it = S.items.find(i => i.id === r.dataset.id); r.classList.toggle('sel', !!it && mesa.selection.has(it)); });
+}
+// el panel arranca siempre debajo de la barra, aunque la barra ocupe dos renglones
+function placeLayers() { $('layers').style.top = document.querySelector('.bar').getBoundingClientRect().bottom + 14 + 'px'; }
+new ResizeObserver(placeLayers).observe(document.querySelector('.bar'));
+addEventListener('resize', placeLayers);
+document.fonts?.ready.then(placeLayers);
+$('newLz').onclick = () => { mesa.setTool('draw'); toast('Dibujá la forma del lienzo con el mouse o la tableta.', 3500); };
+$('lzList').addEventListener('click', e => {
+  if (e.target.closest('[contenteditable=true]')) return; // escribiendo el nombre
+  const g = e.target.closest('.lz'); if (!g) return;
+  const id = g.dataset.id, lz = S.lienzos.find(l => l.id === id) || null;
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  const row = e.target.closest('.lz-row');
+  if (act === 'open') { openLz.has(id) ? openLz.delete(id) : openLz.add(id); return renderLayers(); }
+  if (act === 'eye') { // ocultar / mostrar la capa
+    hist.run(() => { if (lz) S.lienzos.find(l => l.id === id).hidden = !lz.hidden; else S.looseHidden = !S.looseHidden; });
+    const nowHidden = lz ? S.lienzos.find(l => l.id === id)?.hidden : S.looseHidden;
+    if (nowHidden) { // lo oculto deja de estar seleccionado
+      mesa.selection = new Set(mesa.selRefs()); selLz.delete(id); mesa.selChanged();
+    }
+    return renderLayers();
+  }
+  if (row) {
+    const it = S.items.find(i => i.id === row.dataset.id); if (!it) return;
+    if (e.ctrlKey || e.metaKey) { mesa.selection.has(it) ? mesa.selection.delete(it) : mesa.selection.add(it); mesa.anchor = it; mesa.selChanged(); }
+    else mesa.sel = it;
+    return;
+  }
+  if (e.target.closest('.lz-pill')) { // tocar la píldora: queda activo, seleccionado y con sus fotos
+    // doble clic: renombrar. Se detecta acá porque el primer clic redibuja el panel y el navegador
+    // ya no reconoce el segundo como doble clic.
+    const now = performance.now(), dbl = lastPillClick.id === id && now - lastPillClick.t < 450;
+    lastPillClick = dbl ? { id: null, t: 0 } : { id, t: now };
+    if (dbl && lz) return startRename(id);
+    if ((e.ctrlKey || e.metaKey || e.shiftKey) && lz) return toggleLz(id); // Ctrl/Shift: sumar el lienzo sin tocar las fotos
+    return selectLienzo(id);
+  }
+});
+$('lzList').addEventListener('dblclick', e => {
+  const row = e.target.closest('.lz-row');
+  if (row) { const it = S.items.find(i => i.id === row.dataset.id); if (it) { mesa.cam.x = it.x; mesa.cam.y = it.y; mesa.zoomBy(Math.max(1, 2.5 / mesa.cam.z)); } return; }
+  const g = e.target.closest('.lz');
+  if (!g || e.target.closest('[data-act]')) return;
+  startRename(g.dataset.id); // doble clic en cualquier parte de la píldora
+});
+// renombrar un lienzo (también el de 1 × 1 m)
+function startRename(id) {
+  if (id === '__none') return; // "Libre" no se renombra
+  renderLayers();
+  const el = document.querySelector(`.lz[data-id="${id}"] .lz-name`);
+  if (!el) return;
+  el.scrollIntoView({ block: 'nearest' });
+  inlineEdit(el, v => hist.run(() => {
+    if (id === '__none') S.baseName = v.slice(0, 40);
+    else { const lz = S.lienzos.find(l => l.id === id); if (lz) lz.name = v.slice(0, 40); }
+  }));
+}
+// doble clic en el mat, sobre un lienzo vacío de fotos: renombrarlo
+$('mesa').addEventListener('dblclick', e => {
+  if (mesa.tool === 'draw') return; // con la pluma, el doble clic cierra la forma
+  const r = $('mesa').getBoundingClientRect(), w = mesa.toWorld(e.clientX - r.left, e.clientY - r.top);
+  if (mesa.hit(w.x, w.y)) return;
+  const lz = [...S.lienzos].reverse().find(l => pointInPoly(w.x, w.y, l.pts));
+  const b = bounds();
+  const lab = labelRects.find(r => w.x >= r.x0 && w.x <= r.x1 && w.y >= r.y0 && w.y <= r.y1 && r.id !== '__none');
+  if (lab) startRename(lab.id); // doble clic en la etiqueta ✥
+  else if (lz) startRename(lz.id);
+});
+const openMenu = id => {
+  const m = $(id), open = !m.classList.contains('show');
+  document.querySelectorAll('.menu.show').forEach(x => x.classList.remove('show'));
+  m.classList.toggle('show', open);
+  document.querySelector('.tip')?.classList.remove('show');
+  return open;
+};
+$('sortBtn').onclick = () => openMenu('sortMenu');
+// imán: prendido por defecto
+function toggleMagnet() {
+  prefs.magnet = prefs.magnet === false; savePrefs(); syncUI();
+  toast(prefs.magnet !== false ? 'Imán prendido: al arrastrar se pega a bordes y centros.' : 'Imán apagado: se mueve libre (con grilla de 5 mm).', 2500);
+}
+$('magnetBtn').onclick = toggleMagnet;
+$('alignBtn').onclick = () => {
+  if (!mesa.selection.size) return toast('Seleccioná una o más fotos para alinear.', 2500);
+  if (mesa.selection.size === 1 && !selLz.size) return toast('Para alinear esta foto con su lienzo, seleccioná también el lienzo: Ctrl+clic en su etiqueta ✥ (o en su capa del panel).', 5000);
+  syncAlign(); openMenu('alignMenu');
+};
+document.querySelectorAll('[data-align]').forEach(b => b.onclick = () => alignSel(b.dataset.align)); // el menú queda abierto para probar otra
+// lápiz de lienzos: el ícono muestra la forma elegida; clic derecho abre el menú de formas
+const SHAPE_ICON = { rect: 'shapeRect', circle: 'shapeCircle', pen: 'shapePen', free: 'shapeFree', mosaic: 'mosaic' };
+const SHAPE_NAME = { rect: 'rectángulo', circle: 'círculo', pen: 'pluma', free: 'mano alzada', mosaic: 'mosaico' };
+function syncDraw() {
+  const m = prefs.drawMode || 'rect';
+  $('drawBtn').innerHTML = icon(SHAPE_ICON[m]);
+  document.querySelectorAll('[data-shape]').forEach(b => b.classList.toggle('on', b.dataset.shape === m));
+}
+$('drawBtn').addEventListener('contextmenu', e => { e.preventDefault(); openMenu('drawMenu'); });
+document.querySelectorAll('[data-shape]').forEach(b => b.onclick = () => {
+  prefs.drawMode = b.dataset.shape; savePrefs(); syncDraw();
+  $('drawMenu').classList.remove('show');
+  mesa.setTool('draw');
+  toast(`Lienzo nuevo con ${SHAPE_NAME[b.dataset.shape]}.` + (b.dataset.shape === 'pen' ? ' Clic por cada punta; cerrás tocando la primera, con doble clic o Enter.' : ''), 3500);
+});
+syncDraw();
+$('colorBtn').onclick = () => { if (openMenu('colorPanel')) drawWheel(); }; // abrir no selecciona nada
+$('cPres').oninput = e => { CS.p = +e.target.value; applyColor(); };
+$('cDone').onclick = () => $('colorPanel').classList.remove('show');
+document.querySelectorAll('[data-sort]').forEach(b => b.onclick = () => sortBy(b.dataset.sort));
+// opciones de color: cambian en vivo si "Color" es el orden activo
+$('coStart').innerHTML = FAMS.map(([h, n]) => `<button data-co="start" data-v="${h}" style="background:hsl(${(h + 15) % 360},78%,56%)" data-tip="Empezar por los ${n}"></button>`).join('');
+function syncCO() {
+  document.querySelectorAll('[data-co]').forEach(b => b.classList.toggle('on', String(CO[b.dataset.co]) === b.dataset.v));
+  $('coGray').value = CO.grayCut; $('coGrayVal').textContent = CO.grayCut + '%';
+}
+function setCO(k, v) {
+  CO[k] = v;
+  try { localStorage.setItem('ojo-mdp-colorsort', JSON.stringify(CO)); } catch {}
+  syncCO();
+  if (S.sort?.key === 'color') sortBy('color', true);
+}
+$('coToggle').onclick = () => { $('coBody').classList.toggle('show'); $('coToggle').classList.toggle('open'); };
+$('sortMenu').addEventListener('click', e => { const b = e.target.closest('[data-co]'); if (b) setCO(b.dataset.co, b.dataset.co === 'start' ? +b.dataset.v : b.dataset.v); });
+$('coGray').oninput = e => { CO.grayCut = +e.target.value; $('coGrayVal').textContent = CO.grayCut + '%'; };
+$('coGray').onchange = e => setCO('grayCut', +e.target.value);
+syncCO();
+// cerrar menús al tocar afuera: se mira el camino del clic al momento de hacerlo
+// (si la rueda se redibuja durante el clic, el elemento tocado ya no está en la página)
+document.addEventListener('pointerdown', e => {
+  const path = e.composedPath();
+  document.querySelectorAll('.menu.show').forEach(m => { if (!path.includes(m.parentElement)) m.classList.remove('show'); });
+});
+addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.menu.show').forEach(m => m.classList.remove('show')); });
+$('frame').oninput = e => { if (hist.pending == null) hist.begin(); S.frame = +e.target.value; syncUI(); dirty(); };
+$('frame').onchange = () => hist.commit();
+// marco: el botón despliega / contrae el slider; doble clic en el número para escribirlo
+$('frameBtn').onclick = () => $('frameFold').classList.toggle('open');
+$('frameVal').addEventListener('dblclick', () => {
+  const el = $('frameVal');
+  el.textContent = String(S.frame).replace('.', ',');
+  inlineEdit(el, v => {
+    const n = parseFloat(v.replace(',', '.'));
+    if (!isFinite(n)) return toast('Escribí un número de milímetros, por ejemplo 4,5.', 3000);
+    const mm = Math.max(0, Math.min(30, Math.round(n * 10) / 10));
+    hist.run(() => { S.frame = mm; });
+    if (mm !== n) toast(`El marco puede ir de 0 a 30 mm: quedó en ${String(mm).replace('.', ',')} mm.`, 3500);
+  });
+  // si se cancela o no cambia, vuelve a mostrar "N mm"
+  el.addEventListener('blur', () => setTimeout(syncUI), { once: true });
+});
+// fondo del mat: verde → negro → gris con puntitos
+const syncMat = () => { $('night').innerHTML = icon(MAT_ICON[matMode()]); $('night').classList.toggle('on', matMode() !== 'day'); };
+$('night').onclick = () => { const m = cycleMat(); syncMat(); mesa.invalidate(); toast(`Fondo ${MAT_NAME[m]}.`, 1500); };
+syncMat();
+// configuración: ventana en el medio, como los atajos
+const CFG_KEY = { preview: 'preview', cap: 'capMP', steps: 'undoSteps', pointer: 'pointer' };
+function syncCfg() { const c = cfg(); document.querySelectorAll('[data-cfg]').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(c[g.dataset.cfg]) === b.dataset.v))); }
+const setCfg = open => { $('cfg').classList.toggle('show', open); $('cfgBg').classList.toggle('show', open); $('cfgBtn').classList.toggle('on', open); if (open) syncCfg(); };
+$('cfgBtn').onclick = () => setCfg(!$('cfg').classList.contains('show'));
+$('cfgClose').onclick = () => setCfg(false);
+$('cfgBg').onclick = () => setCfg(false);
+addEventListener('keydown', e => { if (e.key === 'Escape' && $('cfg').classList.contains('show')) { setCfg(false); e.stopImmediatePropagation(); } }, true);
+document.querySelectorAll('[data-cfg] button').forEach(b => b.onclick = async () => {
+  const k = b.closest('[data-cfg]').dataset.cfg, v = /^\d+$/.test(b.dataset.v) ? +b.dataset.v : b.dataset.v;
+  if (cfg()[k] === v) return;
+  prefs[CFG_KEY[k]] = v; savePrefs(); syncCfg();
+  if (k === 'steps') { hist.setMax(v); toast(`Ctrl+Z: hasta ${v} pasos.`, 2000); }
+  if (k === 'pointer') toast({ auto: 'Mouse o trackpad: automático.', mouse: 'Ruedita del mouse: zoom.', trackpad: 'Trackpad: dos dedos mueven, pellizcar hace zoom.' }[v], 2500);
+  if (k === 'cap') { // cambia la resolución que se va a exportar (y el aviso de baja resolución)
+    for (const m of meta.values()) { const f = Math.min(1, Math.sqrt(v * 1e6 / ((m.ow || m.w) * (m.oh || m.h)))); m.w = Math.round((m.ow || m.w) * f); m.h = Math.round((m.oh || m.h) * f); }
+    cache = null; mesa.invalidate(); toast(`Al exportar: hasta ${v} MP por foto.`, 2000);
+  }
+  if (k === 'preview') await reloadPreviews();
+});
+async function reloadPreviews() { // vuelve a cargar las fotos de la mesa con la calidad nueva
+  const files = [...images.keys()]; let done = 0;
+  const queue = [...files];
+  await Promise.all(Array.from({ length: 4 }, async () => {
+    while (queue.length) {
+      const f = queue.shift();
+      try { const { bmp, meta: m } = await loadPrev(f); images.get(f)?.close?.(); images.set(f, bmp); meta.set(f, m); } catch {}
+      toast(`Vista previa ${PREVIEW_PX[cfg().preview]} px: ${++done}/${files.length}…`); cache = null; mesa.invalidate();
+    }
+  }));
+  toast('Vista previa lista.', 1500);
+}
+// atajos: ventana en el medio (se cierra con la X, Esc, clic afuera o el "?" de nuevo)
+const setHelp = open => { $('help').classList.toggle('show', open); $('helpBg').classList.toggle('show', open); $('helpBtn').classList.toggle('on', open); };
+$('helpBtn').onclick = () => setHelp(!$('help').classList.contains('show'));
+$('helpClose').onclick = () => setHelp(false);
+$('helpBg').onclick = () => setHelp(false);
+addEventListener('keydown', e => { if (e.key === 'Escape' && $('help').classList.contains('show')) { setHelp(false); e.stopImmediatePropagation(); } }, true);
+// --- vista previa (también antes de exportar) ---
+// --- imprimir: qué lienzos van (lista a la izquierda de la vista previa) ---
+let printSel = null, previewForExport = false;
+const sheetFmt = () => prefs.sheetFmt === 'A4' ? 'A4' : 'A3'; // formato de las hojas finales            // printSel: ids de lienzos ('__none' = sin lienzo)
+const groupOf = it => lzOf(it)?.id || '__none';
+function printGroups() { // lienzos visibles que tienen fotos
+  const L = list().filter(p => !p.hidden);
+  const gs = [...S.lienzos.filter(l => !l.hidden).map(l => ({ id: l.id, name: l.name })), { id: '__none', name: baseName() }];
+  return gs.map(g => ({ ...g, n: L.filter(p => groupOf(p.ref) === g.id).length })).filter(g => g.n);
+}
+const printable = () => list().filter(p => !p.hidden && (!printSel || printSel.has(groupOf(p.ref)))); // ocultas nunca
+// nombre de la exportación: el título; si va un solo lienzo (y hay otros), el título + su nombre
+function exportName() {
+  const gs = printGroups(), chosen = gs.filter(g => printSel?.has(g.id));
+  return chosen.length === 1 && gs.length > 1 ? `${S.title} - ${chosen[0].name}` : S.title;
+}
+function openPreview(forExport) {
+  previewForExport = forExport;
+  const gs = printGroups(), picked = S.lienzos.filter(l => selLz.has(l.id) && !l.hidden && gs.some(g => g.id === l.id)).map(l => l.id);
+  printSel = new Set(picked.length ? picked : gs.map(g => g.id)); // lienzo seleccionado → solo ese; si no, todos
+  renderPreview();
+  $('overlay').classList.add('show');
+}
+function renderPreview() {
+  const fmt = sheetFmt(), gs = printGroups(), L0 = printable(), sheets = packSheets(L0, fmt), L = L0.filter(p => !sheets.skipped.includes(p)), n = sheets.length, hid = list().filter(p => p.hidden).length, skip = sheets.skipped.length;
+  $('pvSide').innerHTML = `<div class="pv-head">Hojas</div>
+    <div class="pv-all pv-fmt"><button data-fmt="A3" class="${fmt === 'A3' ? 'on' : ''}">A3</button><button data-fmt="A4" class="${fmt === 'A4' ? 'on' : ''}">A4</button></div>
+    ${skip ? `<div class="pv-hint pv-warn">${skip} foto${skip === 1 ? '' : 's'} en A3 no entra${skip === 1 ? '' : 'n'} en hoja A4: no se imprime${skip === 1 ? '' : 'n'}. Pasala${skip === 1 ? '' : 's'} a A4 o más chica${skip === 1 ? '' : 's'}.</div>` : ''}
+    <div class="pv-head">Lienzos a imprimir</div>
+    <div class="pv-all"><button data-pv="all">Todos</button><button data-pv="none">Ninguno</button></div>` +
+    gs.map(g => `<button class="pv-lz${printSel.has(g.id) ? ' on' : ''}" data-g="${g.id}"><span class="ck">${printSel.has(g.id) ? icon('check') : ''}</span><span class="nm">${esc(g.name)}</span><span class="n">${g.n}</span></button>`).join('') +
+    (hid ? `<div class="pv-hint">${hid} foto${hid === 1 ? '' : 's'} en capas ocultas: no aparecen acá.</div>` : '');
+  $('ovTitle').textContent = !L.length ? 'Elegí al menos un lienzo' : previewForExport ? `Exportación · ${n} hoja${n === 1 ? '' : 's'} ${fmt}` : `${n} hoja${n === 1 ? '' : 's'} ${fmt} · para recortar`;
+  $('ovNote').textContent = L.length ? `${L.length} foto${L.length === 1 ? '' : 's'} · al exportar elegís dónde: se crea la carpeta "${safeName(exportName())}" · tocá una hoja o el mapa para verlos grandes` : 'No hay nada tildado para imprimir.';
+  $('ovExport').disabled = !L.length;
+  if (L.length) showSheets($('sheets'), sheets, images, 300, { pieces: L, imgs: images, bounds: bounds(), shapes: S.lienzos.filter(l => !l.hidden && printSel.has(l.id)) });
+  else $('sheets').innerHTML = '';
+}
+$('pvSide').addEventListener('click', e => {
+  const all = e.target.closest('[data-pv]'), g = e.target.closest('[data-g]'), f = e.target.closest('[data-fmt]');
+  if (f) { prefs.sheetFmt = f.dataset.fmt; savePrefs(); updateStats(); }
+  else if (all) printSel = new Set(all.dataset.pv === 'all' ? printGroups().map(x => x.id) : []);
+  else if (g) printSel.has(g.dataset.g) ? printSel.delete(g.dataset.g) : printSel.add(g.dataset.g);
+  else return;
+  renderPreview();
+});
+$('ovClose').onclick = () => $('overlay').classList.remove('show');
+let busy = false;
+async function doExport() {
+  if (busy || !S.items.length) return;
+  busy = true; $('export').disabled = $('ovExport').disabled = true;
+  const title = exportName(), name = safeName(title);
+  // dónde: se elige con el explorador de Windows; adentro se crea la carpeta con el nombre de la exportación
+  toast('Elegí dónde crear la carpeta de la exportación…');
+  let base = null;
+  try { base = await winDialog('folder', { start: prefs.lastExportDir || PROJ || '' }); } catch (e) { busy = false; $('export').disabled = $('ovExport').disabled = false; return toast('No se pudo abrir el explorador: ' + e.message, 6000); }
+  if (!base) { busy = false; $('export').disabled = $('ovExport').disabled = false; return toast('Exportación cancelada.', 2000); }
+  prefs.lastExportDir = base; savePrefs();
+  const dir = base.replace(/[\\/]+$/, '') + '\\' + safeName(title);
+  try {
+    const L0 = printable(), sheets = packSheets(L0, sheetFmt()), L = L0.filter(p => !sheets.skipped.includes(p));
+    if (!L.length) throw new Error('no hay ningún lienzo tildado para imprimir');
+    await exportSheets({ sheets, dir, title, loadFull: k => loadImage(fullUrl(k)), onProgress: (i, n) => toast(`Exportando hoja ${i} de ${n}…`) });
+    toast('Armando el mapa de armado…');
+    await exportMap({ pieces: L, dir, name: `${name} - mapa de armado.jpg`, imgs: images, bounds: bounds(), shapes: S.lienzos.filter(l => !l.hidden && printSel?.has(l.id)) });
+    toast(`Listo: ${sheets.length} hojas ${sheetFmt()} en JPG 300 dpi + PDF + mapa en "${dir}".`, 8000);
+    revealFolder(dir); // se abre la carpeta en el explorador
+  } catch (err) {
+    toast('Error al exportar: ' + err.message, 10000);
+  } finally {
+    busy = false; $('export').disabled = $('ovExport').disabled = false;
+  }
+}
+$('export').onclick = () => openPreview(true); // primero se ve cómo queda
+$('ovExport').onclick = doExport;
+// título = nombre de la exportación (doble clic para cambiarlo)
+$('title').addEventListener('dblclick', () => inlineEdit($('title'), v => { hist.run(() => { S.title = v.slice(0, 80); }); syncUI(); }));
+
+// --- menú de clic derecho ---
+let ctxRefs = [], ctxWorld = { x: 0, y: 0 };
+const kbd = t => `<span class="kbd">${t}</span>`;
+function openCtx(refs, cx, cy, w) {
+  ctxRefs = refs || []; ctxWorld = w;
+  const m = $('ctxMenu'), n = ctxRefs.length, canPaste = clip?.length ? '' : 'disabled';
+  if (n) {
+    const sizes = new Set(ctxRefs.map(r => r.size));
+    m.innerHTML = `<div class="menu-title">Tamaño${n > 1 ? ` · ${n} fotos` : ''}</div>
+      <div class="ctx-sizes">${['A3', 'A4', 'A5', 'A6', 'A7'].map(z => `<button data-ctx="size" data-v="${z}" class="${sizes.size === 1 && sizes.has(z) ? 'on' : ''}">${z}</button>`).join('')}</div>
+      <button data-ctx="crop" ${n > 1 || ctxRefs[0].mos ? 'disabled' : ''}>${icon('crop')}<span>Recortar…</span>${n > 1 ? kbd('de a una') : ''}</button>
+      ${n === 1 && !ctxRefs[0].mos ? `<button data-ctx="mosaic">${icon('mosaic')}<span>Partir en mosaico…</span>${kbd('como el ojo')}</button>` : ''}
+      <button data-ctx="rotL">${icon('rotateL')}<span>Rotar 90° a la izquierda</span></button>
+      <button data-ctx="rotR">${icon('rotate')}<span>Rotar 90° a la derecha</span>${kbd('Ctrl+clic der.')}</button>
+      <hr>
+      <button data-ctx="cut">${icon('cut')}<span>Cortar</span>${kbd('Ctrl+X')}</button>
+      <button data-ctx="copy">${icon('copy')}<span>Copiar</span>${kbd('Ctrl+C')}</button>
+      <button data-ctx="paste" ${canPaste}>${icon('paste')}<span>Pegar acá</span>${kbd('Ctrl+V')}</button>
+      <button data-ctx="pasteIn" ${canPaste}>${icon('paste')}<span>Pegar en el mismo lugar</span>${kbd('Ctrl+Shift+V')}</button>
+      <button data-ctx="dup">${icon('dup')}<span>Duplicar</span>${kbd('Ctrl+J')}</button>
+      <hr>
+      <button data-ctx="del" class="danger">${icon('trash')}<span>Borrar</span>${kbd('Supr')}</button>`;
+  } else {
+    m.innerHTML = `<button data-ctx="paste" ${canPaste}>${icon('paste')}<span>Pegar acá</span>${kbd('Ctrl+V')}</button>
+      <button data-ctx="pasteIn" ${canPaste}>${icon('paste')}<span>Pegar en el mismo lugar</span>${kbd('Ctrl+Shift+V')}</button>
+      <hr><button data-ctx="all">${icon('move')}<span>Seleccionar todo</span>${kbd('Ctrl+A')}</button>`;
+  }
+  document.querySelectorAll('.menu.show').forEach(x => x.classList.remove('show'));
+  m.classList.add('show');
+  document.querySelector('.tip')?.classList.remove('show');
+  m.style.left = Math.max(8, Math.min(cx, innerWidth - m.offsetWidth - 8)) + 'px';
+  m.style.top = Math.max(8, Math.min(cy, innerHeight - m.offsetHeight - 8)) + 'px';
+}
+$('ctxMenu').addEventListener('click', e => {
+  const b = e.target.closest('[data-ctx]');
+  if (!b || b.disabled) return;
+  const a = b.dataset.ctx, refs = ctxRefs;
+  $('ctxMenu').classList.remove('show');
+  if (a === 'size') { hist.run(() => refs.forEach(r => { r.size = b.dataset.v; keepInside(r); })); toast(`${refs.length === 1 ? 'Foto' : refs.length + ' fotos'} en ${b.dataset.v}.`, 1800); }
+  if (a === 'crop') openCrop(refs[0]);
+  if (a === 'mosaic') mosaicFromPhoto(refs[0]);
+  if (a === 'rotL' || a === 'rotR') rot90(refs, a === 'rotL' ? -1 : 1);
+  if (a === 'cut') copySel(true);
+  if (a === 'copy') copySel(false);
+  if (a === 'paste') paste(false, ctxWorld);
+  if (a === 'pasteIn') paste(true, ctxWorld);
+  if (a === 'dup') duplicate();
+  if (a === 'del') removeSel();
+  if (a === 'all') mesa.selectAll();
+});
+// rotar 90°: la foto gira dentro de su marco (sale girada en la hoja); una pieza de mosaico gira sobre el mat
+function rot90(refs, dir) {
+  hist.run(() => refs.forEach(it => { if (it.mos) it.ang = (it.ang || 0) + dir * Math.PI / 2; else it.rot = (it.rot + (dir < 0 ? 3 : 1)) % 4; }));
+}
+// --- orden de apilado (qué queda encima): Alt + clic sube un lugar, Alt + clic derecho baja un lugar ---
+// "Un lugar" = pasar la siguiente foto que se le superpone (si no, no se vería ningún cambio).
+const boxOf = p => { const [hw, hh] = extent(p.w, p.h, p.ang); return { x0: p.x - hw, x1: p.x + hw, y0: p.y - hh, y1: p.y + hh }; };
+const overlaps = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+function restackItem(it, dir) {
+  const L = list(), me = L.find(p => p.ref === it); if (!me) return;
+  const mine = boxOf(me), i = S.items.indexOf(it);
+  const others = L.filter(p => p.ref !== it && !p.hidden && overlaps(mine, boxOf(p))).map(p => S.items.indexOf(p.ref));
+  const j = dir > 0 ? Math.min(...others.filter(k => k > i)) : Math.max(...others.filter(k => k < i));
+  if (!isFinite(j)) return toast(dir > 0 ? 'Ya está arriba de todo.' : 'Ya está abajo de todo.', 1500);
+  hist.run(() => { S.items.splice(i, 1); S.items.splice(S.items.indexOf(S.items[dir > 0 ? j - 1 : j]) + (dir > 0 ? 1 : 0), 0, it); });
+  mesa.sel = it; dirty(); toast(dir > 0 ? 'Subió un lugar.' : 'Bajó un lugar.', 1200);
+}
+// un lienzo: pasa al lienzo que se le superpone, y sus fotos (o piezas) van con él
+function restackLienzo(lz, dir) {
+  const bx = l => lzBox(l), mine = bx(lz), i = S.lienzos.indexOf(lz);
+  const others = S.lienzos.map((l, k) => [l, k]).filter(([l]) => l !== lz && !l.hidden && overlaps(mine, bx(l))).map(([, k]) => k);
+  const j = dir > 0 ? Math.min(...others.filter(k => k > i)) : Math.max(...others.filter(k => k < i));
+  if (!isFinite(j)) return toast(`"${lz.name}" ya está ${dir > 0 ? 'arriba' : 'abajo'} de todo.`, 1500);
+  const other = S.lienzos[j], of = l => it => it.lienzo === l.id || it.mos === l.id;
+  hist.run(() => {
+    S.lienzos.splice(i, 1); S.lienzos.splice(S.lienzos.indexOf(other) + (dir > 0 ? 1 : 0), 0, lz);
+    // las fotos del lienzo: arriba de las del otro (o abajo), sin cambiar su orden entre ellas
+    const moving = S.items.filter(of(lz)), rest = S.items.filter(it => !of(lz)(it)), theirs = rest.filter(of(other));
+    if (!moving.length || !theirs.length) return;
+    const at = dir > 0 ? rest.indexOf(theirs.at(-1)) + 1 : rest.indexOf(theirs[0]);
+    rest.splice(at, 0, ...moving); S.items = rest;
+  });
+  cache = null; renderLayers(); dirty(); toast(`"${lz.name}" ${dir > 0 ? 'subió' : 'bajó'} un lugar.`, 1200);
+}
+// duplicar: copia corrida 10 mm, sin tocar el portapapeles
+function duplicate() {
+  const refs = mesa.selRefs();
+  if (!refs.length) return toast('Primero seleccioná fotos.', 2500);
+  const added = refs.map(it => ({ file: it.file, size: it.size, rot: it.rot, ...(it.crop ? { crop: { ...it.crop } } : {}), ...(it.mos ? { mos: it.mos } : {}), ...(it.ang ? { ang: it.ang } : {}), id: uid(), x: it.x + 10, y: it.y + 10 }));
+  hist.run(() => { added.forEach(assignByPos); S.items.push(...added); });
+  mesa.selection = new Set(added); mesa.anchor = null; mesa.selChanged(); renderLayers();
+  toast(`${added.length} foto${added.length === 1 ? '' : 's'} duplicada${added.length === 1 ? '' : 's'}.`, 2000);
+}
+
+// --- recortar: un rectángulo sobre la foto original ---
+// cropS = { it, m (medidas originales), img, r:{x,y,w,h} en proporción 0..1,
+//           ratio: null | ancho/alto en píxeles (candado), mode, drag, alt, shift }
+// Como en Photoshop: Alt = desde el centro · Shift = invertir el candado mientras arrastrás.
+let cropS = null;
+const CROP_RATIO = { free: () => null, orig: m => m.w / m.h, A: (m, r) => (r.w * m.w >= r.h * m.h ? Math.SQRT2 : 1 / Math.SQRT2), sq: () => 1 };
+const cropAspect = (r, m) => (r.w * m.w) / (r.h * m.h);
+function openCrop(it) {
+  const m = meta.get(it.file), img = images.get(it.file);
+  if (!m || !img) return;
+  cropS = { it, m, img, r: it.crop ? { ...it.crop } : { x: 0, y: 0, w: 1, h: 1 }, ratio: null, mode: 'free', alt: false, shift: false, undo: [], redo: [] };
+  $('cropName').textContent = it.file.replace(/\.[^.]+$/, '');
+  const cv = $('cropCv'), d = devicePixelRatio || 1, sc = Math.min((innerWidth - 80) / m.w, (innerHeight - 190) / m.h);
+  cv.style.width = m.w * sc + 'px'; cv.style.height = m.h * sc + 'px';
+  cv.width = Math.round(m.w * sc * d); cv.height = Math.round(m.h * sc * d);
+  $('cropOv').classList.add('show');
+  setCropMode('free', true); // al abrir no cuenta como paso
+}
+// historial del editor: cada arrastre, proporción o candado es un paso (Ctrl+Z / Ctrl+Y)
+const cropSnap = () => ({ r: { ...cropS.r }, ratio: cropS.ratio, mode: cropS.mode });
+function cropPush() { cropS.undo.push(cropSnap()); if (cropS.undo.length > 100) cropS.undo.shift(); cropS.redo = []; }
+function cropStep(back) {
+  const c = cropS, from = back ? c.undo : c.redo, to = back ? c.redo : c.undo;
+  if (!from.length) return toast(back ? 'No hay nada para deshacer en el recorte.' : 'No hay nada para rehacer.', 1500);
+  to.push(cropSnap());
+  const st = from.pop(); c.r = st.r; c.ratio = st.ratio; c.mode = st.mode;
+  syncCropUI(); drawCrop();
+}
+function syncCropUI() {
+  const c = cropS;
+  document.querySelectorAll('[data-ratio]').forEach(b => b.classList.toggle('on', b.dataset.ratio === c.mode));
+  $('cropLock').classList.toggle('on', !!c.ratio);
+  $('cropLock').innerHTML = icon(c.ratio ? 'lock' : 'lockOpen');
+}
+function setCropMode(mode, silent) {
+  if (!silent) cropPush();
+  const c = cropS; c.mode = mode; c.ratio = CROP_RATIO[mode](c.m, c.r);
+  if (c.ratio) { // el rectángulo más grande con esa proporción, centrado donde estaba
+    const { m, r } = c, cx = (r.x + r.w / 2) * m.w, cy = (r.y + r.h / 2) * m.h;
+    const W = Math.min(m.w, m.h * c.ratio), H = W / c.ratio;
+    const x = Math.max(0, Math.min(m.w - W, cx - W / 2)), y = Math.max(0, Math.min(m.h - H, cy - H / 2));
+    c.r = { x: x / m.w, y: y / m.h, w: W / m.w, h: H / m.h };
+  }
+  syncCropUI(); drawCrop();
+}
+// candado: prendido traba la proporción que tiene el recorte ahora; apagado = libre
+function toggleCropLock() {
+  cropPush();
+  const c = cropS;
+  if (c.ratio) { c.ratio = null; c.mode = 'free'; } else { c.ratio = cropAspect(c.r, c.m); c.mode = 'lock'; }
+  syncCropUI(); drawCrop();
+}
+function cropHandles() { // [x, y, qué mueve] en proporción (con el candado también andan los lados)
+  const { r } = cropS, L = r.x, T = r.y, R = r.x + r.w, B = r.y + r.h, cx = L + r.w / 2, cy = T + r.h / 2;
+  return [[L, T, 'lt'], [R, T, 'rt'], [R, B, 'rb'], [L, B, 'lb'], [cx, T, 't'], [R, cy, 'r'], [cx, B, 'b'], [L, cy, 'l']];
+}
+function drawCrop() {
+  const c = cropS, cv = $('cropCv'), ctx = cv.getContext('2d'), d = devicePixelRatio || 1;
+  const W = cv.width, H = cv.height, { r } = c, x = r.x * W, y = r.y * H, w = r.w * W, h = r.h * H;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(c.img, 0, 0, W, H);
+  ctx.fillStyle = 'rgba(22,19,15,.62)';
+  ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(x, y, w, h); ctx.fill('evenodd');
+  ctx.strokeStyle = 'rgba(255,250,240,.35)'; ctx.lineWidth = d;
+  ctx.beginPath(); for (const t of [1 / 3, 2 / 3]) { ctx.moveTo(x + w * t, y); ctx.lineTo(x + w * t, y + h); ctx.moveTo(x, y + h * t); ctx.lineTo(x + w, y + h * t); } ctx.stroke();
+  ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 2 * d; ctx.strokeRect(x, y, w, h);
+  if (c.alt) { // Alt: crucecita en el centro, que queda quieto
+    const cx = x + w / 2, cy = y + h / 2, k = 9 * d;
+    ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 2 * d;
+    ctx.beginPath(); ctx.moveTo(cx - k, cy); ctx.lineTo(cx + k, cy); ctx.moveTo(cx, cy - k); ctx.lineTo(cx, cy + k); ctx.stroke();
+  }
+  const hs = 10 * d;
+  for (const [hx, hy] of cropHandles()) { ctx.fillStyle = '#fffaf0'; ctx.fillRect(hx * W - hs / 2, hy * H - hs / 2, hs, hs); ctx.strokeStyle = '#16130f'; ctx.lineWidth = 1.5 * d; ctx.strokeRect(hx * W - hs / 2, hy * H - hs / 2, hs, hs); }
+  const px = Math.round(r.w * c.m.w), py = Math.round(r.h * c.m.h);
+  const locked = !!c.ratio !== c.shift; // Shift invierte el candado mientras se aprieta
+  $('cropNote').textContent = `${px} × ${py} px · proporción ${locked ? 'trabada 🔒' : 'libre'}${c.shift ? ' (Shift)' : ''}${c.alt ? ' · desde el centro (Alt)' : ''} · Alt: desde el centro · Shift: invertir el candado · Ctrl+Z / Ctrl+Y · Enter acepta · Esc cancela`;
+}
+// Cambia el tamaño desde un manejador. Todo en píxeles de la foto original.
+// alt: el centro queda quieto · rr: proporción a mantener (o null)
+function resizeCrop(g, u, v, alt, rr) {
+  const m = cropS.m, o = g.r0, k = g.kind, MIN = 0.02 * Math.min(m.w, m.h);
+  const L0 = o.x * m.w, T0 = o.y * m.h, R0 = (o.x + o.w) * m.w, B0 = (o.y + o.h) * m.h, cx = (L0 + R0) / 2, cy = (T0 + B0) / 2;
+  const px = Math.max(0, Math.min(m.w, u * m.w)), py = Math.max(0, Math.min(m.h, v * m.h));
+  const hx = k.includes('l') ? -1 : k.includes('r') ? 1 : 0, vy = k.includes('t') ? -1 : k.includes('b') ? 1 : 0;
+  const ax = alt ? cx : hx < 0 ? R0 : L0, ay = alt ? cy : vy < 0 ? B0 : T0; // ancla: el lado opuesto, o el centro
+  const f = alt ? 2 : 1;
+  let W = hx ? Math.max(MIN, (px - ax) * hx * f) : R0 - L0;
+  let H = vy ? Math.max(MIN, (py - ay) * vy * f) : B0 - T0;
+  if (rr) { // proporción: manda el lado que más se estiró
+    if (hx && vy) { if (W / H > rr) H = W / rr; else W = H * rr; }
+    else if (hx) H = W / rr; else W = H * rr;
+  }
+  // lugar disponible desde el ancla (si un lado no se mueve, el otro crece parejo desde el centro)
+  const roomX = hx && !alt ? (hx > 0 ? m.w - ax : ax) : 2 * Math.min(hx ? ax : cx, m.w - (hx ? ax : cx));
+  const roomY = vy && !alt ? (vy > 0 ? m.h - ay : ay) : 2 * Math.min(vy ? ay : cy, m.h - (vy ? ay : cy));
+  if (rr) { const s = Math.min(1, roomX / W, roomY / H); W *= s; H *= s; }
+  else { W = Math.min(W, roomX); H = Math.min(H, roomY); }
+  const L = !hx || alt ? (hx ? ax : cx) - W / 2 : hx > 0 ? ax : ax - W;
+  const T = !vy || alt ? (vy ? ay : cy) - H / 2 : vy > 0 ? ay : ay - H;
+  return { x: L / m.w, y: T / m.h, w: W / m.w, h: H / m.h };
+}
+(() => {
+  const cv = $('cropCv');
+  const pos = e => { const b = cv.getBoundingClientRect(); return [(e.clientX - b.left) / b.width, (e.clientY - b.top) / b.height, b]; };
+  cv.addEventListener('pointerdown', e => {
+    if (!cropS) return;
+    const [u, v, b] = pos(e), tu = 12 / b.width, tv = 12 / b.height, { r } = cropS;
+    const hd = cropHandles().find(([hx, hy]) => Math.abs(hx - u) < tu && Math.abs(hy - v) < tv);
+    cv.setPointerCapture(e.pointerId);
+    cropPush(); // cada arrastre es un paso
+    if (hd) cropS.drag = { kind: hd[2], r0: { ...r } };
+    else if (u >= r.x && u <= r.x + r.w && v >= r.y && v <= r.y + r.h) cropS.drag = { kind: 'move', u0: u, v0: v, r0: { ...r } };
+    else { cropS.r = { x: u, y: v, w: 0.001, h: 0.001 }; cropS.drag = { kind: 'rb', r0: { ...cropS.r }, fresh: true }; }
+  });
+  cv.addEventListener('pointermove', e => {
+    const c = cropS; if (!c?.drag) return;
+    const [u, v] = pos(e), g = c.drag, o = g.r0;
+    c.alt = e.altKey; c.shift = e.shiftKey;
+    if (g.kind === 'move') {
+      c.r.x = Math.max(0, Math.min(1 - o.w, o.x + u - g.u0)); c.r.y = Math.max(0, Math.min(1 - o.h, o.y + v - g.v0));
+    } else {
+      // Shift invierte el candado: trabado → libre; libre → trabado con la forma del comienzo
+      const rr = e.shiftKey ? (c.ratio ? null : (g.fresh ? 1 : cropAspect(o, c.m))) : c.ratio;
+      c.r = resizeCrop(g, u, v, e.altKey, rr);
+    }
+    drawCrop();
+  });
+  cv.addEventListener('pointerup', () => { if (cropS) { cropS.drag = null; if (cropS.mode === 'A') cropS.ratio = CROP_RATIO.A(cropS.m, cropS.r); drawCrop(); } });
+})();
+function closeCrop(ok, reset) {
+  const c = cropS; if (!c) return;
+  $('cropOv').classList.remove('show'); cropS = null;
+  if (!ok) return;
+  const r = reset ? null : c.r, full = !r || (r.w > 0.995 && r.h > 0.995);
+  const rd = v => Math.round(v * 10000) / 10000;
+  hist.run(() => { if (full) delete c.it.crop; else c.it.crop = { x: rd(r.x), y: rd(r.y), w: rd(r.w), h: rd(r.h) }; keepInside(c.it); });
+  toast(full ? 'Foto sin recorte.' : 'Foto recortada: se ve y se imprime solo esa parte.', 2500);
+}
+document.querySelectorAll('[data-ratio]').forEach(b => b.onclick = () => setCropMode(b.dataset.ratio));
+$('cropLock').onclick = toggleCropLock;
+$('cropOk').onclick = () => closeCrop(true);
+$('cropCancel').onclick = () => closeCrop(false);
+$('cropReset').onclick = () => closeCrop(true, true);
+// mientras se recorta, el teclado es del editor (no mueve fotos); Alt y Shift se muestran en vivo
+const cropKeys = (e, down) => {
+  if (!cropS) return;
+  e.stopImmediatePropagation();
+  if (e.key === 'Alt') { e.preventDefault(); cropS.alt = down; drawCrop(); }
+  if (e.key === 'Shift') { cropS.shift = down; drawCrop(); }
+  if (!down) return;
+  const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+  if (mod && k === 'z' && !e.shiftKey) { e.preventDefault(); return cropStep(true); }
+  if (mod && (k === 'y' || (k === 'z' && e.shiftKey))) { e.preventDefault(); return cropStep(false); }
+  if (e.key === 'Enter') { e.preventDefault(); closeCrop(true); }
+  else if (e.key === 'Escape') closeCrop(false);
+  else if (k === 'l' && !mod) toggleCropLock();
+};
+addEventListener('keydown', e => cropKeys(e, true), true);
+addEventListener('keyup', e => cropKeys(e, false), true);
+
+
+// --- proyecto .neo: guardar / abrir (con el explorador de Windows) ---
+let neoPath = null, photosDir = '';
+if (PROJ) photosDir = PROJ; else fetch('/api/root').then(r => r.json()).then(r => { photosDir = r.photos; }).catch(() => {});
+const baseName_ = p => p.split(/[\\/]/).pop();
+function syncProj() { $('projWhere').textContent = neoPath ? baseName_(neoPath) : 'Todavía no se guardó como .neo'; }
+async function saveNeo(as) {
+  $('projMenu').classList.remove('show');
+  let p = !as && neoPath;
+  if (!p) {
+    toast('Elegí dónde guardar el proyecto…');
+    try { p = await winDialog('save', { name: safeName(S.title) + '.neo', start: neoPath ? neoPath.replace(/[\\/][^\\/]*$/, '') : (prefs.lastNeoDir || '') }); }
+    catch (e) { return toast('No se pudo abrir el explorador: ' + e.message, 6000); }
+    if (!p) return toast('Guardado cancelado.', 1800);
+  }
+  const data = { formato: 'neo', version: 1, app: 'Kyro Neo Board', guardado: new Date().toISOString(), fotos: photosDir, estado: S };
+  const r = await fetch('/api/file?path=' + encodeURIComponent(p), { method: 'POST', body: JSON.stringify(data, null, 1) });
+  if (!r.ok) { if (!as && neoPath) { neoPath = null; return saveNeo(true); } return toast('No se pudo guardar: ' + ((await r.json()).error || ''), 6000); }
+  neoPath = p; prefs.lastNeoDir = p.replace(/[\\/][^\\/]*$/, ''); savePrefs(); syncProj();
+  toast(`Proyecto guardado: ${baseName_(p)}`, 3000);
+}
+async function openNeo() {
+  $('projMenu').classList.remove('show');
+  toast('Elegí el proyecto que querés abrir…');
+  let p;
+  try { p = await winDialog('open', { start: prefs.lastNeoDir || '' }); } catch (e) { return toast('No se pudo abrir el explorador: ' + e.message, 6000); }
+  if (!p) return toast('Cancelado.', 1500);
+  if (WELCOME) return openNeoFromWelcome(p);
+  return loadNeoFile(p);
+}
+async function loadNeoFile(p) {
+  let d;
+  try { d = await (await fetch('/api/file?path=' + encodeURIComponent(p))).json(); } catch { d = null; }
+  if (!d || d.formato !== 'neo' || !d.estado?.items) return toast('Ese archivo no es un proyecto .neo válido.', 5000);
+  const norm = x => String(x || '').replace(/[\\/]+$/, '').replace(/\//g, '\\').toLowerCase();
+  if (d.fotos && photosDir && norm(d.fotos) !== norm(photosDir)) return openNeoFromWelcome(p); // es de otra carpeta: abrir esa mesa
+  const have = new Set(images.keys()), missing = d.estado.items.filter(it => !have.has(it.file)).length;
+  hist.run(() => { S = normalize({ ...d.estado, migrated1m: d.estado.migrated1m ?? true, items: d.estado.items.filter(it => have.has(it.file)) }); });
+  neoPath = p; prefs.lastNeoDir = p.replace(/[\\/][^\\/]*$/, ''); savePrefs();
+  mesa.sel = null; clearLz(); syncUI(); syncProj(); dirty(); renderLayers(); mesa.fit();
+  toast(`Proyecto abierto: ${baseName_(p)}` + (missing ? ` · ${missing} foto${missing === 1 ? '' : 's'} no están en la carpeta del proyecto y quedaron afuera` : '') + ' · Ctrl+Z vuelve a lo anterior.', missing ? 7000 : 3500);
+}
+$('projBtn').onclick = () => { syncProj(); openMenu('projMenu'); };
+document.querySelectorAll('[data-proj]').forEach(b => b.onclick = () => (b.dataset.proj === 'home' ? (location.href = '/') : b.dataset.proj === 'open' ? openNeo() : saveNeo(b.dataset.proj === 'saveAs')));
+// Ctrl+S / Ctrl+Shift+S / Ctrl+O (en vez de los del navegador)
+addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  const k = e.key.toLowerCase();
+  if (k === 's') { e.preventDefault(); e.stopImmediatePropagation(); saveNeo(e.shiftKey); }
+  if (k === 'o') { e.preventDefault(); e.stopImmediatePropagation(); openNeo(); }
+}, true);
+
+// --- fotos nuevas: arrastrarlas desde el explorador / escritorio / Drive, o pegarlas (Ctrl+V) ---
+// Quedan donde se soltaron (o donde está el mouse). Si es adentro de un lienzo, son de ese lienzo.
+const FORMATS = 'JPG, PNG, WebP, TIFF, HEIC o RAW';
+const isImgFile = f => /^image\/(jpeg|png|webp|tiff|heic|heif|avif)$/.test(f.type) || /\.(jpe?g|png|webp|tiff?|heic|heif|avif|nef|nrw|cr2|cr3|crw|arw|srf|sr2|dng|raf|orf|rw2|pef|srw|3fr|erf|kdc|mos|mrw|iiq|x3f|rwl)$/i.test(f.name || '');
+async function importImages(sources, at) {
+  const n = sources.length, added = [];
+  toast(`Agregando ${n} foto${n === 1 ? '' : 's'}…`);
+  for (const [i, src] of sources.entries()) {
+    try {
+      const r = src.file
+        ? await fetch(`/api/upload?dir=${encodeURIComponent(DIR)}&name=${encodeURIComponent(src.file.name || 'pegada.png')}`, { method: 'POST', headers: { 'Content-Type': src.file.type || 'application/octet-stream' }, body: src.file })
+        : await fetch(`/api/import-url?dir=${encodeURIComponent(DIR)}&url=${encodeURIComponent(src.url)}`, { method: 'POST' });
+      const j = await r.json();
+      if (!r.ok) { toast('No se pudo agregar: ' + j.error, 6000); continue; }
+      const { bmp, meta: m } = await loadPrev(j.name);
+      images.set(j.name, bmp); meta.set(j.name, m); looks.set(j.name, analyze(bmp)); thumbs.set(j.name, makeThumb(bmp));
+      added.push({ id: uid(), file: j.name, x: Math.round(at.x + (i - (n - 1) / 2) * 115), y: Math.round(at.y), size: 'A6', rot: 0 }); // varias: en fila, centradas donde se soltaron
+    } catch (e) { toast('No se pudo agregar: ' + e.message, 6000); }
+  }
+  if (!added.length) return;
+  $('empty').classList.remove('show');
+  hist.run(() => { added.forEach(assignByPos); S.items.push(...added); });
+  fetch('/api/exif?dir=' + encodeURIComponent(DIR)).then(r => r.json()).then(x => { exif = x; }).catch(() => {});
+  mesa.selection = new Set(added); mesa.anchor = null; mesa.selChanged(); renderLayers();
+  const lz = lzOf(added[0]);
+  toast(`${added.length} foto${added.length === 1 ? '' : 's'} agregada${added.length === 1 ? '' : 's'} ${lz ? `a "${lz.name}"` : 'en Libre'} · se copiaron a "${PROJ ? projName : 'Fotos MDP'}".`, 3500);
+}
+// soltar archivos arriba del mat (y que el navegador no abra la foto si se suelta en otro lado)
+addEventListener('dragover', e => { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = e.target === $('mesa') ? 'copy' : 'none'; });
+addEventListener('drop', e => e.preventDefault());
+$('mesa').addEventListener('drop', e => {
+  e.preventDefault();
+  const r = $('mesa').getBoundingClientRect(), at = mesa.toWorld(e.clientX - r.left, e.clientY - r.top);
+  const files = [...(e.dataTransfer?.files || [])];
+  const imgs = files.filter(isImgFile);
+  if (imgs.length) { if (imgs.length < files.length) toast(`${files.length - imgs.length} archivo${files.length - imgs.length === 1 ? '' : 's'} no eran fotos (sirven ${FORMATS}).`, 3500); return importImages(imgs.map(file => ({ file })), at); }
+  if (files.length) return toast(`Eso no es una foto (sirven ${FORMATS}).`, 3000);
+  const url = (e.dataTransfer?.getData('text/uri-list') || e.dataTransfer?.getData('text/plain') || '').split('\n').map(x => x.trim()).find(x => /^https?:\/\//i.test(x));
+  if (url) importImages([{ url }], at); // arrastrada desde una página web
+});
+// Ctrl+V: si en el portapapeles hay una foto (copiada de internet, una captura…), se agrega donde está el mouse;
+// si no, se pegan las fotos copiadas de la mesa (como siempre).
+let pendingPaste = null;
+addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'v' || /INPUT|TEXTAREA/.test(e.target.tagName) || e.target.isContentEditable || cropS) return;
+  e.stopImmediatePropagation(); // sin preventDefault: así el navegador manda el contenido del portapapeles
+  const pp = pendingPaste = { inPlace: e.shiftKey, at: { ...mesa.mouse } };
+  setTimeout(() => { if (pendingPaste === pp) { pendingPaste = null; paste(pp.inPlace, pp.at); } }, 250);
+}, true);
+addEventListener('paste', e => {
+  if (/INPUT|TEXTAREA/.test(e.target.tagName) || e.target.isContentEditable) return;
+  e.preventDefault();
+  const pp = pendingPaste || { inPlace: false, at: { ...mesa.mouse } };
+  pendingPaste = null;
+  const imgs = [...(e.clipboardData?.items || [])].filter(i => i.kind === 'file' && /^image\//.test(i.type)).map(i => i.getAsFile()).filter(Boolean);
+  if (imgs.length) return importImages(imgs.map(file => ({ file })), pp.at);
+  const t = (e.clipboardData?.getData('text/plain') || '').trim();
+  if (!clip?.length && /^https?:\/\/\S+\.(jpe?g|png|webp)(\?\S*)?$/i.test(t)) return importImages([{ url: t }], pp.at);
+  paste(pp.inPlace, pp.at);
+});
+
+// --- lienzo MOSAICO: una sola foto partida en piezas (como la mesa del ojo) ---
+// lz = { kind: 'mosaico', src: { file, x, y, w, h } (dónde va la foto entera, en mm),
+//        mo: { mode: 'recto' | 'libre', chaos, count, sizes }, see (ver la foto debajo) }
+// Cada pieza es un item con mos = id del lienzo, size (formato A) y ang (giro).
+const MOS_SIZES = ['A7', 'A6', 'A5', 'A4'];
+const mosToLocal = (p, wx, wy) => { const dx = wx - p.x, dy = wy - p.y, c = Math.cos(p.ang || 0), s = Math.sin(p.ang || 0); return [dx * c + dy * s, -dx * s + dy * c]; };
+const mosShows = (p, wx, wy) => { const [w, h] = MOS_DIM[p.size], f = S.frame, [lx, ly] = mosToLocal(p, wx, wy); return Math.abs(lx) <= w / 2 - f && Math.abs(ly) <= h / 2 - f; };
+const mosCovers = (p, wx, wy) => { const [w, h] = MOS_DIM[p.size], [lx, ly] = mosToLocal(p, wx, wy); return Math.abs(lx) <= w / 2 && Math.abs(ly) <= h / 2; };
+function mosFits(p, R) {
+  const [w, h] = MOS_DIM[p.size], c = Math.cos(p.ang), s = Math.sin(p.ang);
+  return [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]].every(([lx, ly]) => {
+    const x = p.x + lx * c - ly * s, y = p.y + lx * s + ly * c;
+    return Math.abs(x - R.x) <= R.w / 2 + 0.5 && Math.abs(y - R.y) <= R.h / 2 + 0.5;
+  });
+}
+function mosGrid(R) {
+  const nx = 80, ny = Math.max(2, Math.round(nx * R.h / R.w)), pts = [];
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) pts.push({ x: R.x - R.w / 2 + (i + 0.5) * R.w / nx, y: R.y - R.h / 2 + (j + 0.5) * R.h / ny });
+  return pts;
+}
+// Reparte la foto: primero que se vea toda (salvo la franja del marco en el borde), después
+// completa la cantidad pedida, mezcla las capas y se asegura de que no quede mat a la vista.
+function generateMosaic(lz) {
+  const s = lz.src, mo = lz.mo, R = { x: s.x, y: s.y, w: s.w, h: s.h };
+  const sz = MOS_SIZES.filter(z => mo.sizes[z]).length ? MOS_SIZES.filter(z => mo.sizes[z]) : ['A6', 'A5'];
+  const rnd = Math.random, pick = a => a[Math.floor(rnd() * a.length)], DEG = Math.PI / 180, libre = mo.mode === 'libre', semi = mo.mode === 'semi', k = mo.chaos / 100;
+  const ang = () => (libre || semi) && rnd() * 100 < mo.chaos ? ((rnd() < 0.5 ? -1 : 1) * (10 + rnd() * 35) + (rnd() < 0.5 ? 0 : 90)) * DEG : (rnd() < 0.5 ? 0 : 90 * DEG);
+  const place = pt => {
+    for (let t = 0; t < 50; t++) {
+      const size = pick(sz), [w, h] = MOS_DIM[size], a = ang(), f = S.frame, spread = libre ? 0.9 + k * 0.5 : 0.75;
+      const ox = (rnd() - 0.5) * (w - 2 * f) * spread, oy = (rnd() - 0.5) * (h - 2 * f) * spread;
+      const p = { x: pt.x - (ox * Math.cos(a) - oy * Math.sin(a)), y: pt.y - (ox * Math.sin(a) + oy * Math.cos(a)), size, ang: a };
+      if (libre) { if (Math.abs(p.x - R.x) <= R.w / 2 + (w / 2) * k * 0.9 && Math.abs(p.y - R.y) <= R.h / 2 + (h / 2) * k * 0.9 && mosShows(p, pt.x, pt.y)) return p; }
+      else if (mosFits(p, R)) return p;
+    }
+    const size = pick(sz), a = libre ? ang() : (rnd() < 0.5 ? 0 : 90 * DEG);
+    if (libre) return { x: pt.x, y: pt.y, size, ang: a };
+    let [w, h] = MOS_DIM[size]; if (a) [w, h] = [h, w];
+    const cl = (v, c, lim) => lim <= 0 ? c : Math.max(c - lim, Math.min(c + lim, v));
+    return { x: cl(pt.x, R.x, R.w / 2 - w / 2), y: cl(pt.y, R.y, R.h / 2 - h / 2), size, ang: a };
+  };
+  const all = mosGrid(R), m = S.frame + 1, out = [];
+  if (semi) {
+    for (let n = 0; n < mo.count; n++) {
+      let p = null;
+      for (let t = 0; t < 80 && !p; t++) {
+        const q = pick(all), size = pick(sz), a = ang(), c = { x: q.x, y: q.y, size, ang: a };
+        if (mosFits(c, R)) p = c;
+      }
+      if (!p) { // si no entra torcida, derecha y apoyada adentro
+        const size = pick(sz), a = rnd() < 0.5 ? 0 : 90 * DEG; let [w, h] = MOS_DIM[size]; if (a) [w, h] = [h, w];
+        const q = pick(all), cl = (v, c0, lim) => lim <= 0 ? c0 : Math.max(c0 - lim, Math.min(c0 + lim, v));
+        p = { x: cl(q.x, R.x, R.w / 2 - w / 2), y: cl(q.y, R.y, R.h / 2 - h / 2), size, ang: a };
+      }
+      out.push(p);
+    }
+    return out; // no se fuerza a cubrir todo: pueden quedar pedazos de la foto sin pieza
+  }
+  let unc = all.filter(q => Math.abs(q.x - R.x) <= R.w / 2 - m && Math.abs(q.y - R.y) <= R.h / 2 - m);
+  while (unc.length && out.length < 300) { const p = place(pick(unc)); out.push(p); unc = unc.filter(q => !mosShows(p, q.x, q.y)); }
+  while (out.length < mo.count) out.push(place(pick(all)));
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  for (let t = 0; t < 60; t++) { const holes = all.filter(q => !out.some(p => mosCovers(p, q.x, q.y))); if (!holes.length) break; out.push(place(pick(holes))); }
+  return out;
+}
+// vuelve a repartir un mosaico (sus piezas viejas se reemplazan) y ajusta el lienzo a lo que ocupan
+function applyMosaic(lz) {
+  const pieces = generateMosaic(lz), r = v => Math.round(v * 10) / 10;
+  const items = pieces.map(p => ({ id: uid(), file: lz.src.file, mos: lz.id, lienzo: lz.id, x: r(p.x), y: r(p.y), size: p.size, ang: p.ang, rot: 0 })); // el giro exacto (0° y 90° quedan derechos de verdad)
+  S.items = S.items.filter(it => it.mos !== lz.id).concat(items);
+  fitMosaicShape(lz);
+  return items.length;
+}
+function fitMosaicShape(lz) { // el lienzo del mosaico abarca la foto y todas sus piezas
+  const s = lz.src, b = { x0: s.x - s.w / 2, x1: s.x + s.w / 2, y0: s.y - s.h / 2, y1: s.y + s.h / 2 };
+  for (const it of S.items) if (it.mos === lz.id) {
+    const [w, h] = MOS_DIM[it.size], [hw, hh] = extent(w, h, it.ang || 0);
+    b.x0 = Math.min(b.x0, it.x - hw); b.x1 = Math.max(b.x1, it.x + hw); b.y0 = Math.min(b.y0, it.y - hh); b.y1 = Math.max(b.y1, it.y + hh);
+  }
+  const p = 10, r = v => Math.round(v * 10) / 10;
+  lz.pts = [[r(b.x0 - p), r(b.y0 - p)], [r(b.x1 + p), r(b.y0 - p)], [r(b.x1 + p), r(b.y1 + p)], [r(b.x0 - p), r(b.y1 + p)]];
+}
+// crear un mosaico con una foto, ocupando el rectángulo R (la foto entra entera, con su proporción)
+function createMosaic(file, R, replaceItem) {
+  const m = meta.get(file) || { w: 3, h: 2 }, ar = m.w / m.h;
+  let w = R.w, h = R.w / ar; if (h > R.h) { h = R.h; w = R.h * ar; }
+  const n = S.lienzos.filter(l => l.kind === 'mosaico').length + 1;
+  const lz = { id: 'l' + Date.now().toString(36), name: `Mosaico ${n}`, kind: 'mosaico', pts: [], see: false,
+    src: { file, x: Math.round(R.x), y: Math.round(R.y), w: Math.round(w), h: Math.round(h) },
+    mo: { mode: 'recto', chaos: 55, count: 30, sizes: { A7: false, A6: true, A5: true, A4: true } } };
+  let n2 = 0;
+  hist.run(() => { S.lienzos.push(lz); if (replaceItem) S.items = S.items.filter(i => i !== replaceItem); n2 = applyMosaic(lz); });
+  selectLienzo(lz.id); openLz.add(lz.id); lastLz = lz.id; renderLayers();
+  toast(`"${lz.name}": la foto quedó partida en ${n2} piezas. Con el botón Mosaico cambiás Derecho / Libre, el caos y las piezas.`, 5500);
+}
+function mosaicFromPhoto(it) { // clic derecho → Partir en mosaico
+  const m = meta.get(it.file) || { w: 3, h: 2 }, W = 600;
+  createMosaic(it.file, { x: it.x, y: it.y, w: W, h: W * m.h / m.w }, it);
+}
+// el mosaico con el que se está trabajando: el seleccionado / activo, o el de las piezas seleccionadas
+function currentMosaic() {
+  const byId = id => S.lienzos.find(l => l.id === id && l.kind === 'mosaico');
+  for (const id of selLz) if (byId(id)) return byId(id);
+  if (active && byId(active)) return byId(active);
+  const p = mesa.selRefs().find(r => r.mos);
+  return p ? byId(p.mos) : null;
+}
+function syncMos() {
+  const lz = currentMosaic();
+  $('mosBtn').classList.toggle('dim', !lz);
+  if (!lz) return;
+  $('mosTitle').textContent = lz.name;
+  document.querySelectorAll('[data-mosgen]').forEach(b => b.classList.toggle('on', lz.mo.mode === b.dataset.mosgen));
+  $('mosChaos').value = lz.mo.chaos; $('mosChaosVal').textContent = lz.mo.chaos;
+  $('mosChaosField').style.opacity = lz.mo.mode === 'recto' ? .45 : 1;
+  $('mosW').value = Math.round(lz.src.w / 10); $('mosCount').value = lz.mo.count;
+  { const mt = meta.get(lz.src.file), dpi = mt ? Math.round(mt.w / (lz.src.w / 25.4)) : 0; $('mosDpi').textContent = dpi ? `${dpi} dpi${dpi < 200 ? ' · baja' : ''}` : '—'; $('mosDpi').style.color = dpi && dpi < 200 ? 'var(--stamp)' : ''; }
+  document.querySelectorAll('[data-mossize]').forEach(b => b.classList.toggle('on', !!lz.mo.sizes[b.dataset.mossize]));
+  $('mosOp').value = lz.op ?? 100; $('mosOpVal').textContent = (lz.op ?? 100) + ' %';
+}
+const mosDo = (fn, regen = true) => { // cambiar algo del mosaico (y volver a mezclar)
+  const lz = currentMosaic(); if (!lz) return;
+  hist.run(() => { const L = S.lienzos.find(l => l.id === lz.id); fn(L); if (regen) applyMosaic(L); });
+  syncMos(); renderLayers();
+};
+$('mosBtn').onclick = () => {
+  if (!currentMosaic()) return toast('Elegí un mosaico (tocá su etiqueta ✥), o hacé clic derecho en una foto → Partir en mosaico.', 4500);
+  syncMos(); openMenu('mosPanel');
+};
+document.querySelectorAll('[data-mosgen]').forEach(b => b.onclick = () => mosDo(L => { L.mo.mode = b.dataset.mosgen; }));
+$('mosChaos').oninput = e => { $('mosChaosVal').textContent = e.target.value; };
+$('mosChaos').onchange = e => mosDo(L => { L.mo.chaos = +e.target.value; if (L.mo.mode === 'recto') L.mo.mode = 'libre'; });
+$('mosCount').onchange = e => mosDo(L => { L.mo.count = Math.max(1, Math.min(300, Math.round(+e.target.value) || 1)); });
+$('mosW').onchange = e => mosDo(L => { const k = Math.max(10, Math.min(500, +e.target.value || 60)) * 10 / L.src.w; L.src.w = Math.round(L.src.w * k); L.src.h = Math.round(L.src.h * k); });
+document.querySelectorAll('[data-mossize]').forEach(b => b.onclick = () => mosDo(L => { L.mo.sizes[b.dataset.mossize] = !L.mo.sizes[b.dataset.mossize]; }));
+$('mosMix').onclick = () => mosDo(() => {});
+// opacidad de las piezas (1–100 %): en vivo; se guarda al soltar
+$('mosOp').oninput = e => { const lz = currentMosaic(); if (!lz) return; lz.op = +e.target.value; $('mosOpVal').textContent = lz.op + ' %'; dirty(); };
+$('mosOp').onchange = () => saveAll();
+
+
+// --- tiradores para agrandar / achicar un lienzo (como en Photoshop) ---
+// Arrastrar: libre · Shift: mantiene la proporción · Alt: desde el centro · Alt+Shift: las dos.
+// Un mosaico siempre mantiene la proporción (para no deformar la foto) y al soltar se vuelve a repartir.
+const HANDLE_CURSOR = { lt: 'nwse-resize', rb: 'nwse-resize', rt: 'nesw-resize', lb: 'nesw-resize', t: 'ns-resize', b: 'ns-resize', l: 'ew-resize', r: 'ew-resize' };
+function handleAt(w) { const r = 9 / mesa.cam.z; return lzHandles.find(h => Math.abs(h.x - w.x) <= r && Math.abs(h.y - w.y) <= r); }
+function drawLzHandles(ctx, z) {
+  lzHandles = [];
+  const ids = [...selLz].filter(id => id !== '__none'), lz = ids.length === 1 && S.lienzos.find(l => l.id === ids[0] && !l.hidden);
+  if (!lz) return;
+  const b = lzBox(lz), cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, k = 8 / z;
+  ctx.setLineDash([5 / z, 4 / z]); ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 1.2 / z; ctx.strokeRect(b.x0, b.y0, b.x1 - b.x0, b.y1 - b.y0); ctx.setLineDash([]);
+  for (const [kind, x, y] of [['lt', b.x0, b.y0], ['rt', b.x1, b.y0], ['rb', b.x1, b.y1], ['lb', b.x0, b.y1], ['t', cx, b.y0], ['r', b.x1, cy], ['b', cx, b.y1], ['l', b.x0, cy]]) {
+    lzHandles.push({ id: lz.id, kind, x, y });
+    ctx.fillStyle = '#fffaf0'; ctx.fillRect(x - k / 2, y - k / 2, k, k);
+    ctx.strokeStyle = '#16130f'; ctx.lineWidth = 1.4 / z; ctx.strokeRect(x - k / 2, y - k / 2, k, k);
+  }
+}
+function grabLzHandle(w, e) {
+  const hd = handleAt(w); if (!hd) return null;
+  const lz = S.lienzos.find(l => l.id === hd.id); if (!lz) return null;
+  hist.begin();
+  const b0 = lzBox(lz), pts0 = lz.pts.map(p => [...p]), src0 = lz.src ? { ...lz.src } : null, mosaic = lz.kind === 'mosaico';
+  const pcs0 = S.items.filter(i => i.mos === lz.id).map(i => [i, i.x, i.y]);
+  const W0 = b0.x1 - b0.x0, H0 = b0.y1 - b0.y0, cx = (b0.x0 + b0.x1) / 2, cy = (b0.y0 + b0.y1) / 2;
+  let changed = false;
+  return {
+    move(mm, ev) {
+      const k = hd.kind, alt = ev.altKey, keep = ev.shiftKey || mosaic, MIN = 20;
+      const hx = k.includes('l') ? -1 : k.includes('r') ? 1 : 0, vy = k.includes('t') ? -1 : k.includes('b') ? 1 : 0;
+      const ax = alt ? cx : hx < 0 ? b0.x1 : b0.x0, ay = alt ? cy : vy < 0 ? b0.y1 : b0.y0, f = alt ? 2 : 1;
+      let W = hx ? Math.max(MIN, (mm.x - ax) * hx * f) : W0, H = vy ? Math.max(MIN, (mm.y - ay) * vy * f) : H0;
+      if (keep) { const r = W0 / H0; if (hx && vy) { if (W / H > r) H = W / r; else W = H * r; } else if (hx) H = W / r; else W = H * r; }
+      const x0 = !hx || alt ? (hx ? ax : cx) - W / 2 : hx > 0 ? ax : ax - W;
+      const y0 = !vy || alt ? (vy ? ay : cy) - H / 2 : vy > 0 ? ay : ay - H;
+      const sx = W / W0, sy = H / H0, mx = x => x0 + (x - b0.x0) * sx, my = y => y0 + (y - b0.y0) * sy, r1 = v => Math.round(v * 10) / 10;
+      lz.pts = pts0.map(([x, y]) => [r1(mx(x)), r1(my(y))]);
+      if (src0) { lz.src.x = mx(src0.x); lz.src.y = my(src0.y); lz.src.w = src0.w * sx; lz.src.h = src0.h * sy; for (const [it, x, y] of pcs0) { it.x = r1(mx(x)); it.y = r1(my(y)); } }
+      changed = true; cache = null; mesa.invalidate();
+    },
+    end() {
+      if (!changed) return hist.cancel();
+      if (lz.src) { lz.src.w = Math.round(lz.src.w); lz.src.h = Math.round(lz.src.h); lz.src.x = Math.round(lz.src.x); lz.src.y = Math.round(lz.src.y); }
+      if (mosaic) applyMosaic(lz); // el mosaico se vuelve a repartir para cubrir el tamaño nuevo
+      hist.commit(); renderLayers();
+      if (mosaic) toast(`"${lz.name}": foto de ${Math.round(lz.src.w / 10)} × ${Math.round(lz.src.h / 10)} cm, vuelta a repartir.`, 3000);
+    },
+  };
+}
+
+// --- arranque ---
+// --- bienvenida (Nueva mesa.bat) ---
+async function showWelcome() {
+  document.title = 'Kyro Neo Board';
+  $('welcome').classList.add('show');
+  setTimeout(() => $('wName').select(), 50);
+  let list = [];
+  try { list = await (await fetch('/api/projects')).json(); } catch {}
+  $('wRecent').innerHTML = list.length ? '<div class="w-head">Proyectos recientes</div>' + list.slice(0, 8).map(p =>
+    `<a class="w-proj" href="/?p=${encodeURIComponent(p.path)}"><b>${esc(p.name)}</b><small>${esc(p.path)}</small><span>${p.photos} foto${p.photos === 1 ? '' : 's'}</span></a>`).join('') : '';
+}
+async function newProject() {
+  const name = $('wName').value.trim() || 'Proyecto nuevo';
+  toast('Elegí dónde crear la carpeta del proyecto…');
+  let parent;
+  try { parent = await winDialog('folder', { start: prefs.lastProjDir || '' }); } catch (e) { return toast('No se pudo abrir el explorador: ' + e.message, 6000); }
+  if (!parent) return toast('Cancelado.', 1500);
+  prefs.lastProjDir = parent; savePrefs();
+  const r = await fetch(`/api/new-project?parent=${encodeURIComponent(parent)}&name=${encodeURIComponent(name)}`, { method: 'POST' }), j = await r.json();
+  if (!r.ok) return toast('No se pudo crear la carpeta: ' + j.error, 6000);
+  location.href = '/?p=' + encodeURIComponent(j.path) + '&creado=1';
+}
+async function openNeoFromWelcome(p) { // abre la mesa del proyecto de ese .neo y lo carga
+  const r = await fetch('/api/adopt?neo=' + encodeURIComponent(p), { method: 'POST' }), j = await r.json();
+  if (!r.ok) return toast('No se pudo abrir: ' + j.error, 6000);
+  location.href = (j.root ? '/?' : '/?p=' + encodeURIComponent(j.fotos) + '&') + 'neo=' + encodeURIComponent(p);
+}
+$('wNew').onclick = newProject;
+$('wName').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') newProject(); });
+$('wOpenNeo').onclick = () => openNeo();
+// mesa vacía: el + abre el explorador para elegir fotos
+$('emptyAdd').onclick = () => $('filePick').click();
+$('filePick').onchange = e => { const fl = [...e.target.files].filter(isImgFile); e.target.value = ''; if (fl.length) importImages(fl.map(file => ({ file })), { x: mesa.cam.x, y: mesa.cam.y }); };
+
+serverIsCurrent().then(ok => { if (!ok) toast(SERVER_OLD_MSG, 30000); }); // ¿quedó un servidor viejo corriendo?
+(async () => {
+  syncUI();
+  if (WELCOME && QS.get('neo')) return openNeoFromWelcome(QS.get('neo')); // se abrió un .neo
+  if (WELCOME) return showWelcome();
+  if (PROJ) { fetch('/api/projects?path=' + encodeURIComponent(PROJ), { method: 'POST' }).catch(() => {}); S.title = projName; syncUI(); }
+  const files = await listDir(DIR);
+  if (!files.length) {
+    $('emptyTitle').textContent = QS.has('creado') ? `Listo: se creó la carpeta "${projName}"` : 'Arrastrá tus fotos acá para empezar';
+    $('emptyText').textContent = QS.has('creado') ? 'Ahora arrastrá tus fotos acá (o tocá el +). Se van a guardar en esa carpeta.' : `O tocá el + para elegirlas. Se guardan en "${PROJ ? projName : 'Fotos MDP'}".`;
+    $('empty').classList.add('show'); $('stats').textContent = '0 fotos';
+    if (PROJ) { const saved = await loadState(STATE); if (saved?.title) { S.title = saved.title; syncUI(); } }
+    placeLayers(); renderLayers(); return;
+  }
+  let done = 0;
+  const queue = [...files];
+  await Promise.all(Array.from({ length: 4 }, async () => {
+    while (queue.length) {
+      const f = queue.shift();
+      try { const { bmp, meta: m } = await loadPrev(f); images.set(f, bmp); meta.set(f, m); looks.set(f, analyze(bmp)); thumbs.set(f, makeThumb(bmp)); }
+      catch { console.warn('No se pudo leer', f); }
+      toast(`Cargando fotos ${++done}/${files.length}…`);
+      mesa.invalidate();
+    }
+  }));
+  toast('');
+  const [saved, savedHist, ex] = await Promise.all([loadState(STATE), loadState(HIST), fetch('/api/exif?dir=' + encodeURIComponent(DIR)).then(r => r.json()).catch(() => ({}))]);
+  exif = ex;
+  // (un proyecto guardado sin la marca "migrated1m" todavía tiene el lienzo de 1 m viejo: se convierte)
+  if (saved?.items) S = normalize({ ...S, migrated1m: false, ...saved, items: saved.items.filter(it => files.includes(it.file)) });
+  hist.restore(savedHist);
+  const known = new Set([...S.items.map(it => it.file), ...S.hidden]); // las sacadas a propósito no vuelven
+  const fresh = files.filter(f => !known.has(f)).map(file => ({ id: uid(), file, x: 0, y: 0, size: 'A6', rot: 0 }));
+  if (fresh.length) {
+    cache = null;
+    let bottom = -Infinity;
+    for (const p of list()) bottom = Math.max(bottom, p.y + p.h / 2);
+    S.items.push(...fresh);
+    cache = null;
+    flow(fresh, bottom === -Infinity ? 0 : bottom + 10 - (S.base?.y || 0), true, false);
+    saveAll();
+  }
+  syncUI(); dirty(); placeLayers(); renderLayers(); mesa.fit();
+  if (QS.get('neo')) loadNeoFile(QS.get('neo'));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+{
+  "name": "kyro-neo-board",
+  "productName": "Kyro Neo Board",
+  "version": "1.2.0",
+  "description": "Mesa para armar fotos en tamaños A3 a A7 e imprimirlas en hojas A3 o A4 para recortar.",
+  "author": "Kyro",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "selftest": "electron . --selftest",
+    "dist": "electron-builder --win nsis --x64",
+    "dist:win7": "electron-builder --win nsis --x64 --config.electronVersion=22.3.27 --config.nsis.artifactName=Kyro-Neo-Board-Setup-${version}-Windows7.exe --config.directories.output=dist-win7"
+  },
+  "devDependencies": {
+    "electron": "33.4.11",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.kyro.neoboard",
+    "productName": "Kyro Neo Board",
+    "copyright": "Kyro",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "web/**/*",
+      "build/icon.png",
+      "package.json",
+      "!web/_app/proyectos.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Kyro Neo Board",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerLanguages": [
+        "es_ES"
+      ],
+      "language": "3082",
+      "artifactName": "Kyro-Neo-Board-Setup-${version}.exe"
+    },
+    "fileAssociations": [
+      {
+        "ext": "neo",
+        "name": "Proyecto Kyro Neo Board",
+        "description": "Proyecto de Kyro Neo Board",
+        "icon": "build/icon.ico",
+        "role": "Editor"
+      }
+    ],
+    "asarUnpack": [
+      "node_modules/sharp/**",
+      "node_modules/@img/**",
+      "node_modules/libheif-js/**"
+    ]
+  },
+  "dependencies": {
+    "heic-decode": "^2.1.0",
+    "libraw-wasm": "^1.6.0",
+    "sharp": "^0.35.5"
+  }
+}
