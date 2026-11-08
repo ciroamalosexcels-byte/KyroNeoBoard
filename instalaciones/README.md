@@ -4,8 +4,8 @@ Bajá el instalador que corresponde a tu Windows y abrilo.
 
 | Windows | Descarga |
 |---|---|
-| **10 y 11** | [Kyro-Neo-Board-Setup-1.3.0.exe](https://github.com/ciroamalosexcels-byte/KyroNeoBoard/releases/download/v1.3.0/Kyro-Neo-Board-Setup-1.3.0.exe) (91 MB) |
-| **7 y 8.1** | [Kyro-Neo-Board-Setup-1.3.0-Windows7.exe](https://github.com/ciroamalosexcels-byte/KyroNeoBoard/releases/download/v1.3.0/Kyro-Neo-Board-Setup-1.3.0-Windows7.exe) (78 MB) |
+| **10 y 11** | [Kyro-Neo-Board-Setup-1.4.0.exe](https://github.com/ciroamalosexcels-byte/KyroNeoBoard/releases/download/v1.4.0/Kyro-Neo-Board-Setup-1.4.0.exe) (91 MB) |
+| **7 y 8.1** | [Kyro-Neo-Board-Setup-1.4.0-Windows7.exe](https://github.com/ciroamalosexcels-byte/KyroNeoBoard/releases/download/v1.4.0/Kyro-Neo-Board-Setup-1.4.0-Windows7.exe) (78 MB) |
 
 Todas las versiones: [página de descargas](https://github.com/ciroamalosexcels-byte/KyroNeoBoard/releases).
 
@@ -16,6 +16,16 @@ Todas las versiones: [página de descargas](https://github.com/ciroamalosexcels-
 - Para actualizar, instalá la versión nueva encima: tus proyectos y tu configuración se conservan.
 
 ## Novedades
+
+**1.4.0**
+- **Sonidos** hechos con frecuencias, sin archivos: bienvenida, sala abierta, entra o sale alguien, mensaje, lienzo nuevo, exportación lista y sala cerrada. Se apagan en Configuración, donde también se pueden probar.
+- **Tutorial** la primera vez que se abre una mesa. Se puede saltar, y vuelve a estar en Atajos → Ver tutorial.
+- **Carteles de ayuda** más cortos. Se pueden apagar en Configuración.
+- **Panel En equipo** rehecho:
+  - El QR se abre en una ventana aparte.
+  - El chat ocupa el panel, con la caja de escribir fija abajo y siempre mostrando el último mensaje.
+  - "Cerrar sala" quedó arriba y discreto.
+- **Ajustado al manual de marca:** botones y paneles con los colores de la paleta, Archivo como única fuente y círculos con sombra dura en vez de contorno.
 
 **1.3.0**
 - **En equipo (red local):** varios trabajan en la misma mesa al mismo tiempo, desde otra compu, el celu o una tablet.

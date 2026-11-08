@@ -1,7 +1,7 @@
 {
   "name": "kyro-neo-board",
   "productName": "Kyro Neo Board",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Mesa para armar fotos en tamaños A3 a A7 e imprimirlas en hojas A3 o A4 para recortar.",
   "author": "Kyro",
   "license": "UNLICENSED",

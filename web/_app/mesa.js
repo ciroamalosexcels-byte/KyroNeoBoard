@@ -47,7 +47,7 @@ export async function loadPreview(url, maxPx = 2000) {
 }
 // Configuración (Configuración ⚙): vista previa, tope al exportar, pasos de Ctrl+Z, trackpad
 export const PREVIEW_PX = { liviana: 1200, normal: 2000, alta: 3000 };
-export const cfg = () => ({ preview: prefs.preview || 'normal', cap: prefs.capMP || 40, steps: prefs.undoSteps || 40, pointer: prefs.pointer || 'auto' });
+export const cfg = () => ({ preview: prefs.preview || 'normal', cap: prefs.capMP || 40, steps: prefs.undoSteps || 40, pointer: prefs.pointer || 'auto', tips: prefs.tips || 'on', sound: prefs.sound || 'on' });
 
 // ---------- Preferencias de vista (compartidas por las dos mesas) ----------
 const PREFS_KEY = 'ojo-mdp-prefs';
@@ -449,7 +449,7 @@ export function mountIcons(root = document) {
   document.body.append(tip);
   document.addEventListener('mouseover', e => {
     const el = e.target.closest?.('[data-tip]');
-    if (!el) { tip.classList.remove('show'); return; }
+    if (!el || prefs.tips === 'off') { tip.classList.remove('show'); return; }
     const [title, ...rest] = el.dataset.tip.split('|');
     tip.innerHTML = `<b>${title}</b>` + rest.map(r => `<span>${r}</span>`).join('');
     tip.classList.add('show');
@@ -1124,7 +1124,7 @@ export class Mesa {
       ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.lineTo(this.mouse.x, this.mouse.y);
       ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 2.5 / z; ctx.lineJoin = ctx.lineCap = 'round'; ctx.stroke();
       if (pts.length >= 2) { ctx.setLineDash([5 / z, 5 / z]); ctx.beginPath(); ctx.moveTo(this.mouse.x, this.mouse.y); ctx.lineTo(...pts[0]); ctx.strokeStyle = 'rgba(255,225,77,.55)'; ctx.lineWidth = 1.5 / z; ctx.stroke(); ctx.setLineDash([]); }
-      pts.forEach(([x, y], i) => { ctx.beginPath(); ctx.arc(x, y, (i ? 4 : 7) / z, 0, 7); ctx.fillStyle = i ? '#ffe14d' : '#fffaf0'; ctx.fill(); ctx.strokeStyle = '#16130f'; ctx.lineWidth = 1.5 / z; ctx.stroke(); });
+      pts.forEach(([x, y], i) => { const r = (i ? 4 : 7) / z, o = 2 / z; ctx.beginPath(); ctx.arc(x + o, y + o, r, 0, 7); ctx.fillStyle = '#16130f'; ctx.fill(); ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = i ? '#ffe14d' : '#fffaf0'; ctx.fill(); });
     }
     if (dr?.mode === 'box') {
       const x = Math.min(dr.x0, dr.x1), y = Math.min(dr.y0, dr.y1), w = Math.abs(dr.x1 - dr.x0), h = Math.abs(dr.y1 - dr.y0);

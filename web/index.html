@@ -12,14 +12,14 @@
 <canvas id="mesa"></canvas>
 
 <div class="bar">
-  <div class="logo"><span class="title" id="title" data-tip="Nombre de la exportación|Doble clic para cambiarlo|Es el nombre de la carpeta y de los archivos al exportar">Proyecto nuevo</span><small>Kyro Neo Board</small></div>
+  <div class="logo"><span class="title" id="title" data-tip="Nombre del proyecto|Doble clic: renombrar">Proyecto nuevo</span><small>Kyro Neo Board</small></div>
   <div class="group center">
-    <button class="ib on" data-tool="move" data-icon="move" data-tip="Seleccionar · V|Clic: elegir una · arrastrar: mover (Alt: sin imán)|Arrastrar en el mat vacío: recuadro para elegir varias|Ctrl + clic: sumar o sacar · Shift + clic: todas las del medio|Ctrl+A: todas · Esc: ninguna"></button>
-    <button class="ib" data-tool="pan" data-icon="hand" data-tip="Mano · H|Arrastrá para mover la vista|Mantené apretado Espacio: es la mano mientras la apretás, y al soltar vuelve tu herramienta|También: ruedita apretada o arrastrar con clic derecho"></button>
-    <button class="ib" data-tool="size" data-icon="size" data-tip="Tamaño · S|Clic en una foto: A7 → A6 → A5 → A4|Shift + clic: al revés|A3 y los demás: clic derecho en la foto"></button>
-    <button class="ib" data-tool="rotate" data-icon="rotate" data-tip="Rotar · R|Arrastrá sobre una foto para girarla libre|Shift: de a 90°|Clic derecho → Rotar 90° a la izquierda / derecha"></button>
+    <button class="ib on" data-tool="move" data-icon="move" data-tip="Seleccionar · V|Ctrl + clic: sumar · Shift + clic: rango|Ctrl+A: todas · Esc: ninguna"></button>
+    <button class="ib" data-tool="pan" data-icon="hand" data-tip="Mano · H|También: Espacio, ruedita o clic derecho"></button>
+    <button class="ib" data-tool="size" data-icon="size" data-tip="Tamaño · S|Clic: A7 → A4 · Shift + clic: al revés"></button>
+    <button class="ib" data-tool="rotate" data-icon="rotate" data-tip="Rotar · R|Shift: de a 90°"></button>
     <div class="drop">
-      <button class="ib" data-tool="draw" id="drawBtn" data-tip="Lienzo nuevo · D|Clic: dibujar con la forma elegida|Clic derecho: rectángulo, círculo, pluma o mano alzada|Si hay fotos seleccionadas, entran esas"></button>
+      <button class="ib" data-tool="draw" id="drawBtn" data-tip="Lienzo · D|Clic derecho: elegir forma"></button>
       <div class="menu" id="drawMenu">
         <div class="menu-title">Forma del lienzo</div>
         <button data-shape="rect" data-icon="shapeRect"><span>Rectángulo<small>Arrastrá de esquina a esquina · Shift: cuadrado</small></span></button>
@@ -29,37 +29,37 @@
         <button data-shape="free" data-icon="shapeFree"><span>Mano alzada<small>Dibujá con el mouse o la tableta</small></span></button>
       </div>
     </div>
-    <button class="ib" data-tool="zoom" data-icon="lupa" data-tip="Lupa · Z|Clic: acercar · clic derecho (o Alt+clic): alejar|Siempre: ruedita del mouse, + y −"></button>
-    <button class="ib" id="magnetBtn" data-icon="magnet" data-tip="Imán · I|Al arrastrar, se pega a bordes y centros de otras fotos y de los lienzos|Una línea roja muestra con qué quedó alineada|Alt mientras arrastrás: mover libre"></button>
+    <button class="ib" data-tool="zoom" data-icon="lupa" data-tip="Lupa · Z|Alt + clic: alejar"></button>
+    <button class="ib" id="magnetBtn" data-icon="magnet" data-tip="Imán · I|Alt al arrastrar: sin imán"></button>
     <span class="sep"></span>
-    <button class="ib" id="fit" data-icon="fit" data-tip="Ver todo · F|Encuadra el lienzo y todas las fotos"></button>
+    <button class="ib" id="fit" data-icon="fit" data-tip="Ver todo · F"></button>
     <span class="sep"></span>
-    <button class="ib" id="undo" data-icon="undo" data-tip="Deshacer · Ctrl+Z|Queda guardado aunque cierres"></button>
-    <button class="ib" id="redo" data-icon="redo" data-tip="Rehacer · Ctrl+Y|También Ctrl+Shift+Z"></button>
+    <button class="ib" id="undo" data-icon="undo" data-tip="Deshacer · Ctrl+Z"></button>
+    <button class="ib" id="redo" data-icon="redo" data-tip="Rehacer · Ctrl+Y"></button>
     <span class="sep"></span>
     <div class="drop">
-      <button class="ib" id="sortBtn" data-icon="filter" data-tip="Acomodar por…|Color, fecha, tamaño, luz, orientación o cámara|Tocar dos veces la misma opción invierte el orden"></button>
+      <button class="ib" id="sortBtn" data-icon="filter" data-tip="Ordenar por|Dos veces: al revés"></button>
       <div class="menu" id="sortMenu">
         <div class="menu-title">Acomodar por</div>
         <button data-sort="color" data-icon="color"><span>Color<small>Como un arcoíris · las grises aparte</small></span><span class="dir"></span></button>
         <button class="co-toggle" id="coToggle" data-icon="chev"><span>Opciones de color</span></button>
         <div class="copts" id="coBody">
           <div class="co-row"><span>Mira el color</span><div class="seg">
-            <button data-co="mode" data-v="dom" data-tip="Dominante|El tono que más hay en la foto">Dominante</button>
-            <button data-co="mode" data-v="avg" data-tip="Promedio|La mezcla de todos los colores de la foto">Promedio</button></div></div>
+            <button data-co="mode" data-v="dom" data-tip="Dominante|El tono que más aparece">Dominante</button>
+            <button data-co="mode" data-v="avg" data-tip="Promedio|La mezcla de todos los tonos">Promedio</button></div></div>
           <div class="co-row col"><span>El arcoíris empieza en</span><div class="chips" id="coStart"></div></div>
           <div class="co-row col"><span>Disposición</span><div class="seg">
-            <button data-co="layout" data-v="flow" data-tip="Seguido|Una atrás de otra, en filas">Seguido</button>
-            <button data-co="layout" data-v="zigzag" data-tip="Zigzag|Una fila va y la siguiente vuelve: el color no salta">Zigzag</button>
-            <button data-co="layout" data-v="groups" data-tip="Fila por color|Cada familia (rojos, naranjas…) arranca su fila">Fila por color</button></div></div>
+            <button data-co="layout" data-v="flow" data-tip="Seguido|En filas">Seguido</button>
+            <button data-co="layout" data-v="zigzag" data-tip="Zigzag|Una fila va, la otra vuelve">Zigzag</button>
+            <button data-co="layout" data-v="groups" data-tip="Fila por color|Una fila por familia">Fila por color</button></div></div>
           <div class="co-row col"><span>Dentro de cada color</span><div class="seg">
-            <button data-co="inner" data-v="light" data-tip="Por luz|De la más clara a la más oscura">Claras primero</button>
-            <button data-co="inner" data-v="sat" data-tip="Por intensidad|Las de color más fuerte primero">Más intensas</button>
-            <button data-co="inner" data-v="none" data-tip="Arcoíris puro|Solo por tono, sin agrupar">Solo tono</button></div></div>
+            <button data-co="inner" data-v="light" data-tip="Por luz|De clara a oscura">Claras primero</button>
+            <button data-co="inner" data-v="sat" data-tip="Por intensidad|Las más saturadas primero">Más intensas</button>
+            <button data-co="inner" data-v="none" data-tip="Solo tono|Sin agrupar">Solo tono</button></div></div>
           <div class="co-row"><span>Grises y B/N</span><div class="seg">
             <button data-co="grays" data-v="end">Al final</button>
             <button data-co="grays" data-v="start">Al principio</button></div></div>
-          <label class="co-row col" data-tip="Qué cuenta como gris|Si la foto tiene menos color que esto, va con las grises">
+          <label class="co-row col" data-tip="Umbral de gris">
             <span>Es gris si tiene menos de <b id="coGrayVal"></b> de color</span><input type="range" id="coGray" min="1" max="40" step="1"></label>
         </div>
         <button data-sort="date" data-icon="date"><span>Fecha<small>De la más vieja a la más nueva</small></span><span class="dir"></span></button>
@@ -74,69 +74,69 @@
       </div>
     </div>
     <div class="drop">
-      <button class="ib" id="colorBtn" data-icon="wheel" data-tip="Seleccionar por color|Elegí un color en la rueda y estirá el umbral|Se seleccionan las fotos que tienen ese color"></button>
+      <button class="ib" id="colorBtn" data-icon="wheel" data-tip="Seleccionar por color"></button>
       <div class="menu cpanel" id="colorPanel">
         <div class="menu-title">Seleccionar por color</div>
         <svg id="wheel" viewBox="0 0 220 220" width="220" height="220" aria-label="Rueda de color"></svg>
         <div class="crow"><span>Umbral</span><b id="cwVal">±30°</b></div>
-        <label class="crow" data-tip="Presencia|Cuánto de la foto tiene que ser de ese color">Presencia <input type="range" id="cPres" min="5" max="80" step="5"><b id="cPresVal">20%</b></label>
+        <label class="crow" data-tip="Presencia|Cuánto de la foto tiene ese color">Presencia <input type="range" id="cPres" min="5" max="80" step="5"><b id="cPresVal">20%</b></label>
         <div class="crow"><b id="cCount" style="text-align:left">0 fotos</b><button class="mbtn" id="cDone">Listo</button></div>
       </div>
     </div>
     <div class="drop">
-      <button class="ib dim" id="alignBtn" data-icon="alignHC" data-tip="Alinear|Entre sí: 2 o más fotos|Contra un lienzo: seleccionalo también (Ctrl+clic en su etiqueta ✥)|Alt+H centrar en columna · Alt+V centrar en fila · Alt+A/D/W/S bordes"></button>
+      <button class="ib dim" id="alignBtn" data-icon="alignHC" data-tip="Alinear|Contra un lienzo: Ctrl + clic en su etiqueta"></button>
       <div class="menu" id="alignMenu">
         <div class="co-row" style="padding:.3rem .6rem 0"><span>Referencia</span><b id="alignRef" style="font-weight:800"></b></div>
         <div class="lz-empty" id="alignHint" style="padding:.2rem .6rem .35rem">Para alinear contra un lienzo: Ctrl+clic en su etiqueta ✥ (o en su capa) para sumarlo a la selección.</div>
         <div class="menu-title">Horizontal</div>
         <div class="align-grid">
           <button data-align="left" data-icon="alignLeft" data-tip="Bordes izquierdos · Alt+A"><small>Izquierda</small></button>
-          <button data-align="hc" data-icon="alignHC" data-tip="Centrar en columna · Alt+H|Todas con el mismo centro horizontal"><small>Centro</small></button>
+          <button data-align="hc" data-icon="alignHC" data-tip="Centrar en columna · Alt+H"><small>Centro</small></button>
           <button data-align="right" data-icon="alignRight" data-tip="Bordes derechos · Alt+D"><small>Derecha</small></button>
         </div>
         <div class="menu-title">Vertical</div>
         <div class="align-grid">
           <button data-align="top" data-icon="alignTop" data-tip="Bordes de arriba · Alt+W"><small>Arriba</small></button>
-          <button data-align="vc" data-icon="alignVC" data-tip="Centrar en fila · Alt+V|Todas con el mismo centro vertical"><small>Medio</small></button>
+          <button data-align="vc" data-icon="alignVC" data-tip="Centrar en fila · Alt+V"><small>Medio</small></button>
           <button data-align="bottom" data-icon="alignBottom" data-tip="Bordes de abajo · Alt+S"><small>Abajo</small></button>
         </div>
         <div class="menu-title">Repartir parejo</div>
         <div class="align-grid two">
-          <button data-align="distH" data-icon="distH" data-tip="Repartir en horizontal|El mismo espacio entre cada una · 3 o más fotos"><small>Horizontal</small></button>
-          <button data-align="distV" data-icon="distV" data-tip="Repartir en vertical|El mismo espacio entre cada una · 3 o más fotos"><small>Vertical</small></button>
+          <button data-align="distH" data-icon="distH" data-tip="Repartir en horizontal|3 o más fotos"><small>Horizontal</small></button>
+          <button data-align="distV" data-icon="distV" data-tip="Repartir en vertical|3 o más fotos"><small>Vertical</small></button>
         </div>
       </div>
     </div>
     <div class="drop">
-      <button class="ib dim" id="mosBtn" data-icon="mosaic" data-tip="Mosaico|Una foto partida en piezas, como el ojo|Para crear uno: clic derecho en una foto → Partir en mosaico"></button>
+      <button class="ib dim" id="mosBtn" data-icon="mosaic" data-tip="Mosaico|Clic derecho en una foto → Partir en mosaico"></button>
       <div class="menu eye-panel" id="mosPanel">
         <div class="menu-title" id="mosTitle">Mosaico</div>
         <div class="co-row col"><div class="seg">
-          <button data-mosgen="recto" data-tip="Derecho|Piezas derechas o acostadas, adentro de la foto">Derecho</button>
-          <button data-mosgen="semi" data-tip="Semilibre|Ángulos al azar, siempre adentro de la foto|No se fuerza a cubrir todo: pueden quedar huecos">Semilibre</button>
-          <button data-mosgen="libre" data-tip="Libre|En diagonal y saliéndose de la foto">Libre</button></div></div>
-        <label class="co-row col" id="mosChaosField" data-tip="Caos (Semilibre y Libre)|Más caos: más piezas torcidas (y en Libre, más desparramadas)|Al soltar, se vuelve a mezclar"><span>Caos <b id="mosChaosVal"></b></span><input type="range" id="mosChaos" min="0" max="100" step="5"></label>
-        <div class="co-row" data-tip="Resolución|Píxeles de la foto por pulgada al ancho elegido|Menos de 200 dpi: puede verse pixelada"><span>Resolución</span><b id="mosDpi"></b></div>
+          <button data-mosgen="recto" data-tip="Derecho|Piezas derechas, dentro de la foto">Derecho</button>
+          <button data-mosgen="semi" data-tip="Semilibre|Ángulos al azar, dentro de la foto">Semilibre</button>
+          <button data-mosgen="libre" data-tip="Libre|En diagonal, fuera de la foto">Libre</button></div></div>
+        <label class="co-row col" id="mosChaosField" data-tip="Caos|Más alto: más piezas torcidas"><span>Caos <b id="mosChaosVal"></b></span><input type="range" id="mosChaos" min="0" max="100" step="5"></label>
+        <div class="co-row" data-tip="Resolución|Menos de 200 dpi: puede pixelarse"><span>Resolución</span><b id="mosDpi"></b></div>
         <label class="co-row"><span>Ancho de la foto</span><span><input type="number" id="mosW" min="10" max="500" step="5" class="eye-num"> cm</span></label>
         <label class="co-row"><span>Piezas</span><input type="number" id="mosCount" min="1" max="300" step="1" class="eye-num"></label>
         <div class="co-row"><span>Tamaños</span><div class="seg">
           <button data-mossize="A4">A4</button><button data-mossize="A5">A5</button><button data-mossize="A6">A6</button><button data-mossize="A7">A7</button></div></div>
-        <label class="co-row col" data-tip="Ver la foto|Opacidad de las piezas: más bajo, más se ve la foto entera debajo|100 % = normal · solo en pantalla, no se imprime"><span>Ver la foto · piezas al <b id="mosOpVal"></b></span><input type="range" id="mosOp" min="1" max="100" step="1"></label>
+        <label class="co-row col" data-tip="Opacidad de las piezas|Solo en pantalla"><span>Ver la foto · piezas al <b id="mosOpVal"></b></span><input type="range" id="mosOp" min="1" max="100" step="1"></label>
         <button class="mbtn eye-mix" id="mosMix" data-icon="dice">Mezclar de nuevo</button>
       </div>
     </div>
-    <button class="ib dim" id="flow" data-icon="rows" data-tip="Acomodar en filas|Con 2 o más fotos seleccionadas, o un lienzo con fotos seleccionado|Ordena las fotos del lienzo adentro de su forma · sin lienzo activo: ordena las fotos sueltas en filas"></button>
+    <button class="ib dim" id="flow" data-icon="rows" data-tip="Acomodar en filas|2 o más fotos, o un lienzo"></button>
     <div class="fold" id="frameFold">
-      <button class="ib" id="frameBtn" data-icon="frame" data-tip="Marco blanco|Tocá para abrir o cerrar el ajuste|Doble clic en el número para escribirlo"></button>
-      <div class="fold-body"><input type="range" id="frame" min="0" max="20" step="0.5" aria-label="Marco en milímetros"><span class="fold-val" id="frameVal" data-tip="Marco en mm|Doble clic para escribir el número"></span></div>
+      <button class="ib" id="frameBtn" data-icon="frame" data-tip="Marco blanco"></button>
+      <div class="fold-body"><input type="range" id="frame" min="0" max="20" step="0.5" aria-label="Marco en milímetros"><span class="fold-val" id="frameVal" data-tip="Marco en mm|Doble clic: escribir"></span></div>
     </div>
     <span class="sep"></span>
-    <button class="ib" id="night" data-tip="Fondo del mat|Tocá para cambiar: verde → negro → gris con puntitos"></button>
+    <button class="ib" id="night" data-tip="Fondo|Verde · negro · puntos"></button>
   </div>
   <div class="spacer"></div>
-  <button class="round" id="collabBtn" data-icon="users" data-tip="En equipo|Trabajar de a varios en esta mesa, en tu misma red|Desde otra compu, el celu o una tablet, con un enlace o un QR"></button>
+  <button class="round" id="collabBtn" data-icon="users" data-tip="En equipo|Sala en la red local"></button>
   <div class="drop proj-drop">
-    <button class="round" id="projBtn" data-icon="folder" data-tip="Proyecto|Guardar o abrir el proyecto (.neo)|Ctrl+S guardar · Ctrl+O abrir"></button>
+    <button class="round" id="projBtn" data-icon="folder" data-tip="Proyecto|Ctrl+S guardar · Ctrl+O abrir"></button>
     <div class="menu" id="projMenu">
       <div class="menu-title">Proyecto</div>
       <button data-proj="save" data-icon="save"><span>Guardar proyecto<small id="projWhere">Todavía no se guardó como .neo</small></span><span class="kbd">Ctrl+S</span></button>
@@ -145,9 +145,9 @@
       <button data-proj="home" data-icon="folder"><span>Inicio<small>Proyecto nuevo o uno reciente</small></span></button>
     </div>
   </div>
-  <button class="stamp icon" id="export" data-icon="print" aria-label="Exportar" data-tip="Exportar|Primero muestra la vista previa de cómo sale|Hojas A3 en JPG 300 dpi + PDF + mapa de armado|Van a una carpeta con el nombre del título"></button>
-  <button class="round" id="cfgBtn" data-icon="gear" data-tip="Configuración|Calidad de la vista previa, resolución al exportar|Pasos de Ctrl+Z, mouse o trackpad"></button>
-  <button class="round" id="helpBtn" data-icon="help" data-tip="Atajos|Muestra u oculta la lista de atajos"></button>
+  <button class="stamp icon" id="export" data-icon="print" aria-label="Exportar" data-tip="Exportar|JPG 300 dpi + PDF"></button>
+  <button class="round" id="cfgBtn" data-icon="gear" data-tip="Configuración"></button>
+  <button class="round" id="helpBtn" data-icon="help" data-tip="Atajos y tutorial"></button>
 </div>
 
 <div class="stats floating" id="stats">Cargando…</div>
@@ -155,26 +155,30 @@
 <div class="cb-gate" id="cbGate"><div class="cb-box"></div></div>
 
 <aside class="layers" id="layers">
-  <div class="layers-head"><span>Lienzos</span><button class="lz-btn" id="newLz" data-icon="plus" data-tip="Lienzo nuevo · D|Dibujá la forma a mano alzada|Si hay fotos seleccionadas, entran esas|Si no, queda vacío y arrastrás las fotos adentro"></button></div>
+  <div class="layers-head"><span>Lienzos</span><button class="lz-btn" id="newLz" data-icon="plus" data-tip="Lienzo nuevo · D|Entran las fotos seleccionadas"></button></div>
   <div id="lzList" style="display:flex;flex-direction:column;gap:9px"></div>
 </aside>
 
 <div class="help-bg" id="cfgBg"></div>
 <div class="help cfg" id="cfg" role="dialog" aria-label="Configuración">
   <div class="help-head"><h4>Configuración</h4><button class="round" id="cfgClose" data-icon="x" aria-label="Cerrar" data-tip="Cerrar · Esc"></button></div>
-  <div class="cfg-row"><div><b>Vista previa en la mesa</b><small>Solo cambia cómo se ve en pantalla. Al exportar se usa siempre la foto completa.</small></div>
+  <div class="cfg-row"><div><b>Vista previa en la mesa</b><small>Solo en pantalla. Al exportar se usa la foto completa.</small></div>
     <div class="seg" data-cfg="preview"><button data-v="liviana">Liviana</button><button data-v="normal">Normal</button><button data-v="alta">Alta</button></div></div>
-  <div class="cfg-row"><div><b>Resolución máxima al exportar</b><small>Una hoja A3 a 300 dpi usa 17 MP: con 20 MP alcanza y exporta más rápido. Las fotos más grandes se achican solo al exportar; las originales no se tocan.</small></div>
+  <div class="cfg-row"><div><b>Resolución máxima al exportar</b><small>Una A3 a 300 dpi usa 17 MP: con 20 alcanza y es más rápido.</small></div>
     <div class="seg" data-cfg="cap"><button data-v="20">20 MP</button><button data-v="40">40 MP</button></div></div>
-  <div class="cfg-row"><div><b>Pasos para deshacer (Ctrl+Z)</b><small>Cuántos cambios se pueden volver atrás. Menos pasos: el proyecto pesa menos.</small></div>
+  <div class="cfg-row"><div><b>Pasos para deshacer (Ctrl+Z)</b><small>Cambios que se pueden deshacer.</small></div>
     <div class="seg" data-cfg="steps"><button data-v="20">20</button><button data-v="40">40</button></div></div>
-  <div class="cfg-row"><div><b>Mouse o trackpad</b><small>Trackpad: dos dedos mueven la vista y pellizcar hace zoom. Mouse: la ruedita hace zoom. Automático: se da cuenta solo.</small></div>
+  <div class="cfg-row"><div><b>Mouse o trackpad</b><small>Trackpad: dos dedos mueven y pellizcar hace zoom.</small></div>
     <div class="seg" data-cfg="pointer"><button data-v="auto">Automático</button><button data-v="mouse">Mouse</button><button data-v="trackpad">Trackpad</button></div></div>
-  <div class="help-foot">Fotos que se pueden usar: JPG, PNG, WebP, TIFF, HEIC (iPhone) y RAW de cámara (NEF, CR2, CR3, ARW, DNG, RAF, ORF, RW2, PEF…). Del RAW se usa la foto de tamaño completo que guarda la cámara adentro.</div>
+  <div class="cfg-row"><div><b>Carteles de ayuda</b><small>Al pasar el mouse por los botones.</small></div>
+    <div class="seg" data-cfg="tips"><button data-v="on">Sí</button><button data-v="off">No</button></div></div>
+  <div class="cfg-row"><div><b>Sonidos</b><small id="sndList"></small></div>
+    <div class="seg" data-cfg="sound"><button data-v="on">Sí</button><button data-v="off">No</button></div></div>
+  <div class="help-foot">Formatos: JPG, PNG, WebP, TIFF, HEIC y RAW (NEF, CR2, CR3, ARW, DNG, RAF, ORF, RW2, PEF…). Del RAW se usa la foto completa que guarda la cámara.</div>
 </div>
 <div class="help-bg" id="helpBg"></div>
 <div class="help" id="help" role="dialog" aria-label="Atajos">
-  <div class="help-head"><h4>Atajos</h4><button class="round" id="helpClose" data-icon="x" aria-label="Cerrar" data-tip="Cerrar · Esc"></button></div>
+  <div class="help-head"><h4>Atajos</h4><div class="help-acts"><button class="pill" id="tutBtn">Ver tutorial</button><button class="round" id="helpClose" data-icon="x" aria-label="Cerrar" data-tip="Cerrar · Esc"></button></div></div>
   <div class="help-cols">
     <section><h5>Herramientas</h5>
       <p><b>V · H · S · R · D</b><span>seleccionar · mano · tamaño · rotar · lienzo</span></p>
@@ -251,12 +255,12 @@
 <div class="overlay" id="cropOv">
   <div class="overlay-head">
     <div class="logo">Recortar <small id="cropName"></small></div>
-    <button class="crop-lock" id="cropLock" data-tip="Mantener proporción · L|Prendido: el recorte no se deforma|Shift mientras arrastrás: lo invierte por un momento|Alt: agrandar o achicar desde el centro"></button>
+    <button class="crop-lock" id="cropLock" data-tip="Mantener proporción · L|Shift: invertir · Alt: desde el centro"></button>
     <div class="crop-seg" id="cropSeg">
-      <button data-ratio="free" data-tip="Libre|Cualquier proporción">Libre</button>
-      <button data-ratio="orig" data-tip="Original|La proporción de la foto">Original</button>
-      <button data-ratio="A" data-tip="Hoja A|La proporción de A3, A4, A5 y A6: sin blanco de más">Hoja A</button>
-      <button data-ratio="sq" data-tip="Cuadrado|1 × 1">Cuadrado</button>
+      <button data-ratio="free" data-tip="Libre">Libre</button>
+      <button data-ratio="orig" data-tip="Original|Proporción de la foto">Original</button>
+      <button data-ratio="A" data-tip="Hoja A|Proporción A3–A6">Hoja A</button>
+      <button data-ratio="sq" data-tip="Cuadrado">Cuadrado</button>
     </div>
     <div class="spacer"></div>
     <button class="pill" id="cropReset">Sin recorte</button>
@@ -268,16 +272,16 @@
 </div>
 <div class="toast" id="toast"></div>
 <div class="empty" id="empty"><div class="empty-card">
-  <button class="w-plus" id="emptyAdd" data-icon="plus" aria-label="Agregar fotos" data-tip="Agregar fotos|Elegilas con el explorador"></button>
-  <b id="emptyTitle">Arrastrá tus fotos acá para empezar</b>
-  <span id="emptyText">O tocá el + para elegirlas.</span>
+  <button class="w-plus" id="emptyAdd" data-icon="plus" aria-label="Agregar fotos" data-tip="Agregar fotos"></button>
+  <b id="emptyTitle">Arrastrá fotos acá</b>
+  <span id="emptyText">o tocá el +</span>
 </div></div>
 <input type="file" id="filePick" accept="image/jpeg,image/png,image/webp,image/tiff,image/heic,image/heif,.heic,.heif,.tif,.tiff,.avif,.nef,.nrw,.cr2,.cr3,.crw,.arw,.srf,.sr2,.dng,.raf,.orf,.rw2,.pef,.srw,.3fr,.erf,.kdc,.mos,.mrw,.iiq,.x3f,.rwl" multiple hidden>
 <div class="welcome" id="welcome">
   <div class="welcome-card">
     <div class="logo">Kyro Neo Board <small>proyecto nuevo</small></div>
     <h1>Empezá un proyecto</h1>
-    <p>Elegís dónde crear la carpeta del proyecto. Ahí se van a guardar las fotos que arrastres o elijas, el armado y el historial.</p>
+    <p>Una carpeta para las fotos y el armado.</p>
     <label class="w-name">Nombre <input id="wName" value="Proyecto nuevo" maxlength="60"></label>
     <button class="w-new" id="wNew"><span class="w-plus" data-icon="plus"></span><span><b>Apretá acá para iniciar un nuevo proyecto</b><small>Se abre el explorador para elegir dónde crear la carpeta</small></span></button>
     <div class="w-row">
@@ -291,6 +295,8 @@
 <script type="module">
 import { A, SIZES, LIENZO, Mesa, History, prefs, savePrefs, mountIcons, icon, extent, clampXY, isOutside, spansInBand, pieceInPoly, pointInPoly, listDir, loadState, saveState, loadPreview, loadImage, fileUrl, cfg, PREVIEW_PX, packSheets, exportSheets, exportMap, showSheets, safeName, inlineEdit, matMode, cycleMat, MAT_NAME, MAT_ICON, winDialog, revealFolder, serverIsCurrent, SERVER_OLD_MSG } from './_app/mesa.js';
 import { createCollab } from './_app/collab.js';
+import { play, SOUNDS } from './_app/sound.js';
+import { startTutorial } from './_app/tutorial.js';
 
 const CYCLE = ['A7', 'A6', 'A5', 'A4']; // tamaños del clic con la herramienta Tamaño (A3 desde el menú)
 // ?p=<carpeta>: proyecto en su propia carpeta (fotos, armado e historial adentro) · ?nuevo: bienvenida
@@ -325,7 +331,7 @@ function toggleLz(id) {
   selLz = new Set(selLz); selLz.has(id) ? selLz.delete(id) : selLz.add(id);
   if (selLz.has(id)) { active = id; lastLz = id; }
   renderLayers(); updateStats(); mesa.invalidate();
-  if (selLz.has(id)) toast(`"${lz.name}" seleccionado junto con las fotos: Alinear las acomoda contra él.`, 3000);
+  if (selLz.has(id)) toast(`"${lz.name}" seleccionado.`, 1500);
 }
 let clip = null;                              // portapapeles: copias de fotos
 
@@ -341,7 +347,7 @@ function alignSel(kind) {
   const lzSel = S.lienzos.filter(l => selLz.has(l.id));
   const toLz = lzSel.length > 0;
   if (!refs.length) return toast('Seleccioná una o más fotos para alinear.', 2500);
-  if (!toLz && refs.length < 2) return toast('Para alinear esta foto con su lienzo, seleccioná también el lienzo: Ctrl+clic en su etiqueta ✥ (o en su capa del panel).', 5000);
+  if (!toLz && refs.length < 2) return toast('Falta seleccionar el lienzo (Ctrl + clic en su etiqueta).', 3000);
   const dist = kind === 'distH' || kind === 'distV';
   const byRef = new Map(list().map(p => [p.ref, p]));
   // cada foto va contra su lienzo si está seleccionado; si hay un solo lienzo seleccionado, todas contra ese
@@ -396,7 +402,7 @@ function copySel(cut) {
   if (!refs.length) return toast('Primero seleccioná fotos.', 2500);
   clip = refs.map(it => ({ file: it.file, x: it.x, y: it.y, size: it.size, rot: it.rot, ...(it.crop ? { crop: { ...it.crop } } : {}), ...(it.mos ? { mos: it.mos } : {}), ...(it.ang ? { ang: it.ang } : {}) }));
   if (cut) { removeSel(true); toast(`${refs.length} foto${refs.length === 1 ? '' : 's'} cortada${refs.length === 1 ? '' : 's'}. Ctrl+V para pegar.`, 3000); }
-  else toast(`${refs.length} foto${refs.length === 1 ? '' : 's'} copiada${refs.length === 1 ? '' : 's'}. Ctrl+V pega donde está el mouse · Ctrl+Shift+V en el mismo lugar.`, 3500);
+  else toast(`${refs.length} foto${refs.length === 1 ? '' : 's'} copiada${refs.length === 1 ? '' : 's'}.`, 1500);
 }
 function paste(inPlace, m) {
   if (!clip?.length) return toast('No hay nada copiado. Seleccioná fotos y apretá Ctrl+C.', 3000);
@@ -672,13 +678,12 @@ function sector(a1, a2, r1, r2) {
   const L = a2 - a1 > 180 ? 1 : 0, [ax, ay] = polar(a1, r2), [bx, by] = polar(a2, r2), [cx, cy] = polar(a2, r1), [dx, dy] = polar(a1, r1);
   return `M${ax} ${ay}A${r2} ${r2} 0 ${L} 1 ${bx} ${by}L${cx} ${cy}A${r1} ${r1} 0 ${L} 0 ${dx} ${dy}Z`;
 }
-const knob = (x, y, r, fill, sw) => `<circle cx="${x + 2.5}" cy="${y + 2.5}" r="${r}" fill="${INK}"/><circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${INK}" stroke-width="${sw}"/>`;
+const knob = (x, y, r, fill, sw) => `<circle cx="${x + 2.5}" cy="${y + 2.5}" r="${r}" fill="${INK}"/><circle cx="${x}" cy="${y}" r="${r}" fill="${fill}"/>`; // sombra dura, sin contorno
 function drawWheel() {
   const svg = $('wheel');
   if (!svg.dataset.ring) {
     let ring = `<path d="${sector(0, 360, R1, R2)}" fill="${INK}" fill-rule="evenodd" transform="translate(4 4)"/>`;
     for (let i = 0; i < 24; i++) ring += `<path d="${sector(i * 15, i * 15 + 15, R1, R2)}" fill="hsl(${i * 15 + 7.5},78%,56%)" stroke="${PAPER}" stroke-width="2.2" stroke-linejoin="round"/>`;
-    ring += `<path d="${sector(0, 360, R1, R2)}" fill="none" stroke="${INK}" stroke-width="2.5" fill-rule="evenodd"/>`;
     svg.innerHTML = `<g>${ring}</g><g id="wDyn" style="pointer-events:none"></g>`;
     svg.dataset.ring = '1';
   }
@@ -687,9 +692,8 @@ function drawWheel() {
   const n = mesa.selection.size;
   svg.querySelector('#wDyn').innerHTML =
     (w < 180 ? `<path d="${sector(h + w, h - w + 360, R1, R2)}" fill="${PAPER}" fill-opacity=".74"/>` : '') +
-    `<path d="${sector(h - w, h + w, R1 - 1, R2 + 1)}" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round" fill-rule="evenodd"/>` +
-    `<circle cx="114" cy="114" r="${R1 - 12}" fill="${INK}"/><circle cx="110" cy="110" r="${R1 - 12}" fill="${PAPER}" stroke="${INK}" stroke-width="2.5"/>` +
-    `<rect x="92" y="79" width="36" height="13" rx="6.5" fill="${sel}" stroke="${INK}" stroke-width="2"/>` +
+    `<circle cx="114" cy="114" r="${R1 - 12}" fill="${INK}"/><circle cx="110" cy="110" r="${R1 - 12}" fill="${PAPER}"/>` +
+    `<rect x="94" y="81" width="36" height="13" rx="6.5" fill="${INK}"/><rect x="92" y="79" width="36" height="13" rx="6.5" fill="${sel}"/>` +
     `<text x="110" y="119" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="800" font-size="27" fill="${INK}">${n}</text>` +
     `<text x="110" y="135" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="700" font-size="11" fill="#5f5849">${n === 1 ? 'foto' : 'fotos'}</text>` +
     (w < 180 ? knob(ex1, ey1, 7.5, PAPER, 2.5) + knob(ex2, ey2, 7.5, PAPER, 2.5) : '') +
@@ -791,7 +795,7 @@ const SORTS = {
 };
 const cmp = (a, b) => { for (let i = 0; i < a.length; i++) { if (a[i] < b[i]) return -1; if (a[i] > b[i]) return 1; } return 0; };
 function sortBy(name, keep = false) {
-  if (scope().mosaic) { $('sortMenu').classList.remove('show'); return toast('Es un mosaico: se reacomoda con el botón Mosaico → Mezclar.', 3500); } // keep: reacomodar con las opciones nuevas, sin invertir ni cerrar el menú
+  if (scope().mosaic) { $('sortMenu').classList.remove('show'); return toast('Es un mosaico: se mezcla desde Mosaico.', 2500); } // keep: reacomodar con las opciones nuevas, sin invertir ni cerrar el menú
   const dir = keep ? (S.sort?.dir || 1) : S.sort?.key === name ? -S.sort.dir : 1;
   const { lz, items } = scope();
   if (!items.length) { $('sortMenu').classList.remove('show'); return toast(lz ? `"${lz.name}" no tiene fotos todavía: arrastralas adentro.` : 'No hay fotos sueltas para acomodar. Tocá un lienzo en el panel para acomodar el suyo.', 4500); }
@@ -914,7 +918,7 @@ const mesa = new Mesa($('mesa'), {
     if ((prefs.drawMode || 'rect') === 'mosaic') { // mosaico: la foto seleccionada, partida adentro del rectángulo
       const ph = mesa.selRefs().find(r => !r.mos);
       mesa.setTool('move');
-      if (!ph) return toast('Para el mosaico, primero seleccioná la foto que querés partir y después dibujá el rectángulo.', 5000);
+      if (!ph) return toast('Primero seleccioná una foto.', 2500);
       const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
       return createMosaic(ph.file, { x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 }, ph);
     }
@@ -922,7 +926,7 @@ const mesa = new Mesa($('mesa'), {
     const chosen = mesa.selRefs();
     let left = 0;
     hist.run(() => {
-      S.lienzos.push(lz); cache = null;
+      S.lienzos.push(lz); cache = null; play('lienzo');
       if (chosen.length) left = flow(chosen, null, false, lz);
     });
     active = lz.id; lastLz = lz.id; openLz.add(lz.id);
@@ -1057,7 +1061,7 @@ function canFlow() {
   const lzs = S.lienzos.filter(l => selLz.has(l.id) && l.kind !== 'mosaico' && !l.hidden);
   return fotos.length >= 2 || lzs.some(l => S.items.some(i => i.lienzo === l.id && !i.mos));
 }
-$('flow').onclick = () => { if (!canFlow()) return toast('Para acomodar en filas, seleccioná 2 o más fotos, o un lienzo con fotos (tocá su etiqueta ✥).', 4000); if (scope().mosaic) return toast('Es un mosaico: se reacomoda con el botón Mosaico → Mezclar.', 3500); const { lz, items } = scope(); if (!items.length) return toast('No hay fotos para acomodar.', 2000); hist.run(() => flow(items, null, false, lz)); toast(`${items.length} foto${items.length === 1 ? '' : 's'} acomodada${items.length === 1 ? '' : 's'}.`, 2000); };
+$('flow').onclick = () => { if (!canFlow()) return toast('Seleccioná 2 o más fotos, o un lienzo.', 2500); if (scope().mosaic) return toast('Es un mosaico: se reacomoda con el botón Mosaico → Mezclar.', 3500); const { lz, items } = scope(); if (!items.length) return toast('No hay fotos para acomodar.', 2000); hist.run(() => flow(items, null, false, lz)); toast(`${items.length} foto${items.length === 1 ? '' : 's'} acomodada${items.length === 1 ? '' : 's'}.`, 2000); };
 
 // --- panel de lienzos ---
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -1077,7 +1081,7 @@ function renderLayers() {
         <span class="lz-swatch${g.lz ? '' : ' base'}"></span>
         <span class="lz-name" title="${esc(g.name)}${g.lz ? ' · doble clic para renombrar · Supr para borrar' : ''}">${esc(g.name)}</span>
         <span class="lz-count${bad ? ' bad' : ''}" title="${bad ? bad + ' afuera' : ''}">${rows.length}</span>
-        <button class="lz-btn lz-eye" data-act="eye" data-tip="${hid ? 'Mostrar' : 'Ocultar'}|${hid ? 'Vuelve a verse en el mat y en la impresión' : 'No se ve, no se puede tocar y no se imprime'}">${icon(hid ? 'eyeOff' : 'eye')}</button>
+        <button class="lz-btn lz-eye" data-act="eye" data-tip="${hid ? 'Mostrar' : 'Ocultar|No se imprime'}">${icon(hid ? 'eyeOff' : 'eye')}</button>
       </div>
       <div class="lz-items">${rows.length ? rows.map(p => `<div class="lz-row${mesa.selection.has(p.ref) ? ' sel' : ''}${p.out ? ' out' : ''}" data-id="${p.ref.id}" title="${esc(p.ref.file)}">
           <img src="${thumbs.get(p.ref.file) || ''}" alt=""><b>${p.label}</b><span class="nm">${esc(p.ref.file.replace(/\.[^.]+$/, ''))} · ${p.size}</span></div>`).join('')
@@ -1194,7 +1198,7 @@ document.querySelectorAll('[data-shape]').forEach(b => b.onclick = () => {
   prefs.drawMode = b.dataset.shape; savePrefs(); syncDraw();
   $('drawMenu').classList.remove('show');
   mesa.setTool('draw');
-  toast(`Lienzo nuevo con ${SHAPE_NAME[b.dataset.shape]}.` + (b.dataset.shape === 'pen' ? ' Clic por cada punta; cerrás tocando la primera, con doble clic o Enter.' : ''), 3500);
+  toast(`Lienzo: ${SHAPE_NAME[b.dataset.shape]}.` + (b.dataset.shape === 'pen' ? ' Doble clic o Enter para cerrar.' : ''), 2500);
 });
 syncDraw();
 $('colorBtn').onclick = () => { if (openMenu('colorPanel')) drawWheel(); }; // abrir no selecciona nada
@@ -1247,8 +1251,10 @@ const syncMat = () => { $('night').innerHTML = icon(MAT_ICON[matMode()]); $('nig
 $('night').onclick = () => { const m = cycleMat(); syncMat(); mesa.invalidate(); toast(`Fondo ${MAT_NAME[m]}.`, 1500); };
 syncMat();
 // configuración: ventana en el medio, como los atajos
-const CFG_KEY = { preview: 'preview', cap: 'capMP', steps: 'undoSteps', pointer: 'pointer' };
+const CFG_KEY = { preview: 'preview', cap: 'capMP', steps: 'undoSteps', pointer: 'pointer', tips: 'tips', sound: 'sound' };
 function syncCfg() { const c = cfg(); document.querySelectorAll('[data-cfg]').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(c[g.dataset.cfg]) === b.dataset.v))); }
+$('sndList').innerHTML = Object.entries(SOUNDS).map(([k, x]) => `<button class="snd-try" data-snd="${k}">${x.name}</button>`).join('');
+$('sndList').onclick = e => { const b = e.target.closest('[data-snd]'); if (b) play(b.dataset.snd, true); };
 const setCfg = open => { $('cfg').classList.toggle('show', open); $('cfgBg').classList.toggle('show', open); $('cfgBtn').classList.toggle('on', open); if (open) syncCfg(); };
 $('cfgBtn').onclick = () => setCfg(!$('cfg').classList.contains('show'));
 $('cfgClose').onclick = () => setCfg(false);
@@ -1259,7 +1265,8 @@ document.querySelectorAll('[data-cfg] button').forEach(b => b.onclick = async ()
   if (cfg()[k] === v) return;
   prefs[CFG_KEY[k]] = v; savePrefs(); syncCfg();
   if (k === 'steps') { hist.setMax(v); toast(`Ctrl+Z: hasta ${v} pasos.`, 2000); }
-  if (k === 'pointer') toast({ auto: 'Mouse o trackpad: automático.', mouse: 'Ruedita del mouse: zoom.', trackpad: 'Trackpad: dos dedos mueven, pellizcar hace zoom.' }[v], 2500);
+  if (k === 'sound' && v === 'on') play('hola');
+  if (k === 'pointer') toast({ auto: 'Mouse o trackpad: automático.', mouse: 'Mouse.', trackpad: 'Trackpad.' }[v], 1500);
   if (k === 'cap') { // cambia la resolución que se va a exportar (y el aviso de baja resolución)
     for (const m of meta.values()) { const f = Math.min(1, Math.sqrt(v * 1e6 / ((m.ow || m.w) * (m.oh || m.h)))); m.w = Math.round((m.ow || m.w) * f); m.h = Math.round((m.oh || m.h) * f); }
     cache = null; mesa.invalidate(); toast(`Al exportar: hasta ${v} MP por foto.`, 2000);
@@ -1282,6 +1289,8 @@ async function reloadPreviews() { // vuelve a cargar las fotos de la mesa con la
 const setHelp = open => { $('help').classList.toggle('show', open); $('helpBg').classList.toggle('show', open); $('helpBtn').classList.toggle('on', open); };
 $('helpBtn').onclick = () => setHelp(!$('help').classList.contains('show'));
 $('helpClose').onclick = () => setHelp(false);
+const tutorialDone = () => { prefs.tutorialDone = true; savePrefs(); };
+$('tutBtn').onclick = () => { setHelp(false); startTutorial({ onEnd: tutorialDone }); };
 $('helpBg').onclick = () => setHelp(false);
 addEventListener('keydown', e => { if (e.key === 'Escape' && $('help').classList.contains('show')) { setHelp(false); e.stopImmediatePropagation(); } }, true);
 // --- vista previa (también antes de exportar) ---
@@ -1349,7 +1358,7 @@ async function doExport() {
     await exportSheets({ sheets, dir, title, loadFull: k => loadImage(fullUrl(k)), onProgress: (i, n) => toast(`Exportando hoja ${i} de ${n}…`) });
     toast('Armando el mapa de armado…');
     await exportMap({ pieces: L, dir, name: `${name} - mapa de armado.jpg`, imgs: images, bounds: bounds(), shapes: S.lienzos.filter(l => !l.hidden && printSel?.has(l.id)) });
-    toast(`Listo: ${sheets.length} hojas ${sheetFmt()} en JPG 300 dpi + PDF + mapa en "${dir}".`, 8000);
+    toast(`Listo: ${sheets.length} hojas ${sheetFmt()} en "${dir}".`, 6000); play('listo');
     revealFolder(dir); // se abre la carpeta en el explorador
   } catch (err) {
     toast('Error al exportar: ' + err.message, 10000);
@@ -1656,7 +1665,7 @@ async function loadNeoFile(p) {
   hist.run(() => { S = normalize({ ...d.estado, migrated1m: d.estado.migrated1m ?? true, items: d.estado.items.filter(it => have.has(it.file)) }); });
   neoPath = p; prefs.lastNeoDir = p.replace(/[\\/][^\\/]*$/, ''); savePrefs();
   mesa.sel = null; clearLz(); syncUI(); syncProj(); dirty(); renderLayers(); mesa.fit();
-  toast(`Proyecto abierto: ${baseName_(p)}` + (missing ? ` · ${missing} foto${missing === 1 ? '' : 's'} no están en la carpeta del proyecto y quedaron afuera` : '') + ' · Ctrl+Z vuelve a lo anterior.', missing ? 7000 : 3500);
+  toast(`Proyecto abierto: ${baseName_(p)}` + (missing ? ` · ${missing} foto${missing === 1 ? '' : 's'} no están en la carpeta` : ''), missing ? 5000 : 2000);
 }
 $('projBtn').onclick = () => { syncProj(); openMenu('projMenu'); };
 document.querySelectorAll('[data-proj]').forEach(b => b.onclick = () => (b.dataset.proj === 'home' ? (location.href = '/') : b.dataset.proj === 'open' ? openNeo() : saveNeo(b.dataset.proj === 'saveAs')));
@@ -1693,7 +1702,7 @@ async function importImages(sources, at) {
   fetch('/api/exif?dir=' + encodeURIComponent(DIR)).then(r => r.json()).then(x => { exif = x; }).catch(() => {});
   mesa.selection = new Set(added); mesa.anchor = null; mesa.selChanged(); renderLayers();
   const lz = lzOf(added[0]);
-  toast(`${added.length} foto${added.length === 1 ? '' : 's'} agregada${added.length === 1 ? '' : 's'} ${lz ? `a "${lz.name}"` : 'en Libre'} · se copiaron a "${PROJ ? projName : 'Fotos MDP'}".`, 3500);
+  toast(`${added.length} foto${added.length === 1 ? '' : 's'} agregada${added.length === 1 ? '' : 's'} ${lz ? `a "${lz.name}"` : ''}.`, 2000);
 }
 // soltar archivos arriba del mat (y que el navegador no abra la foto si se suelta en otro lado)
 addEventListener('dragover', e => { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = e.target === $('mesa') ? 'copy' : 'none'; });
@@ -1821,8 +1830,9 @@ function createMosaic(file, R, replaceItem) {
     mo: { mode: 'recto', chaos: 55, count: 30, sizes: { A7: false, A6: true, A5: true, A4: true } } };
   let n2 = 0;
   hist.run(() => { S.lienzos.push(lz); if (replaceItem) S.items = S.items.filter(i => i !== replaceItem); n2 = applyMosaic(lz); });
+  play('lienzo');
   selectLienzo(lz.id); openLz.add(lz.id); lastLz = lz.id; renderLayers();
-  toast(`"${lz.name}": la foto quedó partida en ${n2} piezas. Con el botón Mosaico cambiás Derecho / Libre, el caos y las piezas.`, 5500);
+  toast(`"${lz.name}": ${n2} piezas.`, 2500);
 }
 function mosaicFromPhoto(it) { // clic derecho → Partir en mosaico
   const m = meta.get(it.file) || { w: 3, h: 2 }, W = 600;
@@ -1855,7 +1865,7 @@ const mosDo = (fn, regen = true) => { // cambiar algo del mosaico (y volver a me
   syncMos(); renderLayers();
 };
 $('mosBtn').onclick = () => {
-  if (!currentMosaic()) return toast('Elegí un mosaico (tocá su etiqueta ✥), o hacé clic derecho en una foto → Partir en mosaico.', 4500);
+  if (!currentMosaic()) return toast('Seleccioná un mosaico.', 2000);
   syncMos(); openMenu('mosPanel');
 };
 document.querySelectorAll('[data-mosgen]').forEach(b => b.onclick = () => mosDo(L => { L.mo.mode = b.dataset.mosgen; }));
@@ -1989,6 +1999,8 @@ if (PROJ) collab = createCollab({ el: $('collab'), btn: $('collabBtn'), gate: $(
 else $('collabBtn').hidden = true;
 if (QS.has('kyrotest')) globalThis.__mesa = { mesa, state: () => S, hist, list, collab: () => collab, images }; // solo para las pruebas automáticas
 
+try { if (!GUEST && !sessionStorage.getItem('knb-hola')) { sessionStorage.setItem('knb-hola', '1'); setTimeout(() => play('hola'), 350); } } catch {}
+
 serverIsCurrent().then(ok => { if (!ok) toast(SERVER_OLD_MSG, 30000); }); // ¿quedó un servidor viejo corriendo?
 (async () => {
   syncUI();
@@ -1997,11 +2009,13 @@ serverIsCurrent().then(ok => { if (!ok) toast(SERVER_OLD_MSG, 30000); }); // ¿q
   if (PROJ) { if (!GUEST) fetch('/api/projects?path=' + encodeURIComponent(PROJ), { method: 'POST' }).catch(() => {}); S.title = projName; syncUI(); }
   const files = await listDir(DIR);
   if (!files.length) {
-    $('emptyTitle').textContent = QS.has('creado') ? `Listo: se creó la carpeta "${projName}"` : 'Arrastrá tus fotos acá para empezar';
-    $('emptyText').textContent = QS.has('creado') ? 'Ahora arrastrá tus fotos acá (o tocá el +). Se van a guardar en esa carpeta.' : `O tocá el + para elegirlas. Se guardan en "${PROJ ? projName : 'Fotos MDP'}".`;
+    $('emptyTitle').textContent = QS.has('creado') ? `Listo: "${projName}"` : 'Arrastrá fotos acá';
+    $('emptyText').textContent = QS.has('creado') ? 'Arrastrá fotos acá o tocá el +' : 'o tocá el +';
     $('empty').classList.add('show'); $('stats').textContent = '0 fotos';
     if (PROJ && !GUEST) { const saved = await loadState(STATE); if (saved?.title) { S.title = saved.title; syncUI(); } }
-    placeLayers(); renderLayers(); return;
+    placeLayers(); renderLayers();
+    if (!GUEST && !prefs.tutorialDone && !QS.has('kyrotest')) setTimeout(() => startTutorial({ onEnd: tutorialDone }), 700);
+    return;
   }
   let done = 0;
   files.forEach(f => loading.add(f));
@@ -2039,6 +2053,7 @@ serverIsCurrent().then(ok => { if (!ok) toast(SERVER_OLD_MSG, 30000); }); // ¿q
     saveAll();
   }
   syncUI(); dirty(); placeLayers(); renderLayers(); mesa.fit();
+  if (!GUEST && !prefs.tutorialDone && !QS.has('kyrotest')) setTimeout(() => startTutorial({ onEnd: tutorialDone }), 700);
   if (QS.get('neo')) loadNeoFile(QS.get('neo'));
 })();
 </script>

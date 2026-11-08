@@ -6,10 +6,10 @@ Mesa para armar fotos en tamaños A3 a A7 con marco blanco, acomodarlas en lienz
 
 **Descargas:** carpeta [instalaciones](instalaciones/) o la [página de descargas](https://github.com/ciroamalosexcels-byte/KyroNeoBoard/releases/latest).
 
-Ejecutá `Kyro-Neo-Board-Setup-1.3.0.exe`. Si Windows muestra **"Windows protegió su PC"**, tocá *Más información → Ejecutar de todas formas*. Aparece porque el programa no tiene firma digital paga; no es un virus.
+Ejecutá `Kyro-Neo-Board-Setup-1.4.0.exe`. Si Windows muestra **"Windows protegió su PC"**, tocá *Más información → Ejecutar de todas formas*. Aparece porque el programa no tiene firma digital paga; no es un virus.
 
-- Windows 10 y 11: `Kyro-Neo-Board-Setup-1.3.0.exe`
-- Windows 7 / 8.1: `Kyro-Neo-Board-Setup-1.3.0-Windows7.exe`. Usa un motor más viejo, sin actualizaciones de seguridad.
+- Windows 10 y 11: `Kyro-Neo-Board-Setup-1.4.0.exe`
+- Windows 7 / 8.1: `Kyro-Neo-Board-Setup-1.4.0-Windows7.exe`. Usa un motor más viejo, sin actualizaciones de seguridad.
 - Windows XP: no se puede, ningún motor actual corre ahí.
 
 ## Usar

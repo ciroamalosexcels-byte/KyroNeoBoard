@@ -3,6 +3,7 @@
 // Viaja solo lo que cambió: cada foto / lienzo por su id. Si dos tocan lo mismo, gana el último.
 // Lo de los demás no se deshace con tu Ctrl+Z (se copia también en tu historial).
 import { AV } from './avatars.js';
+import { play } from './sound.js';
 
 export const AV_ICONS = Object.keys(AV);
 export const AV_COLORS = ['#d9381a', '#f08a24', '#ffe14d', '#7cb342', '#2b6b58', '#0f9fb0', '#2f5aa8', '#5b4fd0', '#7a4fd0', '#e86aa6', '#8a5a3c', '#16130f'];
@@ -11,6 +12,10 @@ const ink = hex => { const n = parseInt(hex.slice(1).padEnd(6, '0').slice(0, 6),
 export const avSvg = (icon, px) => `<svg viewBox="0 0 24 24" width="${px}" height="${px}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${AV[icon] || AV.smile}</svg>`;
 export const avHTML = (icon, color, px = 24) => `<span class="av" style="width:${px}px;height:${px}px;background:${esc(color)};color:${ink(color)}">${avSvg(icon, Math.round(px * 0.62))}</span>`;
 const device = () => matchMedia('(pointer:coarse)').matches ? (Math.min(screen.width, screen.height) < 600 ? 'phone' : 'tablet') : 'pc';
+const SVG = d => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const X_ICON = SVG('<path d="M18 6 6 18M6 6l12 12"/>');
+const QR_ICON = SVG('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/>');
+const SEND_ICON = SVG('<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>');
 const DEVICE_NAME = { pc: 'compu', phone: 'celu', tablet: 'tablet' };
 
 /* ---------- qué cambió: foto por foto, lienzo por lienzo ---------- */
@@ -87,7 +92,7 @@ export function createCollab(app) {
     C.ws = null;
     if (!C.on) return;
     if (code === 4000 || !C.host && C.retry > 30) { // la sala se cerró
-      stop(true);
+      stop(true); play('cerrada');
       if (!C.host) return showGate('closed');
       return app.toast('La sala se cerró.', 3000);
     }
@@ -101,7 +106,7 @@ export function createCollab(app) {
 
   /* --- abrir / entrar / salir --- */
   async function openRoom() {
-    if (!prof.name.trim()) { app.toast('Poné tu nombre para que te vean.', 2500); $('#cbName')?.focus(); return; }
+    if (!prof.name.trim()) { app.toast('Falta tu nombre.', 2000); $('#cbName')?.focus(); return; }
     try {
       const r = await fetch(`/api/lan/start?dir=${encodeURIComponent(app.proj)}&name=${encodeURIComponent(app.projName())}`, { method: 'POST' });
       C.info = await r.json(); if (!r.ok) throw new Error(C.info.error);
@@ -109,7 +114,7 @@ export function createCollab(app) {
     } catch (e) { app.toast('No se pudo abrir la sala: ' + e.message, 5000); return; }
     C.on = true; C.host = true; C.base = C.commitBase = snapOf(app.getS()); track();
     render(); drawQR();
-    app.toast(`Sala ${C.info.code} abierta. Pasales el enlace o el QR a los que estén en tu misma red.`, 5000);
+    app.toast(`Sala ${C.info.code} abierta.`, 2500); play('sala');
   }
   async function rejoinAsHost() { // la mesa se recargó con la sala abierta: volver a entrar solo
     try { const i = await (await fetch('/api/lan/info')).json(); if (!i.on || norm(i.dir) !== norm(app.proj)) return; C.info = i; await connect(); } catch { return; }
@@ -117,7 +122,7 @@ export function createCollab(app) {
   }
   const norm = p => String(p || '').replace(/[\\/]+$/, '').replace(/\//g, '\\').toLowerCase();
   async function joinAsGuest() {
-    if (!prof.name.trim()) { app.toast('Poné tu nombre para que te vean.', 2500); app.gate.querySelector('#cbName')?.focus(); return; }
+    if (!prof.name.trim()) { app.toast('Falta tu nombre.', 2000); app.gate.querySelector('#cbName')?.focus(); return; }
     saveProf();
     try { await connect(); } catch { return showGate('closed'); }
     C.on = true; C.host = false; C.info = { code: app.guestCode };
@@ -134,7 +139,7 @@ export function createCollab(app) {
     const was = C.on; C.on = false; C.awaiting = false;
     try { C.ws?.close(); } catch {} C.ws = null;
     C.peers = {}; C.cursors = {}; C.sels = {}; C.queue = [];
-    if (C.host && was && !silent) { await fetch('/api/lan/stop', { method: 'POST' }).catch(() => {}); app.toast('Cerraste la sala.', 2000); }
+    if (C.host && was && !silent) { await fetch('/api/lan/stop', { method: 'POST' }).catch(() => {}); app.toast('Sala cerrada.', 1500); play('cerrada'); }
     app.mesa.invalidate(); render();
   }
   function leaveAsGuest() {
@@ -145,8 +150,10 @@ export function createCollab(app) {
   /* --- lo que llega --- */
   function onPresence(peers) {
     const before = C.peers;
-    for (const [id, p] of Object.entries(peers)) if (!before[id] && id !== C.id && p.name && Object.keys(before).length) app.toast(`${p.name} entró a la sala.`, 2500);
-    for (const [id, p] of Object.entries(before)) if (!peers[id] && id !== C.id && p.name) app.toast(`${p.name} salió de la sala.`, 2500);
+    let joined = 0, left = 0;
+    for (const [id, p] of Object.entries(peers)) if (!before[id] && id !== C.id && p.name && Object.keys(before).length) { app.toast(`${p.name} entró.`, 2000); joined++; }
+    for (const [id, p] of Object.entries(before)) if (!peers[id] && id !== C.id && p.name) { app.toast(`${p.name} salió.`, 2000); left++; }
+    if (joined) play('entra'); else if (left) play('sale');
     C.peers = peers;
     for (const id of Object.keys(C.cursors)) if (!peers[id]) { delete C.cursors[id]; delete C.sels[id]; }
     app.mesa.invalidate(); render();
@@ -166,7 +173,8 @@ export function createCollab(app) {
       app.replaceS(p.state);
       C.base = C.commitBase = snapOf(app.getS());
       if (Array.isArray(p.chat) && !C.chat.length) { C.chat = p.chat; renderChat(); }
-      return app.toast(`Entraste a la sala de ${hostName() || 'la mesa'}.`, 3000);
+      play('sala');
+      return app.toast(`Entraste a la sala de ${hostName() || 'la mesa'}.`, 2500);
     }
     if (p.k === 'op' && p.op) return remoteOp(p.op, !!p.c);
   }
@@ -257,6 +265,7 @@ export function createCollab(app) {
   /* --- mensajes (chat) --- */
   function addChat(m) {
     C.chat.push(m); if (C.chat.length > 200) C.chat.shift();
+    if (m.from !== C.id) play('mensaje');
     if (!C.open && m.from !== C.id) { C.unread++; app.toast(`${m.name}: ${m.text}`, 3500); }
     renderChat(); paintBtn();
   }
@@ -268,15 +277,28 @@ export function createCollab(app) {
   function renderChat() {
     const log = $('#cbChat'); if (!log) return;
     log.innerHTML = C.chat.length ? C.chat.map(m => `<div class="chat-msg${m.from === C.id ? ' me' : ''}">${avHTML(m.icon, m.color, 22)}<div class="chat-body"><b class="chat-who">${esc(m.name)}</b><span>${esc(m.text)}</span></div></div>`).join('')
-      : '<div class="cb-hint">Los mensajes que escriban acá los ven todos los de la sala.</div>';
+      : '<div class="cb-hint cb-empty">Sin mensajes.</div>';
     log.scrollTop = log.scrollHeight;
+    requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; }); // después de que se acomode el panel
   }
 
-  /* --- QR del enlace (sin internet) --- */
+  /* --- QR del enlace (sin internet), en una ventana en el medio --- */
+  const qrModal = document.createElement('div');
+  qrModal.className = 'cb-qr'; qrModal.innerHTML = '<div class="cb-qr-box" role="dialog" aria-label="QR de la sala"><button class="cb-x" id="cbQRClose" aria-label="Cerrar" data-tip="Cerrar · Esc">' + X_ICON + '</button><canvas id="cbQR"></canvas><b id="cbQRCode"></b><span id="cbQRUrl"></span></div>';
+  document.body.append(qrModal);
+  const showQR = open => {
+    qrModal.classList.toggle('show', open);
+    if (!open) return;
+    drawQR();
+    qrModal.querySelector('#cbQRCode').textContent = C.info?.code || '';
+    qrModal.querySelector('#cbQRUrl').textContent = (C.info?.urls?.[0] || '').replace(/^https?:\/\//, '');
+  };
+  qrModal.addEventListener('click', e => { if (e.target === qrModal || e.target.closest('#cbQRClose')) showQR(false); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && qrModal.classList.contains('show')) { showQR(false); e.stopImmediatePropagation(); } }, true);
   function drawQR() {
-    const cv = $('#cbQR'), url = C.info?.urls?.[0]; if (!cv || !url || !window.qrcode) return;
+    const cv = document.getElementById('cbQR'), url = C.info?.urls?.[0]; if (!cv || !url || !window.qrcode) return;
     const qr = window.qrcode(0, 'M'); qr.addData(url); qr.make();
-    const n = qr.getModuleCount(), quiet = 2, px = Math.max(3, Math.floor(200 / (n + quiet * 2)));
+    const n = qr.getModuleCount(), quiet = 2, px = Math.max(4, Math.floor(300 / (n + quiet * 2)));
     cv.width = cv.height = (n + quiet * 2) * px;
     const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.fillStyle = '#16130f';
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) cx.fillRect((c + quiet) * px, (r + quiet) * px, px, px);
@@ -285,35 +307,33 @@ export function createCollab(app) {
   /* --- panel --- */
   const profileHTML = () => `
     <label class="cb-field"><span class="cb-label">Tu nombre</span><input class="cb-input" id="cbName" maxlength="24" placeholder="Nombre" autocomplete="off" value="${esc(prof.name)}"></label>
-    <div class="cb-profile"><button class="cb-av" id="cbAv" aria-label="Elegir ícono" data-tip="Tu ícono|Tocá para elegir otro">${avHTML(prof.icon, prof.color, 44)}</button>
+    <div class="cb-profile"><button class="cb-av" id="cbAv" aria-label="Elegir ícono" data-tip="Ícono">${avHTML(prof.icon, prof.color, 44)}</button>
       <div class="cb-colors">${AV_COLORS.map(c => `<button class="cb-sw${c === prof.color ? ' on' : ''}" data-c="${c}" style="background:${c}" aria-label="Color"></button>`).join('')}</div></div>
     <div class="cb-icons" id="cbIcons" hidden>${AV_ICONS.map(i => `<button class="cb-ic${i === prof.icon ? ' on' : ''}" data-i="${i}" aria-label="${i}">${avSvg(i, 20)}</button>`).join('')}</div>`;
   function render() {
     paintBtn();
     if (!app.el) return;
-    const head = `<div class="cb-head"><div><b>En equipo</b><span class="cb-chip">red local</span></div><button class="cb-x" id="cbClose" aria-label="Cerrar" data-tip="Cerrar">×</button></div>`;
+    const head = `<div class="cb-head"><div><b>En equipo</b><span class="cb-chip">red local</span></div><button class="cb-x" id="cbClose" aria-label="Cerrar panel" data-tip="Cerrar · Esc">${X_ICON}</button></div>`;
     if (!C.on) {
       app.el.innerHTML = head + profileHTML() + (C.host ? `
         <button class="cb-big" id="cbOpen"${app.proj ? '' : ' disabled'}>Abrir sala</button>
-        <p class="cb-hint">Los que estén en tu misma red (wifi o cable) entran a esta mesa desde su compu, celu o tablet, con un enlace o un QR. Las fotos no salen de tu compu: las ven desde acá.</p>
+        <p class="cb-hint">Para trabajar de a varios en la misma red (wifi o cable). Las fotos quedan en esta compu.</p>
         <div class="cb-near"><div class="cb-label">Salas cerca</div><div id="cbNear">${nearHTML()}</div></div>` : '');
     } else {
       const people = Object.entries(C.peers).sort(([a], [b]) => (C.peers[b].host - C.peers[a].host) || a.localeCompare(b));
       app.el.innerHTML = head + `
         <div class="ticket"><div class="ticket-body"><div class="ticket-main"><div class="cb-code">${esc(C.info?.code || '')}</div><div class="ticket-rule"></div><div class="ticket-project">${esc(app.projName())}</div></div><div class="ticket-stub"></div></div></div>
-        ${C.retry ? '<div class="cb-warn">Se cortó la conexión. Reintentando…</div>' : ''}
-        ${C.host && C.info?.urls?.length ? `<div class="cb-share"><span class="cb-label">Entran desde</span>${C.info.urls.map(u => `<button class="cb-url" data-url="${esc(u)}" data-tip="Copiar enlace">${esc(u.replace(/^https?:\/\//, ''))}</button>`).join('')}
-          <canvas id="cbQR" aria-label="QR para entrar desde el celu"></canvas><span class="cb-hint">Con la cámara del celu, apuntá al QR.</span></div>`
-          : C.host ? '<div class="cb-warn">Esta compu no está conectada a ninguna red (wifi o cable): conectala para que puedan entrar los demás.</div>' : ''}
-        <div class="cb-label">En la sala</div>
+        <button class="cb-leave" id="cbLeave">${C.host ? 'Cerrar sala' : 'Salir de la sala'}</button>
+        ${C.retry ? '<div class="cb-warn">Sin conexión. Reintentando…</div>' : ''}
+        ${C.host && C.info?.urls?.length ? `<div class="cb-share"><button class="cb-url" data-url="${esc(C.info.urls[0])}" data-tip="Copiar enlace">${esc(C.info.urls[0].replace(/^https?:\/\//, ''))}</button><button class="cb-round" id="cbQRBtn" aria-label="QR" data-tip="QR">${QR_ICON}</button></div>`
+          : C.host ? '<div class="cb-warn">Sin conexión a una red.</div>' : ''}
         <div class="cb-peers">${people.map(([id, p]) => `<span class="cb-peer">${avHTML(p.icon, p.color, 24)}<span class="nm">${esc(p.name || '…')}${id === C.id ? ' (vos)' : ''}</span>${p.host ? '<span class="cb-tag">anfitrión</span>' : p.device !== 'pc' ? `<span class="cb-tag">${DEVICE_NAME[p.device]}</span>` : ''}</span>`).join('')}</div>
-        <div class="chat"><div id="cbChat"></div><form id="cbChatForm" autocomplete="off"><input class="cb-input" id="cbMsg" maxlength="400" placeholder="Escribí un mensaje"><button class="cb-send" aria-label="Enviar">➤</button></form></div>
-        <button class="cb-leave" id="cbLeave">${C.host ? 'Cerrar sala' : 'Salir de la sala'}</button>`;
-      renderChat(); drawQR();
+        <div class="chat"><div id="cbChat"></div><form id="cbChatForm" autocomplete="off"><input class="cb-input" id="cbMsg" maxlength="400" placeholder="Mensaje"><button class="cb-send" aria-label="Enviar" data-tip="Enviar · Enter">${SEND_ICON}</button></form></div>`;
+      renderChat();
     }
   }
   const nearHTML = () => C.near.length ? C.near.map(n => `<div class="cb-room"><div><b>${esc(n.project || 'Mesa')}</b><small>${esc(n.name)} · ${n.people} ${n.people === 1 ? 'persona' : 'personas'}</small></div><button class="cb-go" data-url="${esc(n.url)}">Entrar</button></div>`).join('')
-    : '<span class="cb-hint">No hay otras salas abiertas en tu red.</span>';
+    : '<span class="cb-hint">Ninguna sala abierta.</span>';
   async function pollNear() {
     if (!C.open || C.on || !C.host) return;
     try { C.near = await (await fetch('/api/lan/peers')).json(); } catch { C.near = []; }
@@ -332,6 +352,7 @@ export function createCollab(app) {
     } catch {}
   }, 2000);
   function paintBtn() {
+    app.el?.classList.toggle('live', C.on);
     app.btn.classList.toggle('live', C.on);
     app.btn.classList.toggle('unread', C.unread > 0);
   }
@@ -344,13 +365,14 @@ export function createCollab(app) {
   function onClick(e) {
     const t = e.target.closest('button'); if (!t) return;
     if (t.id === 'cbClose') return setOpen(false);
+    if (t.id === 'cbQRBtn') return showQR(true);
     if (t.id === 'cbAv') { const g = t.closest('.cb-box, .collab-panel').querySelector('#cbIcons'); g.hidden = !g.hidden; return; }
     if (t.dataset.c) { prof.color = t.dataset.c; saveProf(); return rerenderProfile(t); }
     if (t.dataset.i) { prof.icon = t.dataset.i; saveProf(); return rerenderProfile(t); }
     if (t.id === 'cbOpen') return openRoom();
     if (t.id === 'cbEnter') return joinAsGuest();
     if (t.id === 'cbRetry') return location.reload();
-    if (t.id === 'cbLeave') return C.host ? stop() : leaveAsGuest();
+    if (t.id === 'cbLeave') { showQR(false); return C.host ? stop() : leaveAsGuest(); }
     if (t.classList.contains('cb-url')) { navigator.clipboard.writeText(t.dataset.url).then(() => app.toast('Enlace copiado.', 1500), () => window.prompt('Copiá este enlace', t.dataset.url)); return; }
     if (t.classList.contains('cb-go')) { // entrar a la sala de otra compu (sale de esta mesa: queda guardada)
       const back = location.origin + '/';
@@ -380,10 +402,10 @@ export function createCollab(app) {
     g.classList.add('show');
     const box = g.querySelector('.cb-box');
     if (kind === 'closed' || kind === 'left') {
-      box.innerHTML = `<h3>${kind === 'left' ? 'Saliste de la sala' : 'La sala se cerró'}</h3><p class="cb-hint">${kind === 'left' ? 'Podés volver a entrar cuando quieras.' : 'Quien la abrió la cerró o se apagó su compu. Pedile que la vuelva a abrir.'}</p><button class="cb-big" id="cbRetry">Volver a entrar</button>`;
+      box.innerHTML = `<h3>${kind === 'left' ? 'Saliste de la sala' : 'La sala se cerró'}</h3><button class="cb-big" id="cbRetry">Volver a entrar</button>`;
       return;
     }
-    box.innerHTML = `<h3>Te invitaron a una mesa</h3><p class="cb-hint">Sala <b>${esc(app.guestCode)}</b> · elegí cómo te van a ver los demás.</p>${profileHTML()}<button class="cb-big" id="cbEnter">Entrar</button>`;
+    box.innerHTML = `<h3>Sala ${esc(app.guestCode)}</h3>${profileHTML()}<button class="cb-big" id="cbEnter">Entrar</button>`;
     setTimeout(() => g.querySelector('#cbName')?.focus(), 50);
   }
 
