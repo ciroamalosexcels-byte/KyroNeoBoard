@@ -1,7 +1,7 @@
 {
   "name": "kyro-neo-board",
   "productName": "Kyro Neo Board",
-  "version": "1.4.0",
+  "version": "1.4.4",
   "description": "Mesa para armar fotos en tamaños A3 a A7 e imprimirlas en hojas A3 o A4 para recortar.",
   "author": "Kyro",
   "license": "UNLICENSED",
@@ -10,6 +10,7 @@
   "scripts": {
     "start": "electron .",
     "selftest": "electron . --selftest",
+    "test": "node --test tests/*.test.cjs",
     "dist": "electron-builder --win nsis --x64",
     "dist:win7": "electron-builder --win nsis --x64 --config.electronVersion=22.3.27 --config.nsis.artifactName=Kyro-Neo-Board-Setup-${version}-Windows7.exe --config.directories.output=dist-win7"
   },

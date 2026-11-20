@@ -11,6 +11,7 @@ const TYPES = {
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp',
   '.pdf': 'application/pdf', '.svg': 'image/svg+xml',
+  '.woff2': 'font/woff2',
 };
 const imaging = require('./imaging.js'); // JPG, PNG, WebP, TIFF, HEIC y RAW
 const IMG = { test: f => imaging.isImage(f) };
@@ -22,7 +23,9 @@ if (process.env.MESA_ALLOW) allowed.add(path.resolve(process.env.MESA_ALLOW)); /
 const REG = process.env.MESA_REG || path.join(__dirname, 'proyectos.json');
 const readReg = () => { try { return JSON.parse(fs.readFileSync(REG, 'utf8')); } catch { return []; } };
 const writeReg = list => fs.writeFileSync(REG, JSON.stringify(list, null, 1));
-for (const p of readReg()) if (p?.path) allowed.add(path.resolve(p.path));
+const browserProjects = new Map();
+for (const p of readReg()) if (p?.path) { allowed.add(path.resolve(p.path)); if (p.neo) allowed.add(path.resolve(p.neo)); }
+const projects = require('./project-store.js').createProjectStore({ readReg, writeReg });
 function httpsFetch(url, opt = {}, hops = 0) { // reemplazo mínimo de fetch para Node 16
   return new Promise((ok, ko) => {
     const lib = url.startsWith('https:') ? require('https') : require('http');
@@ -48,20 +51,22 @@ function safe(rel) {
 const { execFile } = require('child_process');
 const os = require('os');
 let dialogProvider = null, revealProvider = null;
-function winDialog(kind, { name = '', start = '' } = {}) {
-  if (dialogProvider) return Promise.resolve(dialogProvider(kind, { name, start })).then(p => p || '');
+function winDialog(kind, { name = '', start = '', title = '' } = {}) {
+  if (dialogProvider) return Promise.resolve(dialogProvider(kind, { name, start, title })).then(p => p || '');
   const q = s => "'" + String(s).replace(/'/g, "''") + "'";
   const init = start && fs.existsSync(start) ? start : path.join(os.homedir(), 'Downloads');
   const dlg = {
-    folder: `$d = New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description = 'Elegí dónde crear la carpeta de la exportación'; $d.UseDescriptionForTitle = $true; $d.ShowNewFolderButton = $true; $d.InitialDirectory = ${q(init)}; if ($d.ShowDialog($w) -eq 'OK') { $d.SelectedPath }`,
+    folder: `$d = New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description = ${q(title || 'Elegí dónde crear la carpeta de la exportación')}; $d.UseDescriptionForTitle = $true; $d.ShowNewFolderButton = $true; $d.InitialDirectory = ${q(init)}; if ($d.ShowDialog($w) -eq 'OK') { $d.SelectedPath }`,
     save: `$d = New-Object System.Windows.Forms.SaveFileDialog; $d.Title = 'Guardar proyecto'; $d.Filter = 'Proyecto Neo (*.neo)|*.neo'; $d.DefaultExt = 'neo'; $d.AddExtension = $true; $d.FileName = ${q(name)}; $d.InitialDirectory = ${q(init)}; $d.OverwritePrompt = $true; if ($d.ShowDialog($w) -eq 'OK') { $d.FileName }`,
     open: `$d = New-Object System.Windows.Forms.OpenFileDialog; $d.Title = 'Abrir proyecto'; $d.Filter = 'Proyecto Neo (*.neo)|*.neo'; $d.InitialDirectory = ${q(init)}; if ($d.ShowDialog($w) -eq 'OK') { $d.FileName }`,
   }[kind];
   // una ventana invisible "siempre adelante" como dueña, para que el explorador no quede detrás del navegador
-  const script = `[Console]::OutputEncoding = [Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::EnableVisualStyles(); $w = New-Object System.Windows.Forms.Form; $w.TopMost = $true; $w.ShowInTaskbar = $false; $w.Opacity = 0; $w.StartPosition = 'CenterScreen'; $w.Show(); $w.Activate(); ${dlg}; $w.Close()`;
-  return new Promise(ok => {
-    const run = exe => execFile(exe, ['-NoProfile', '-STA', '-Command', script], { windowsHide: true, encoding: 'utf8', timeout: 10 * 60 * 1000 }, (err, out) => {
+  if (!dlg) return Promise.reject(new Error('Tipo de selector desconocido.'));
+  const script = `$ErrorActionPreference = 'Stop'; [Console]::OutputEncoding = [Text.Encoding]::UTF8; $w = $null; try { Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::EnableVisualStyles(); $w = New-Object System.Windows.Forms.Form; $w.TopMost = $true; $w.ShowInTaskbar = $false; $w.Opacity = 0; $w.StartPosition = 'CenterScreen'; $w.Show(); $w.Activate(); [System.Windows.Forms.Application]::DoEvents(); ${dlg} } catch { [Console]::Error.WriteLine($_.Exception.Message); exit 1 } finally { if ($w) { $w.Close(); $w.Dispose() } }`;
+  return new Promise((ok, ko) => {
+    const run = exe => execFile(exe, ['-NoProfile', '-STA', '-Command', script], { windowsHide: true, encoding: 'utf8', timeout: 10 * 60 * 1000 }, (err, out, stderr) => {
       if (err && exe === 'pwsh') return run('powershell'); // sin PowerShell 7: el de Windows
+      if (err) return ko(new Error('No se pudo mostrar el selector de archivos: ' + (String(stderr || '').trim() || err.message)));
       ok((out || '').trim().split(/\r?\n/).pop() || '');
     });
     run('pwsh');
@@ -211,16 +216,38 @@ const handler = async (req, res) => {
       fs.mkdirSync(dir, { recursive: true });
       allowed.add(dir);
       writeReg([{ path: dir, name: path.basename(dir), created: new Date().toISOString() }, ...readReg().filter(p => p.path !== dir)]);
-      return send(res, 200, { path: dir, name: path.basename(dir) });
+      const saved = await projects.save(dir, { estado: { title: name, frame: 6, items: [], lienzos: [], hidden: [], base: { x: 0, y: 0 }, migrated1m: true }, historial: { undos: [], redos: [] } });
+      return send(res, 200, { path: dir, name: path.basename(dir), neo: saved.path });
+    }
+    if (u.pathname === '/api/project') {
+      const dir = safe(q('dir')), file = q('file') ? safe(q('file')) : undefined;
+      if (!fs.statSync(dir).isDirectory()) throw Error('No encuentro la carpeta de este proyecto.');
+      if (req.method === 'GET') return send(res, 200, await projects.load(dir, file));
+      if (req.method === 'POST') return send(res, 200, await projects.save(dir, JSON.parse(await body(req)), { file, seq: Number(q('seq')) || 0 }));
+      return send(res, 405, { error: 'Método no permitido.' });
     }
     if (u.pathname === '/api/adopt' && req.method === 'POST') { // abrir un .neo: permitir su carpeta de fotos
-      const neo = safe(q('neo'));
-      const d = JSON.parse(fs.readFileSync(neo, 'utf8'));
+      const fromBrowser = !q('neo');
+      const d = fromBrowser ? JSON.parse(String(await body(req))) : JSON.parse(fs.readFileSync(safe(q('neo')), 'utf8'));
+      if(d?.formato !== 'neo' || !Array.isArray(d.estado?.items)) throw new Error('Ese archivo no es un proyecto .neo válido.');
       const fotos = d?.fotos && path.resolve(d.fotos);
-      if (!fotos || !fs.existsSync(fotos)) throw new Error('no encuentro la carpeta de fotos de ese proyecto');
+      if (!fotos || !fs.existsSync(fotos) || !fs.statSync(fotos).isDirectory()) throw new Error('no encuentro la carpeta de fotos de ese proyecto');
       const root = fotos === path.join(ROOT, 'Fotos MDP');
-      if (!root) { allowed.add(fotos); writeReg([{ path: fotos, name: path.basename(fotos), created: new Date().toISOString() }, ...readReg().filter(p => path.resolve(p.path) !== fotos)]); }
-      return send(res, 200, { fotos, root });
+      allowed.add(fotos);
+      const neo = fromBrowser ? await projects.importBrowser(fotos, d, req.headers['x-neo-name'] ? decodeURIComponent(req.headers['x-neo-name']) : undefined) : safe(q('neo'));
+      if (!fromBrowser) await projects.load(fotos, neo);
+      let token;
+      if(fromBrowser && !req.headers['x-neo-name']){
+        for(const [key,value] of browserProjects) if(Date.now()-value.created>300000) browserProjects.delete(key);
+        if(browserProjects.size>=16) throw new Error('Hay demasiados proyectos esperando abrirse. Recargá e intentá de nuevo.');
+        token=require('crypto').randomBytes(24).toString('hex');browserProjects.set(token,{data:d,created:Date.now()});
+      }
+      return send(res, 200, { fotos, root, token, neo });
+    }
+    if(u.pathname==='/api/opened-project' && req.method==='GET'){
+      const token=q('token'),pending=browserProjects.get(token);browserProjects.delete(token);
+      if(!pending || Date.now()-pending.created>300000)return send(res,404,{error:'El proyecto seleccionado venció. Volvé a abrirlo.'});
+      return send(res,200,pending.data);
     }
     if (u.pathname === '/api/projects') { // proyectos recientes (los que siguen existiendo)
       const list = readReg().filter(p => p?.path && fs.existsSync(p.path));
@@ -246,13 +273,17 @@ const handler = async (req, res) => {
       return fs.createReadStream(f).pipe(res);
     }
     // --- sala en la red local (solo desde esta compu: la red no llega hasta acá) ---
-    if (u.pathname === '/api/lan/start' && req.method === 'POST') return send(res, 200, await lan.start(safe(q('dir')), q('name') || ''));
+    if (u.pathname.startsWith('/api/lan/') && req.method === 'POST' && req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) return send(res, 403, { error: 'Origen no permitido.' });
+    if (u.pathname === '/api/lan/start' && req.method === 'POST') return send(res, 200, await lan.start(safe(q('dir')), q('name') || '', JSON.parse(String(await body(req)) || '{}')));
     if (u.pathname === '/api/lan/stop' && req.method === 'POST') return send(res, 200, lan.stop());
     if (u.pathname === '/api/lan/info') return send(res, 200, lan.info());
     if (u.pathname === '/api/lan/peers') return send(res, 200, lan.peers());
+    if (u.pathname === '/api/lan/resolve') { const result = await lan.resolve(q('code')); return send(res, result.error ? 404 : 200, result); }
+    if (u.pathname === '/api/lan/requests') return send(res, 200, lan.requests());
+    if (u.pathname === '/api/lan/decide' && req.method === 'POST') return send(res, 200, lan.decide(q('id'), q('allow') === '1'));
     if (u.pathname === '/api/formats') return send(res, 200, { label: imaging.extsLabel, all: imaging.hasSharp });
     if (u.pathname === '/api/dialog' && req.method === 'POST') { // explorador de Windows
-      const kind = q('kind'), p = await winDialog(kind, { name: q('name') || '', start: q('start') || '' });
+      const kind = q('kind'), p = await winDialog(kind, { name: q('name') || '', start: q('start') || '', title: q('title') || '' });
       if (!p) return send(res, 200, { cancel: true });
       allowed.add(kind === 'folder' ? path.resolve(p) : path.resolve(p)); // se permite solo lo elegido
       return send(res, 200, { path: path.resolve(p) });
@@ -293,7 +324,7 @@ const handler = async (req, res) => {
       fs.writeFileSync(path.join(dir, file), buf);
       return send(res, 200, { name: file });
     }
-    if (u.pathname === '/api/version') return send(res, 200, { v: 2 }); // la mesa compara con la suya
+    if (u.pathname === '/api/version') return send(res, 200, { v: 3 }); // la mesa compara con la suya
     if (u.pathname === '/api/root') return send(res, 200, { root: ROOT, photos: path.join(ROOT, 'Fotos MDP') });
     if (u.pathname === '/api/list') {
       const dir = safe(q('dir'));
@@ -311,6 +342,7 @@ const handler = async (req, res) => {
     if (u.pathname === '/api/state') {
       const f = safe(q('file'));
       if (req.method === 'POST') {
+        if (/^mesa(?:\.historial)?\.json$/i.test(path.basename(f))) return send(res, 409, { error: 'El guardado ahora usa un solo .neo. Recargá el programa.' });
         // cada guardado trae su número de orden: si llega tarde uno viejo, no pisa a uno más nuevo
         const seq = Number(q('seq')) || 0, b = await body(req);
         if (seq && seq <= (lastSeq.get(f) || 0)) return send(res, 200, { ok: true, viejo: true });

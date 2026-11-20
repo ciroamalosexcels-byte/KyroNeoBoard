@@ -1,4 +1,5 @@
 // Kyro Neo Board · tutorial: pasos cortos que señalan cada parte. Se puede saltar en cualquier momento.
+import { paperIn } from './motion.js';
 const STEPS = [
   { title: 'Kyro Neo Board', text: 'Armá fotos en tamaños A3 a A7 y exportalas en hojas para recortar.' },
   { el: '.bar > .group.center', title: 'Herramientas', text: 'Seleccionar, mano, tamaño, rotar, lienzo y lupa. Cada una tiene su tecla.' },
@@ -20,13 +21,14 @@ export function startTutorial({ onEnd } = {}) {
   root.innerHTML = '<div class="tut-shade"></div><div class="tut-spot"></div><div class="tut-card" role="dialog" aria-live="polite"><div class="tut-n"></div><b class="tut-t"></b><p class="tut-x"></p><div class="tut-btns"><button class="tut-skip">Saltar</button><button class="tut-next"></button></div></div>';
   document.body.append(root);
   const $ = s => root.querySelector(s);
-  let i = 0;
+  let i = 0, shown = -1;
   function show() {
     const s = steps[i], target = s.el && document.querySelector(s.el);
     $('.tut-n').textContent = `${i + 1} / ${steps.length}`;
     $('.tut-t').textContent = s.title; $('.tut-x').textContent = s.text;
     $('.tut-next').textContent = i === steps.length - 1 ? 'Listo' : 'Siguiente';
     const card = $('.tut-card'), spot = $('.tut-spot');
+    if (shown !== i) { paperIn(card); shown = i; }
     root.classList.toggle('center', !target);
     if (!target) { spot.style.cssText = ''; card.style.left = card.style.top = ''; $('.tut-next').focus(); return; }
     const r = target.getBoundingClientRect(), pad = 6;

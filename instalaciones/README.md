@@ -17,6 +17,31 @@ Todas las versiones: [página de descargas](https://github.com/ciroamalosexcels-
 
 ## Novedades
 
+**1.4.4 (instaladores locales)**
+- Dibujo y texto con motores de Kyro Zine Generator; edici?n, guardado, colaboraci?n y exportaci?n.
+- Inicio dividido entre proyecto y sala; recientes plegados.
+- Chat de vidrio seg?n el tema, sin X, con altura de herramientas. Nombres e ?conos del perfil, mensajes compactos y duraci?n configurable (15 segundos por defecto).
+
+**1.4.3 (instaladores locales; las descargas de arriba siguen en 1.4.0)**
+- Ingreso con un ticket y seis casilleros vacíos para el código; permite escribir y pegar normalmente.
+- QR dentro del ticket de la sala, abajo a la izquierda, con un botón circular amarillo y sombra dura.
+- **Solo chat**: barra translúcida abajo y centrada, con los últimos dos mensajes arriba, sin una tarjeta de fondo.
+- El borrador se conserva entre el panel y el chat compacto. Ocultar el chat no cierra la sala.
+
+**1.4.2 (instaladores locales; las descargas de arriba siguen en 1.4.0)**
+- Solo códigos en el ingreso del programa: **Pegar código → Entrar**.
+- El costado derecho del ticket copia el código; la dirección se resuelve dentro del programa.
+- El avatar del anfitrión lleva una corona amarilla en lugar de una etiqueta de texto.
+- Botones nuevos, campos, solicitudes y pantallas de ingreso con Archivo, papel crema, tinta, rojo sello, amarillo y sombras duras.
+- Se mantiene el QR para entrar desde el celu o la tablet.
+
+**1.4.1 (preparación local; las descargas de arriba siguen en 1.4.0)**
+- Inicio permite conectarse a una sala por enlace, por código detectado en la red o desde la lista de salas.
+- Los enlaces de redes compartidas `100.64.0.0/10` se abren dentro del programa.
+- Aprobación del anfitrión o entrada directa; contraseña opcional al abrir la sala.
+- Las solicitudes se aceptan o rechazan desde En equipo. Mientras esperan no pueden leer fotos ni editar.
+- Cada invitado usa una sesión propia; cerrar la sala invalida los accesos anteriores.
+
 **1.4.0**
 - **Sonidos** hechos con frecuencias, sin archivos: bienvenida, sala abierta, entra o sale alguien, mensaje, lienzo nuevo, exportación lista y sala cerrada. Se apagan en Configuración, donde también se pueden probar.
 - **Tutorial** la primera vez que se abre una mesa. Se puede saltar, y vuelve a estar en Atajos → Ver tutorial.

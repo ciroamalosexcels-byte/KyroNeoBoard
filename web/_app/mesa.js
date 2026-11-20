@@ -47,7 +47,7 @@ export async function loadPreview(url, maxPx = 2000) {
 }
 // Configuración (Configuración ⚙): vista previa, tope al exportar, pasos de Ctrl+Z, trackpad
 export const PREVIEW_PX = { liviana: 1200, normal: 2000, alta: 3000 };
-export const cfg = () => ({ preview: prefs.preview || 'normal', cap: prefs.capMP || 40, steps: prefs.undoSteps || 40, pointer: prefs.pointer || 'auto', tips: prefs.tips || 'on', sound: prefs.sound || 'on' });
+export const cfg = () => ({ preview: prefs.preview || 'normal', cap: prefs.capMP || 40, steps: prefs.undoSteps || 40, pointer: prefs.pointer || 'auto', tips: prefs.tips || 'on', sound: prefs.sound || 'on', chatSeconds: prefs.chatSeconds ?? 15, roomApproval: prefs.roomApproval || 'on' });
 
 // ---------- Preferencias de vista (compartidas por las dos mesas) ----------
 const PREFS_KEY = 'ojo-mdp-prefs';
@@ -88,7 +88,7 @@ async function apiJson(r) {
   if (!r.ok) throw new Error(j.error || 'error del servidor');
   return j;
 }
-export const SERVER_V = 2;
+export const SERVER_V = 3;
 export async function serverIsCurrent() {
   try { const r = await fetch('/api/version'); return r.ok && (await r.json()).v >= SERVER_V; } catch { return false; }
 }
@@ -139,8 +139,7 @@ export function isOutside(p, b) {
 // ctx en mm, origen en el centro de la pieza, pieza derecha.
 export function drawPiece(ctx, p, imgs) {
   const { w, h, f } = p;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(-w / 2, -h / 2, w, h);
+  if(!p.ref?.art){ctx.fillStyle = '#fff';ctx.fillRect(-w / 2, -h / 2, w, h);}
   ctx.save();
   ctx.beginPath();
   ctx.rect(-w / 2 + f, -h / 2 + f, w - 2 * f, h - 2 * f);
@@ -204,6 +203,8 @@ export function packSheets(pieces, fmt = 'A3') {
   sheets.skipped = pieces.filter(p => !sizeOf(p));
   return sheets;
 }
+// La app puede pintar encima de cada foto lo que la cruza (dibujos y textos), en el lugar exacto.
+export const sheetOverlay = { fn: null };
 export function renderSheet(ctx, sheet, s, imgs) {
   const SHEET = SHEETS[sheet.fmt || 'A3'];
   ctx.setTransform(s, 0, 0, s, 0, 0);
@@ -215,6 +216,7 @@ export function renderSheet(ctx, sheet, s, imgs) {
     const rot = (p.w > p.h) !== (rect.w > rect.h) && Math.abs(p.w - p.h) > 0.01;
     if (rot) ctx.rotate(Math.PI / 2);
     drawPiece(ctx, p, imgs);
+    if (sheetOverlay.fn) { ctx.save(); ctx.beginPath(); ctx.rect(-p.w / 2 + p.f, -p.h / 2 + p.f, p.w - 2 * p.f, p.h - 2 * p.f); ctx.clip(); sheetOverlay.fn(ctx, p); ctx.restore(); } // dibujos y textos encima de la foto
     const cw = rot ? rect.h : rect.w, ch = rot ? rect.w : rect.h;
     if (Math.abs(p.w - cw) > 0.5 || Math.abs(p.h - ch) > 0.5) { // guía de corte en el borde del marco
       ctx.strokeStyle = '#d4d4d4'; ctx.lineWidth = 0.15;
@@ -261,7 +263,7 @@ export function showSheets(container, sheets, imgs, cssW = 300, map = null) {
     container.append(wrap);
   });
 }
-function setJpegDpi(u8, dpi = 300) {
+export function setJpegDpi(u8, dpi = 300) {
   if (u8[6] === 0x4a && u8[7] === 0x46 && u8[8] === 0x49 && u8[9] === 0x46) {
     u8[13] = 1; u8[14] = dpi >> 8; u8[15] = dpi & 255; u8[16] = dpi >> 8; u8[17] = dpi & 255;
   }
@@ -397,12 +399,19 @@ const ICONS = {
   save: '<path d="M5 3h11l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M7 3v5h8V3M7 21v-7h10v7"/>',
   folderOpen: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v1"/><path d="M3 7v11a2 2 0 0 0 2 2h12.5a2 2 0 0 0 1.9-1.4L22 12H8l-3 8"/>',
   mosaic: '<rect x="3" y="4" width="9" height="11" rx="1" transform="rotate(-10 7.5 9.5)"/><rect x="11" y="7" width="10" height="12" rx="1" transform="rotate(12 16 13)"/><rect x="6" y="13" width="8" height="8" rx="1"/>',
+  pyramid: '<path d="m12 3-9 16 9 3 9-3-9-16Z"/><path d="m12 3 0 19M3 19l9-4 9 4"/>',
+  play: '<path d="m9 5 11 7-11 7V5Z"/>',
   rotateL: '<path d="M3 12a9 9 0 1 0 9-9c-2.5 0-4.9 1-6.7 2.7L3 8"/><path d="M3 3v5h5"/>',
   gear: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   check: '<path d="M20 6L9 17l-5-5"/>',
   x: '<path d="M18 6L6 18M6 6l12 12"/>',
   chev: '<path d="M9 6l6 6-6 6"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  pencil: '<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/>',
+  type: '<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>',
+  eraser: '<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/>',
+  pipette: '<path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/>',
   lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   lockOpen: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.8-1.3"/>',
   crop: '<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
@@ -439,10 +448,18 @@ export const icon = name => `<svg class="ico" viewBox="0 0 24 24" fill="none" st
 export function fitBar() {
   const bar = document.querySelector('.bar'), c = bar?.querySelector('.group.center'), logo = bar?.querySelector(':scope > .logo');
   if (!c || !logo || !c.getBoundingClientRect) return;
-  logo.style.maxWidth = Math.max(60, c.getBoundingClientRect().left - bar.getBoundingClientRect().left - 12) + 'px';
+  if(innerWidth<=820){bar.classList.remove('two-row');bar.style.removeProperty('--tools-space');document.documentElement.style.removeProperty('--bar-bottom');return;}
+  bar.classList.remove('two-row');bar.style.removeProperty('--tools-space');
+  const right=[...bar.children].filter(el=>el!==logo&&el!==c&&!el.classList.contains('spacer'));
+  const rightWidth=right.reduce((n,el)=>n+el.getBoundingClientRect().width,0)+right.length*10;
+  const need=c.getBoundingClientRect().width+2*Math.max(180,rightWidth+12)>bar.clientWidth;
+  if(need){bar.classList.add('two-row');bar.style.setProperty('--tools-space',c.getBoundingClientRect().height+12+'px');logo.style.maxWidth=Math.min(420,bar.clientWidth-rightWidth-12)+'px';}
+  else logo.style.maxWidth=Math.max(60,c.getBoundingClientRect().left-bar.getBoundingClientRect().left-12)+'px';
+  document.documentElement.style.setProperty('--bar-bottom',bar.getBoundingClientRect().bottom+'px');
 }
 export function mountIcons(root = document) {
   addEventListener('resize', fitBar); document.fonts?.ready.then(fitBar); setTimeout(fitBar, 0);
+  const tools=document.querySelector('.bar>.group.center');if(tools){let queued=false;new ResizeObserver(()=>{if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;fitBar();});}}).observe(tools);}
   root.querySelectorAll('[data-icon]').forEach(el => el.insertAdjacentHTML('afterbegin', icon(el.dataset.icon)));
   const tip = document.createElement('div');
   tip.className = 'tip';
@@ -455,7 +472,7 @@ export function mountIcons(root = document) {
     tip.classList.add('show');
     const r = el.getBoundingClientRect(), tw = tip.offsetWidth;
     tip.style.left = Math.max(8, Math.min(innerWidth - tw - 8, r.left + r.width / 2 - tw / 2)) + 'px';
-    tip.style.top = r.bottom + 10 + 'px';
+    const th = tip.offsetHeight; tip.style.top = (r.bottom + 10 + th > innerHeight - 8 ? Math.max(8, r.top - th - 10) : r.bottom + 10) + 'px'; // abajo de todo: el cartel va arriba
   });
 }
 
@@ -628,7 +645,7 @@ export class Mesa {
       if (L[i].hidden) continue;
       const p = L[i], dx = wx - p.x, dy = wy - p.y, a = p.ang || 0;
       const lx = dx * Math.cos(a) + dy * Math.sin(a), ly = -dx * Math.sin(a) + dy * Math.cos(a);
-      if (Math.abs(lx) <= p.w / 2 && Math.abs(ly) <= p.h / 2) return p;
+      if (Math.abs(lx) <= p.w / 2 && Math.abs(ly) <= p.h / 2 && (!p.solidAt || p.solidAt(lx, ly))) return p; // los dibujos solo se tocan donde hay tinta
     }
     return null;
   }
@@ -984,7 +1001,7 @@ export class Mesa {
   }
   cursor() {
     const d = this.drag;
-    let c = this.space || this.tool === 'pan' ? 'grab' : this.tool === 'size' ? 'nwse-resize' : this.tool === 'rotate' ? 'alias' : this.tool === 'draw' ? 'crosshair' : this.tool === 'zoom' ? 'zoom-in' : 'default';
+    let c = this.space || this.tool === 'pan' ? 'grab' : this.tool === 'size' ? 'nwse-resize' : this.tool === 'rotate' ? 'alias' : this.tool === 'draw' || this.tool === 'brush' || this.tool === 'eraser' ? 'crosshair' : this.tool === 'text' ? 'text' : this.tool === 'zoom' ? 'zoom-in' : 'default';
     if (d && (d.mode === 'move' || (d.mode === 'pan' && d.moved !== false))) c = 'grabbing';
     if (d?.mode === 'pan' && !d.right) c = 'grabbing';
     this.c.style.cursor = c;
@@ -1041,8 +1058,7 @@ export class Mesa {
       ctx.rotate(p.ang || 0);
       const pa = p.alpha ?? this.h.pieceAlpha?.() ?? 1; // piezas semitransparentes (para ver lo que hay debajo)
       ctx.globalAlpha = pa;
-      ctx.fillStyle = 'rgba(0,0,0,.35)';
-      ctx.fillRect(-p.w / 2 + 3 / z, -p.h / 2 + 4 / z, p.w, p.h);
+      if (!p.ref?.art) { ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-p.w / 2 + 3 / z, -p.h / 2 + 4 / z, p.w, p.h); } // dibujos y textos son transparentes: sin sombra de papel
       drawPiece(ctx, p, this.h.images);
       ctx.globalAlpha = 1;
       if (p.warn) { ctx.fillStyle = '#d9381a'; ctx.beginPath(); ctx.arc(-p.w / 2 + p.f / 2 + 1, -p.h / 2 + p.f / 2 + 1, Math.max(2, 5 / z), 0, 7); ctx.fill(); }

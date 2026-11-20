@@ -1,0 +1,71 @@
+/* Misma ventana de vista previa de Zine, con el editor de la pirámide al costado. */
+.illusion-modal[hidden],.illusion-modal [hidden]{display:none!important}
+.illusion-modal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(22,19,15,.7)}
+.illusion-box{width:min(1180px,100%);height:min(90vh,820px);display:flex;flex-direction:column;background:var(--bg-card);border-radius:20px;box-shadow:6px 6px 0 var(--text);overflow:hidden;animation:paper-card .45s var(--paper-ease)}
+.illusion-head{display:flex;align-items:center;gap:1rem;padding:.75rem 1rem .75rem 1.2rem;flex-shrink:0}
+.illusion-head h2{font-size:1.15rem;font-weight:800;white-space:nowrap}
+.illusion-spec{flex:1;min-width:0;font-size:.82rem;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.illusion-close{width:38px;height:38px;border-radius:50%;background:var(--bg);display:grid;place-items:center;flex-shrink:0;box-shadow:var(--lift)}
+.illusion-close:hover{background:var(--hl);transform:translate(-1px,-1px);box-shadow:var(--lift-hi)}
+.illusion-close:active{transform:translate(2px,2px);box-shadow:var(--lift-lo)}
+.illusion-body{display:flex;flex:1;min-height:0}
+.illusion-settings{width:260px;flex-shrink:0;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:13px;background:var(--bg-card);border-right:2px dashed var(--paper-dark)}
+.illusion-settings label{display:flex;flex-direction:column;gap:5px;font-size:.76rem;font-weight:700}
+.illusion-settings input:not([type=range]):not([type=checkbox]){min-width:0;width:100%;height:32px;border:0;border-radius:9px;padding:5px 8px;background:var(--bg);box-shadow:2px 2px 0 var(--text);font:700 .82rem var(--font)}
+.illusion-settings input:focus-visible{outline:2px solid var(--stamp);outline-offset:3px}
+.illusion-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.illusion-label{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.illusion-label output{font-weight:800;white-space:nowrap}
+.illusion-settings input[type=range]{width:100%}
+.illusion-picker{display:block;width:100%;height:150px;touch-action:none;cursor:crosshair;border-radius:10px;background:var(--paper-dark);box-shadow:var(--lift)}
+.illusion-hint{font-size:.69rem;line-height:1.45;color:var(--muted)}
+.illusion-settings details{border-top:2px dashed var(--paper-dark);padding-top:10px;font-size:.75rem}
+.illusion-settings summary{cursor:pointer;font-weight:800;margin-bottom:8px}
+.illusion-advanced{display:flex;flex-direction:column;gap:10px}
+.illusion-settings .illusion-check{flex-direction:row;align-items:center;gap:7px}
+.illusion-settings .illusion-check input{width:16px;height:16px}
+.illusion-apply,.illusion-export{min-height:38px;border-radius:999px;padding:.55rem 1rem;background:var(--stamp);color:var(--bg-card);font-size:.8rem;font-weight:800;box-shadow:var(--lift)}
+.illusion-export{background:var(--text)}
+.illusion-apply:hover:not(:disabled),.illusion-export:hover:not(:disabled){transform:translate(-1px,-1px);box-shadow:var(--lift-hi)}
+.illusion-apply:active:not(:disabled),.illusion-export:active:not(:disabled){transform:translate(2px,2px);box-shadow:var(--lift-lo)}
+.illusion-status{font-size:.73rem;line-height:1.4;color:var(--muted)}
+.illusion-status:empty{display:none}
+.illusion-viewer{display:flex;flex:1;min-width:0;flex-direction:column;background:var(--stage)}
+.illusion-stage{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:1.6rem;touch-action:none;background-color:var(--stage);background-image:linear-gradient(rgba(255,250,240,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,250,240,.08) 1px,transparent 1px);background-size:28px 28px;outline:none}
+.illusion-stage.is-3d{padding:0;cursor:grab}
+.illusion-stage.is-3d:active{cursor:grabbing}
+.illusion-stage canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto;touch-action:none}
+.illusion-stage.is-3d canvas{width:100%;height:100%;max-width:none;max-height:none}
+.illusion-stage:not(.is-3d) canvas{object-fit:contain;box-shadow:4px 4px 0 var(--text);background:#fff}
+.illusion-controls{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;padding:.8rem 1rem;background:var(--bg-card);flex-shrink:0}
+.illusion-modes{display:flex;gap:3px;background:var(--bg);border-radius:999px;padding:3px;margin-right:auto}
+.illusion-modes button{padding:.4rem .7rem;border-radius:999px;font-size:.75rem;font-weight:800}
+.illusion-modes button.on{background:var(--text);color:var(--bg-card)}
+.illusion-control{width:38px;height:38px;border-radius:50%;background:var(--bg);display:grid;place-items:center;box-shadow:2px 2px 0 var(--text);flex-shrink:0}
+.illusion-control:hover:not(:disabled){background:var(--hl);transform:translate(-1px,-1px);box-shadow:var(--lift)}
+.illusion-control:active:not(:disabled){transform:translate(2px,2px);box-shadow:var(--lift-lo)}
+.illusion-control.on{background:var(--text);color:var(--bg-card)}
+.illusion-page{font-size:.72rem;font-weight:800;min-width:60px;text-align:center}
+.illusion-modal button:focus-visible,.illusion-stage:focus-visible,.illusion-picker:focus-visible{outline:2px dashed var(--stamp);outline-offset:3px}
+.illusion-controls .ico{width:19px;height:19px}
+.illusion-settings progress{width:100%;accent-color:var(--stamp)}
+.bar.two-row{padding-bottom:var(--tools-space,56px)}
+.bar.two-row>.group.center{top:calc(var(--h) + 12px);height:auto;min-height:var(--h);max-width:calc(100vw - 28px);flex-wrap:wrap;justify-content:center;border-radius:22px}
+@media(min-width:821px){.collab-panel,.art-panel{top:calc(var(--bar-bottom,58px) + 14px);max-height:calc(100vh - var(--bar-bottom,58px) - 40px)}.collab-panel.live{height:calc(100vh - var(--bar-bottom,58px) - 40px)}}
+@media(max-width:720px){.illusion-modal{padding:8px}.illusion-box{height:calc(100dvh - 16px);height:min(94vh,920px)}.illusion-head{gap:8px;padding:10px 12px}.illusion-head h2{font-size:1rem}.illusion-spec{font-size:.7rem}.illusion-body{flex-direction:column}.illusion-viewer{order:0;flex:0 0 47%;min-height:230px}.illusion-settings{order:1;width:100%;flex:1;border-right:0;border-top:2px dashed var(--paper-dark);display:grid;grid-template-columns:1fr 1fr;align-content:start;padding:12px;gap:12px}.illusion-settings>details,.illusion-status,.illusion-settings>progress{grid-column:1/-1}.illusion-controls{padding:8px;gap:6px}.illusion-control{width:32px;height:32px}.illusion-picker{height:120px}.illusion-modes button{padding:.3rem .5rem;font-size:.68rem}.illusion-view-hint{font-size:.62rem}.illusion-stage{padding:10px}.illusion-settings>label:first-child{grid-column:1/-1}}
+@media(prefers-reduced-motion:reduce){.illusion-box{animation:none}.illusion-modal *{transition:none!important}}
+/* Hojas: todas juntas sobre el mat, como la vista previa común. */
+.illusion-stage.is-board{padding:0;cursor:grab}
+.illusion-stage.is-board canvas{width:100%;height:100%;max-width:none;max-height:none;box-shadow:none;background:none}
+
+.illusion-group{display:flex;flex-direction:column;gap:6px}
+.illusion-sub{font-size:.76rem;font-weight:800}
+.illusion-sep{width:2px;height:24px;background:var(--paper-dark);border-radius:2px;margin:0 2px}
+.illusion-seg{display:flex;gap:3px;padding:3px;border-radius:999px;background:var(--bg)}
+.illusion-seg button{padding:.35rem .6rem;border-radius:999px;font-size:.75rem;font-weight:800}
+.illusion-seg button.on{background:var(--text);color:var(--bg-card)}
+.illusion-control.warn{background:var(--stamp);color:var(--bg-card)}
+.illusion-controls .illusion-act{width:44px;height:44px;min-height:0;padding:0;border-radius:50%;display:grid;place-items:center;flex-shrink:0;box-shadow:var(--lift)}
+.illusion-controls .illusion-act .ico{width:21px;height:21px;stroke-width:2.4}
+.illusion-act:disabled{opacity:.4;box-shadow:none}
+@media(max-width:720px){.illusion-controls .illusion-act{width:36px;height:36px}.illusion-sep{display:none}}

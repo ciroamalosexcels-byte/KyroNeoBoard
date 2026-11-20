@@ -7,6 +7,207 @@
 <link rel="icon" href="_app/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="_app/fonts/archivo.css">
 <link rel="stylesheet" href="_app/mesa.css">
+<link rel="stylesheet" href="_app/illusion.css">
+<style>
+.toast{z-index:90}
+/* Mat de inicio: módulos de cinco por cinco cuadrados. */
+.welcome{background-image:linear-gradient(rgba(255,250,240,.22) 2px,transparent 2px),linear-gradient(90deg,rgba(255,250,240,.22) 2px,transparent 2px),linear-gradient(rgba(255,250,240,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,250,240,.08) 1px,transparent 1px);background-size:140px 140px,140px 140px,28px 28px,28px 28px}
+/* Selección y desplazamiento con la paleta de la marca. */
+::selection,input::selection,textarea::selection{background:var(--hl);color:var(--text);text-shadow:none}
+*{scrollbar-color:var(--stamp) var(--bg)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg);border-radius:999px;box-shadow:none}
+::-webkit-scrollbar-thumb{background:var(--stamp);border:2px solid var(--bg);border-radius:999px;background-clip:padding-box;box-shadow:none}
+::-webkit-scrollbar-thumb:hover{background:var(--text);background-clip:padding-box}
+::-webkit-scrollbar-corner{background:var(--bg)}
+/* Código del ticket: seis guiones, sin casilleros. */
+.room-code-slots>span{background:transparent;border-radius:0;box-shadow:none;border-bottom:2px solid var(--text)}
+.room-code-slots>.active{transform:none;box-shadow:none;border-bottom-width:4px}
+.room-code-slots>.selected{background:transparent;color:var(--text);border-bottom-color:var(--stamp)}
+/* Recientes visibles: tres filas y desplazamiento para el resto. */
+.w-history{grid-row:7}
+.w-history h2{font-size:.82rem;margin:0 0 8px;font-weight:800}
+.w-history .w-recent{gap:8px;max-height:208px;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.w-history .w-proj{flex:0 0 64px;height:64px;min-height:64px}
+.w-history .w-proj b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Mismo ticket de la sala abierta, con el talón para pegar. */
+.room-join-form .room-ticket .ticket-body{--stub:64px;min-height:108px}
+.room-ticket .ticket-main{min-width:0;gap:12px;padding:14px 10px}
+.room-ticket .room-code-field{width:100%}
+.room-ticket .room-paste{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;align-self:stretch;padding:8px 4px;border-radius:0 12px 12px 0;background:transparent;box-shadow:none;font-size:.7rem;line-height:1.15;transform:none}
+.room-ticket .room-paste:hover:not(:disabled){background:var(--bg-card);box-shadow:none;transform:none}
+.room-ticket .room-paste:active:not(:disabled),.room-ticket .room-paste:focus-visible{background:var(--text);color:var(--bg-card);box-shadow:none;transform:none;outline:none}
+/* Fotos vacías apiladas y esquina de papel que se dobla. */
+#newProjectCard{position:relative;isolation:isolate;display:block;padding:0;margin:6px 5px 12px;background:transparent;border-radius:16px;box-shadow:none;transition:transform .5s cubic-bezier(.22,1,.36,1)}
+#newProjectCard .new-photo{position:absolute;inset:0;z-index:-1;pointer-events:none;border:6px solid #fffaf0;border-bottom-width:11px;border-radius:12px;background:var(--paper-dark);box-shadow:3px 3px 0 var(--text);transition:transform .5s cubic-bezier(.22,1,.36,1)}
+#newProjectCard .new-photo-back{transform:translate(-4px,3px) rotate(-3deg)}
+#newProjectCard .new-photo-middle{transform:translate(4px,6px) rotate(2deg)}
+#newProjectCard .new-face{position:relative;display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;border-radius:16px;background:var(--text);color:var(--bg-card);clip-path:polygon(0 0,100% 0,100% 0,100% 100%,0 100%);transition:clip-path .75s cubic-bezier(.22,1,.36,1)}
+#newProjectCard .new-face::after{content:"";position:absolute;top:0;right:0;width:34px;height:34px;border-radius:0 0 0 7px;pointer-events:none;background:var(--bg-card);clip-path:polygon(0 0,0 100%,100% 100%);filter:drop-shadow(-2px 2px 0 var(--text));transform:scale(.001) rotate(-12deg);transform-origin:100% 0;opacity:0;transition:transform .75s cubic-bezier(.22,1,.36,1),opacity .375s ease}
+#newProjectCard:hover,#newProjectCard:focus-within{transform:translate(-1px,-2px);box-shadow:none;outline:none}
+#newProjectCard:hover .new-photo-back,#newProjectCard:focus-within .new-photo-back{transform:translate(-6px,4px) rotate(-4deg)}
+#newProjectCard:hover .new-photo-middle,#newProjectCard:focus-within .new-photo-middle{transform:translate(5px,8px) rotate(3deg)}
+#newProjectCard:hover .new-face,#newProjectCard:focus-within .new-face{clip-path:polygon(0 0,calc(100% - 34px) 0,100% 34px,100% 100%,0 100%)}
+#newProjectCard:hover .new-face::after,#newProjectCard:focus-within .new-face::after{transform:scale(1) rotate(0);opacity:1}
+#newProjectCard:active{transform:translate(2px,2px);box-shadow:none}
+@media(prefers-reduced-motion:reduce){#newProjectCard,#newProjectCard .new-photo,#newProjectCard .new-face,#newProjectCard .new-face::after{transition:none}}
+/* Nombre integrado, sin anidar un campo dentro de un botón. */
+.welcome-card>#newProjectCard{grid-column:1;grid-row:2}
+.welcome-card>.w-row{grid-row:3}
+#wRoomJoin{grid-row:3/7}
+#newProjectCard .new-face{display:grid;grid-template-columns:64px minmax(0,1fr);grid-template-rows:32px 32px;gap:0 16px}
+#newProjectCard .new-create{grid-column:1/-1;grid-row:1/3;display:flex;align-items:center;gap:16px;width:100%;height:64px;padding:0;text-align:left;color:var(--bg-card);background:none;border:0;box-shadow:none}
+#newProjectCard .new-create b{padding-top:28px}
+#newProjectCard #wName{grid-column:2;grid-row:1;z-index:1;width:100%;min-width:0;height:30px;padding:0 0 1px;background-color:transparent;background-image:radial-gradient(circle,var(--muted) 1px,transparent 1.2px);background-size:6px 2px;background-repeat:repeat-x;background-position:left bottom;color:var(--bg-card);border:0;border-radius:0;box-shadow:none;outline:none;font:800 1.08rem var(--font)}
+#newProjectCard #wName::placeholder{color:var(--bg-card);opacity:.65}
+#newProjectCard #wName:focus{background-image:radial-gradient(circle,var(--hl) 1px,transparent 1.2px)}
+/* Flecha al final de la línea de puntos: crea el proyecto (igual que Enter). */
+#newProjectCard .new-face{grid-template-columns:64px minmax(0,1fr) 30px}
+#newProjectCard #wGo{grid-column:3;grid-row:1;z-index:1;align-self:center;width:30px;height:30px;margin-right:4px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:var(--stamp);color:#fff;box-shadow:var(--lift);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,opacity .2s ease}
+#newProjectCard #wGo .ico{width:18px;height:18px;stroke-width:2.8}
+#newProjectCard #wGo:hover{transform:translate(-1px,-1px);box-shadow:var(--lift-hi)}
+#newProjectCard #wGo:active{transform:translate(2px,2px);box-shadow:var(--lift-lo)}
+#newProjectCard #wName:placeholder-shown~#wGo{opacity:.45}
+#newProjectCard #wGo[aria-busy="true"]{opacity:.45;pointer-events:none}
+@media(prefers-reduced-motion:reduce){#newProjectCard #wGo{transition:none}}
+.welcome-card>.logo[role="heading"]{height:auto;min-height:var(--h);padding:.65rem 1rem;font-size:2rem;line-height:1.15;white-space:normal;flex-wrap:wrap;gap:.35rem .65rem}
+.welcome-card>.logo[role="heading"] small{display:inline;font-size:inherit;font-weight:800;letter-spacing:inherit;opacity:1}
+/* Abrir: carpeta blanca sobre un mat de corte verde. */
+#wOpenNeo{position:relative;display:flex;align-items:center;gap:18px;width:100%;margin:6px 5px;padding:14px 18px;text-align:left;border-radius:12px;background-color:#2b6b58;background-image:linear-gradient(rgba(255,250,240,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(255,250,240,.15) 1px,transparent 1px),linear-gradient(rgba(255,250,240,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,250,240,.08) 1px,transparent 1px);background-size:70px 70px,70px 70px,14px 14px,14px 14px;color:var(--bg-card);box-shadow:var(--lift);transition:transform .45s cubic-bezier(.22,1,.36,1),box-shadow .3s ease}
+#wOpenNeo .open-envelope{position:relative;display:block;flex:0 0 76px;height:62px;pointer-events:none}
+#wOpenNeo .envelope-back{position:absolute;inset:17px 0 0;border-radius:4px;background:#fff;filter:drop-shadow(4px 4px 0 var(--text))}
+#wOpenNeo .envelope-back::before{content:"";position:absolute;left:0;top:-9px;width:34px;height:12px;background:#fff;clip-path:polygon(0 0,75% 0,100% 100%,0 100%);border-radius:4px 0 0 0}
+#wOpenNeo .envelope-photo{position:absolute;left:15px;top:3px;width:48px;height:48px;border:5px solid #fffaf0;border-bottom-width:10px;border-radius:2px;background:var(--paper-dark);box-shadow:2px 2px 0 var(--text);transform:rotate(-7deg);transition:transform .55s cubic-bezier(.22,1,.36,1)}
+#wOpenNeo .envelope-front{position:absolute;inset:27px -2px 0 2px;border-radius:4px;background:#fff;transform:skewX(-5deg);transform-origin:50% 100%;box-shadow:4px 4px 0 var(--text)}
+#wOpenNeo .open-title{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:.95rem;font-weight:800}
+#wOpenNeo .neo-stamp{display:inline-block;padding:3px 6px;border-radius:4px;background:var(--stamp);color:var(--bg-card);font-size:.7rem;letter-spacing:.04em;transform:rotate(-5deg);box-shadow:2px 2px 0 var(--text)}
+#wOpenNeo:hover,#wOpenNeo:focus-visible{transform:translate(-1px,-1px);box-shadow:var(--lift-hi);outline:none}
+#wOpenNeo:hover .envelope-photo,#wOpenNeo:focus-visible .envelope-photo{transform:translateY(-13px) rotate(-3deg)}
+#wOpenNeo:active{transform:translate(2px,2px);box-shadow:var(--lift-lo)}
+@media(prefers-reduced-motion:reduce){#wOpenNeo,#wOpenNeo .envelope-photo{transition:none}}
+/* Dos copias espejadas del pliegue rectángulo de Crear proyecto. */
+.ticket{transform:none}
+.ticket-body{overflow:hidden;clip-path:polygon(0 0,calc(100% - var(--stub)) 0,calc(100% - var(--stub)) 0,calc(100% - var(--stub)) 0,100% 0,100% 100%,0 100%);transition:clip-path .75s cubic-bezier(.22,1,.36,1)}
+.ticket-body>.ticket-main,.ticket-body>.ticket-stub{position:relative}
+.ticket-body>.ticket-stub,.ticket-body>.ticket-stub:hover,.ticket-body>.ticket-stub:focus-visible,.ticket-body>.ticket-stub:active,.room-ticket .room-paste:hover:not(:disabled),.room-ticket .room-paste:focus-visible,.room-ticket .room-paste:active:not(:disabled){background:var(--hl);color:var(--text)}
+.ticket-body>.ticket-main::after,.ticket-body>.ticket-stub::after{content:"";position:absolute;top:0;width:34px;height:34px;pointer-events:none;z-index:2;background:var(--bg-card);filter:drop-shadow(2px 2px 0 var(--text));opacity:1;transition:transform .75s cubic-bezier(.22,1,.36,1)}
+.ticket-body>.ticket-main::after{right:0;clip-path:polygon(0 0,0 100%,100% 100%);-webkit-mask:radial-gradient(circle 9px at 0 100%,#0000 98%,#000);mask:radial-gradient(circle 9px at 0 100%,#0000 98%,#000);transform-origin:100% 0;transform:scale(0) rotate(-12deg)}
+.ticket-body>.ticket-stub::after{left:0;clip-path:polygon(100% 0,100% 100%,0 100%);-webkit-mask:radial-gradient(circle 9px at 100% 100%,#0000 98%,#000);mask:radial-gradient(circle 9px at 100% 100%,#0000 98%,#000);transform-origin:0 0;transform:scale(0) rotate(12deg)}
+.ticket-body:has(>.ticket-stub:hover:not(:disabled)),.ticket-body:has(>.ticket-stub:focus-visible){clip-path:polygon(0 0,calc(100% - var(--stub) - 34px) 0,calc(100% - var(--stub)) 34px,calc(100% - var(--stub) + 34px) 0,100% 0,100% 100%,0 100%)}
+.ticket-body:has(>.ticket-stub:hover:not(:disabled))>.ticket-main::after,.ticket-body:has(>.ticket-stub:focus-visible)>.ticket-main::after,.ticket-body:has(>.ticket-stub:hover:not(:disabled))>.ticket-stub::after,.ticket-body:has(>.ticket-stub:focus-visible)>.ticket-stub::after{opacity:1;transform:scale(1) rotate(0)}
+@media(prefers-reduced-motion:reduce){.ticket-body,.ticket-body>.ticket-main::after,.ticket-body>.ticket-stub::after{transition:none}}
+/* Sombra continua hasta el borde superior del papel; prolongación inferior de 4px. */
+.ticket-body>.ticket-main::after,.ticket-body>.ticket-stub::after{filter:none}
+.ticket-body>.ticket-main::before,.ticket-body>.ticket-stub::before{content:"";position:absolute;top:0;width:34px;height:38px;pointer-events:none;z-index:1;background:var(--text);opacity:1;transition:transform .75s cubic-bezier(.22,1,.36,1)}
+.ticket-body>.ticket-main::before{right:-4px;clip-path:polygon(0 0,0 100%,100% 100%);-webkit-mask:radial-gradient(circle 9px at 0 100%,#0000 98%,#000);mask:radial-gradient(circle 9px at 0 100%,#0000 98%,#000);transform-origin:100% 0;transform:scale(0) rotate(-12deg)}
+.ticket-body>.ticket-stub::before{left:4px;clip-path:polygon(100% 0,100% 100%,0 100%);-webkit-mask:radial-gradient(circle 9px at 100% 100%,#0000 98%,#000);mask:radial-gradient(circle 9px at 100% 100%,#0000 98%,#000);transform-origin:0 0;transform:scale(0) rotate(12deg)}
+.ticket-body:has(>.ticket-stub:hover:not(:disabled))>.ticket-main::before,.ticket-body:has(>.ticket-stub:focus-visible)>.ticket-main::before,.ticket-body:has(>.ticket-stub:hover:not(:disabled))>.ticket-stub::before,.ticket-body:has(>.ticket-stub:focus-visible)>.ticket-stub::before{opacity:1;transform:scale(1) rotate(0)}
+@media(prefers-reduced-motion:reduce){.ticket-body>.ticket-main::before,.ticket-body>.ticket-stub::before{transition:none}}
+/* Los tres títulos usan la misma tipografía y jerarquía. */
+#newProjectCard .new-create b,#wOpenNeo .open-title,.room-ticket .room-ticket-title{font-family:var(--font);font-size:1.08rem;font-weight:800;letter-spacing:normal;text-transform:none}
+#wOpenNeo .neo-stamp{font-size:inherit}
+/* Etiqueta como cinta arrancada: plana y dentada solo en los extremos. */
+#wOpenNeo .neo-stamp{--tape-cut:polygon(0 0,100% 0,94% 12%,100% 25%,94% 38%,100% 50%,94% 62%,100% 75%,94% 88%,100% 100%,0 100%,6% 88%,0 75%,6% 62%,0 50%,6% 38%,0 25%,6% 12%);position:relative;isolation:isolate;padding:3px 10px;border-radius:0;background:transparent;transform:none;box-shadow:none}
+#wOpenNeo .neo-stamp::before,#wOpenNeo .neo-stamp::after{content:"";position:absolute;inset:0;clip-path:var(--tape-cut);pointer-events:none}
+#wOpenNeo .neo-stamp::before{z-index:-1;background:var(--stamp)}
+#wOpenNeo .neo-stamp::after{z-index:-2;background:var(--text);transform:translate(4px,4px)}
+#wOpenNeo .neo-stamp{font-size:.864rem;padding:2.4px 8px;letter-spacing:.032em}
+#wOpenNeo .neo-stamp::after{transform:translate(3.2px,3.2px)}
+/* Tarjetas de entrada: alturas iguales y alineación superior. */
+#wOpenNeo{height:90px;min-height:90px}
+#wRoomJoin .room-join>h3{display:none}
+#wRoomJoin .room-ticket{margin:6px 0 12px;transform-origin:50% 100%;transform:none}
+#wRoomJoin .room-ticket .ticket-body{height:90px;min-height:90px}
+#wRoomJoin .room-ticket .ticket-main{padding:10px;gap:6px}
+#wRoomJoin .room-code-slots>span{height:34px}
+/* Impacto sobre el papel, independiente del guion del cursor. */
+#wRoomJoin .room-code-slots>span{position:relative}
+#wRoomJoin .room-code-slots>span.stamping{color:transparent}
+#wRoomJoin .room-code-slots>span.stamping::after{content:attr(data-stamp-char);position:absolute;inset:0 0 2px;display:flex;align-items:center;justify-content:center;color:var(--text);font:inherit;pointer-events:none;transform-origin:50% 50%;animation:code-stamp .34s cubic-bezier(.2,.8,.25,1) both}
+#wRoomJoin .room-code-slots>span.active:not(.selected){animation:code-caret 1s steps(1,end) infinite}
+@keyframes code-caret{0%,55%,100%{border-bottom-color:var(--text)}56%,99%{border-bottom-color:transparent}}
+@keyframes code-stamp{
+  0%{opacity:0;transform:scale(1.45)}
+  12%{opacity:1;transform:scale(1.12)}
+  32%{opacity:1;transform:scale(1.24,1.12)}
+  65%{opacity:1;transform:scale(.97)}
+  84%{opacity:1;transform:scale(1.015)}
+  100%{opacity:1;transform:scale(1)}
+}
+@media(prefers-reduced-motion:reduce){#wRoomJoin .room-code-slots>span.stamping::after,#wRoomJoin .room-code-slots>span.active:not(.selected){animation:none}}
+#wRoomJoin .room-join-form{position:relative}
+.ticket-discard{position:absolute;pointer-events:none;z-index:5;transform-origin:50% 50%}
+.ticket-discard .room-ticket{margin:0!important;width:100%;animation:none!important}
+.ticket-discard .room-code-slots>span{animation:none!important}
+/* Misma curvatura que los extremos de las píldoras de la interfaz. */
+.ticket-body{border-radius:calc(var(--h) / 2)}
+.ticket-body>.ticket-stub,.room-ticket .room-paste{border-radius:0 calc(var(--h) / 2) calc(var(--h) / 2) 0}
+/* Terminal de salas locales, alineada con Abrir proyecto. */
+#wRoomJoin{grid-row:2/4}
+.w-history{grid-row:4}
+.lan-terminal{grid-column:2;grid-row:3;align-self:start;min-width:0;min-height:90px;margin:6px 0 6px 26px;background:var(--text);color:var(--bg-card);border-radius:12px;box-shadow:var(--lift);overflow:hidden}
+.lan-terminal-head{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--paper-dark);color:var(--text);font-size:.75rem;font-weight:800}
+.lan-terminal-head svg{width:17px;height:17px;flex:none}
+.lan-prompt{margin-left:auto;font-weight:800}
+.lan-screen{padding:9px 12px;display:flex;flex-direction:column;gap:7px}
+.lan-terminal .room-status{color:var(--hl);font-size:.72rem;line-height:1.4}
+.lan-terminal .room-status::before{content:"> ";font-weight:800}
+.lan-terminal .room-status::after{content:" ▌";animation:lan-cursor 1s steps(1,end) infinite}
+.lan-terminal .room-near{max-height:130px;overflow-y:auto;gap:7px;scrollbar-color:var(--hl) var(--text)}
+.lan-terminal .room-near:empty{display:none}
+.lan-terminal .cb-room{gap:8px;padding:7px 0;border-radius:0;background:transparent;box-shadow:none;border-top:1px dashed var(--muted)}
+.lan-terminal .cb-room::before{content:"";flex:0 0 18px;height:18px;background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffe14d' stroke-width='1.8'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cellipse cx='12' cy='12' rx='4' ry='9'/%3E%3Cpath d='M3 12h18'/%3E%3C/svg%3E")}
+.lan-terminal .cb-room>div{flex:1;min-width:0}
+.lan-terminal .cb-room b{font-size:.76rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lan-terminal .cb-room small{color:var(--bg);font-size:.65rem}
+.lan-terminal .cb-go{background:var(--hl);color:var(--text);height:28px;box-shadow:2px 2px 0 var(--muted)}
+.lan-terminal-foot{padding:0 12px 9px;color:var(--bg);font-size:.63rem}
+@keyframes lan-cursor{0%,55%,100%{opacity:1}56%,99%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.lan-terminal .room-status::after{animation:none}}
+@media(max-width:650px){.lan-terminal{margin:0 0 8px}}
+/* Movimiento de la marca: papel que se despliega y sellos que recuperan su forma. */
+:root{--paper-ease:cubic-bezier(.22,1,.36,1)}
+.menu.show{transform-origin:24px 0;animation:paper-menu .4s var(--paper-ease) both}
+.proj-drop .menu{transform-origin:calc(100% - 24px) 0}
+.help.show,.cb-qr.show>.cb-qr-box,.cb-gate.show>.cb-box{animation:paper-card .48s var(--paper-ease) both}
+.collab-panel.show,.art-panel:not([hidden]){transform-origin:100% 24px;animation:paper-side .46s var(--paper-ease) both}
+.welcome.show>.welcome-card{animation:paper-card .6s var(--paper-ease) both}
+.welcome.show .welcome-card>.logo{animation:paper-settle .55s .06s var(--paper-ease) backwards}
+.welcome.show #newProjectCard{animation:paper-settle .55s .11s var(--paper-ease) backwards}
+.welcome.show #wRoomJoin{animation:paper-settle .55s .16s var(--paper-ease) backwards}
+.welcome.show .welcome-card>.w-row,.welcome.show .lan-terminal{animation:paper-settle .55s .21s var(--paper-ease) backwards}
+.welcome.show .w-history{animation:paper-settle .55s .25s var(--paper-ease) backwards}
+.w-proj{transition:transform .38s var(--paper-ease),box-shadow .25s ease;transform-origin:12% 50%}
+.w-proj:hover,.w-proj:focus-visible{transform:translate(-2px,-2px) rotate(-.35deg);box-shadow:var(--lift-hi)}
+.ib>.ico,.menu button>.ico,.cb-round>.ico,.dock-tool>.ico{transform-origin:50% 60%}
+.ib:hover:not(:disabled)>.ico,.menu button:hover:not(:disabled)>.ico,.cb-round:hover>.ico,.dock-tool:hover>.ico{animation:paper-icon .5s var(--paper-ease)}
+.ib.on>.ico,.ib.on>b,.cfg .seg button.on,.cb-sw.on,.cb-ic.on{animation:paper-stamp .38s var(--paper-ease)}
+.cb-x>.ico,.help-head .round>.ico{transition:rotate .38s var(--paper-ease)}
+.cb-x:hover>.ico,.help-head .round:hover>.ico{rotate:90deg}
+.cb-icons:not([hidden]) .cb-ic{animation:paper-stamp .38s var(--paper-ease) backwards}
+.cb-icons:not([hidden]) .cb-ic:nth-child(3n+2){animation-delay:.035s}
+.cb-icons:not([hidden]) .cb-ic:nth-child(3n){animation-delay:.07s}
+.cb-chat-dock:not([hidden])>.dock-compose{animation:paper-dock .45s var(--paper-ease)}
+.overlay.show>.overlay-head{animation:paper-settle .42s var(--paper-ease)}
+.overlay.show .sheet{animation:paper-settle .45s var(--paper-ease) backwards}
+.sheet:nth-child(3n+2){animation-delay:.04s}.sheet:nth-child(3n){animation-delay:.08s}
+.empty.show>.empty-card{animation:paper-card .5s var(--paper-ease)}
+.toast.show{animation:paper-toast .35s var(--paper-ease)}
+body:has(.cb-chat-dock:not([hidden])) .toast{bottom:calc(var(--h) + 110px)}
+.lz-pill,.lz-row{transition:background .18s ease,box-shadow .25s ease}
+.lz-pill:hover{box-shadow:var(--lift-hi)}
+.tut-card{transition:left .4s var(--paper-ease),top .4s var(--paper-ease)}
+.tut-spot{transition:left .4s var(--paper-ease),top .4s var(--paper-ease),width .4s var(--paper-ease),height .4s var(--paper-ease)}
+@keyframes paper-menu{0%{opacity:0;translate:0 -6px;rotate:-1deg;scale:.94 .85}65%{opacity:1;translate:0 1px;rotate:.2deg;scale:1.006 1.018}100%{opacity:1;translate:0 0;rotate:0deg;scale:1}}
+@keyframes paper-card{0%{opacity:0;translate:0 16px;rotate:-.8deg;scale:.96}65%{opacity:1;translate:0 -2px;rotate:.2deg;scale:1.008}100%{opacity:1;translate:0 0;rotate:0deg;scale:1}}
+@keyframes paper-side{0%{opacity:0;translate:24px 4px;rotate:1deg;scale:.97}70%{opacity:1;translate:-2px 0;rotate:-.15deg;scale:1.005}100%{opacity:1;translate:0 0;rotate:0deg;scale:1}}
+@keyframes paper-settle{0%{opacity:0;translate:0 9px;rotate:-.4deg}70%{opacity:1;translate:0 -1px;rotate:.1deg}100%{opacity:1;translate:0 0;rotate:0deg}}
+@keyframes paper-icon{0%,100%{rotate:0deg;scale:1}35%{rotate:-9deg;scale:1.1}70%{rotate:4deg;scale:.98}}
+@keyframes paper-stamp{0%{scale:1.12 .9}45%{scale:.97 1.04}100%{scale:1}}
+@keyframes paper-dock{0%{opacity:0;translate:0 12px;scale:.96 .9}70%{opacity:1;translate:0 -1px;scale:1.008 1.025}100%{opacity:1;translate:0 0;scale:1}}
+@keyframes paper-toast{0%{opacity:0;translate:0 8px;scale:.97}100%{opacity:1;translate:0 0;scale:1}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
 </head>
 <body>
 <canvas id="mesa"></canvas>
@@ -16,6 +217,8 @@
   <div class="group center">
     <button class="ib on" data-tool="move" data-icon="move" data-tip="Seleccionar · V|Ctrl + clic: sumar · Shift + clic: rango|Ctrl+A: todas · Esc: ninguna"></button>
     <button class="ib" data-tool="pan" data-icon="hand" data-tip="Mano · H|También: Espacio, ruedita o clic derecho"></button>
+    <button class="ib" data-tool="brush" data-icon="pencil" aria-label="Dibujar" data-tip="Dibujar · B|Goma: E"></button>
+    <button class="ib" data-tool="text" data-icon="type" aria-label="Texto" data-tip="Texto · T|Doble clic en un texto: editarlo"></button>
     <button class="ib" data-tool="size" data-icon="size" data-tip="Tamaño · S|Clic: A7 → A4 · Shift + clic: al revés"></button>
     <button class="ib" data-tool="rotate" data-icon="rotate" data-tip="Rotar · R|Shift: de a 90°"></button>
     <div class="drop">
@@ -125,6 +328,7 @@
         <button class="mbtn eye-mix" id="mosMix" data-icon="dice">Mezclar de nuevo</button>
       </div>
     </div>
+    <button class="ib dim" id="illusionBtn" data-icon="pyramid" aria-label="Ilusión 3D: pirámide" data-tip="Ilusión 3D · Pirámide|Una foto, cuatro caras y una punta" disabled></button>
     <button class="ib dim" id="flow" data-icon="rows" data-tip="Acomodar en filas|2 o más fotos, o un lienzo"></button>
     <div class="fold" id="frameFold">
       <button class="ib" id="frameBtn" data-icon="frame" data-tip="Marco blanco"></button>
@@ -174,6 +378,9 @@
     <div class="seg" data-cfg="tips"><button data-v="on">Sí</button><button data-v="off">No</button></div></div>
   <div class="cfg-row"><div><b>Sonidos</b><small id="sndList"></small></div>
     <div class="seg" data-cfg="sound"><button data-v="on">Sí</button><button data-v="off">No</button></div></div>
+  <div class="cfg-row"><div><b>Mensajes en Solo chat</b><small>Tiempo hasta desvanecerse. El historial queda en En equipo.</small></div><div class="seg" data-cfg="chatSeconds"><button data-v="5">5 s</button><button data-v="15">15 s</button><button data-v="30">30 s</button><button data-v="0">Siempre</button></div></div>
+  <div class="cfg-row"><div><b>Ingreso a mis salas</b><small>Para la próxima sala. También podés agregar una contraseña al abrirla.</small></div>
+    <div class="seg" data-cfg="roomApproval"><button data-v="on">Pedir aprobación</button><button data-v="off">Entrada directa</button></div></div>
   <div class="help-foot">Formatos: JPG, PNG, WebP, TIFF, HEIC y RAW (NEF, CR2, CR3, ARW, DNG, RAF, ORF, RW2, PEF…). Del RAW se usa la foto completa que guarda la cámara.</div>
 </div>
 <div class="help-bg" id="helpBg"></div>
@@ -277,36 +484,307 @@
   <span id="emptyText">o tocá el +</span>
 </div></div>
 <input type="file" id="filePick" accept="image/jpeg,image/png,image/webp,image/tiff,image/heic,image/heif,.heic,.heif,.tif,.tiff,.avif,.nef,.nrw,.cr2,.cr3,.crw,.arw,.srf,.sr2,.dng,.raf,.orf,.rw2,.pef,.srw,.3fr,.erf,.kdc,.mos,.mrw,.iiq,.x3f,.rwl" multiple hidden>
+<input type="file" id="neoBrowserPick" accept=".neo" hidden>
 <div class="welcome" id="welcome">
   <div class="welcome-card">
-    <div class="logo">Kyro Neo Board <small>proyecto nuevo</small></div>
-    <h1>Empezá un proyecto</h1>
-    <p>Una carpeta para las fotos y el armado.</p>
-    <label class="w-name">Nombre <input id="wName" value="Proyecto nuevo" maxlength="60"></label>
-    <button class="w-new" id="wNew"><span class="w-plus" data-icon="plus"></span><span><b>Apretá acá para iniciar un nuevo proyecto</b><small>Se abre el explorador para elegir dónde crear la carpeta</small></span></button>
+    <div class="logo" role="heading" aria-level="1">Kyro Neo Board <small>Proyecto Nuevo</small></div>
+    <div class="w-new" id="newProjectCard"><span class="new-photo new-photo-back" aria-hidden="true"></span><span class="new-photo new-photo-middle" aria-hidden="true"></span><div class="new-face"><button class="new-create" id="wNew"><span class="w-plus" data-icon="plus"></span><b>Crear proyecto</b></button><input id="wName" aria-label="Nombre del proyecto" placeholder="Nombre del proyecto" maxlength="60" autocomplete="off"><button class="new-go" id="wGo" data-icon="arrow" aria-label="Crear proyecto" data-tip="Crear · Enter"></button></div></div>
     <div class="w-row">
-      <button class="pill" id="wOpenNeo" data-icon="folderOpen">Abrir proyecto .neo…</button>
+      <button id="wOpenNeo" aria-label="Abrir proyecto .neo"><span class="open-envelope" aria-hidden="true"><span class="envelope-back"></span><span class="envelope-photo"></span><span class="envelope-front"></span></span><span class="open-title">Abrir proyecto <span class="neo-stamp">.neo</span></span></button>
     </div>
-    <div class="w-recent" id="wRecent"></div>
+    <div id="wRoomJoin"></div>
+    <section class="w-history" aria-labelledby="wRecentTitle"><h2 id="wRecentTitle">Proyectos recientes</h2><div class="w-recent" id="wRecent" tabindex="0" aria-label="Lista de proyectos recientes"></div></section>
   </div>
 </div>
 
 <script src="_app/qrcode.js"></script>
+<script src="_app/room-link.js"></script>
 <script type="module">
-import { A, SIZES, LIENZO, Mesa, History, prefs, savePrefs, mountIcons, icon, extent, clampXY, isOutside, spansInBand, pieceInPoly, pointInPoly, listDir, loadState, saveState, loadPreview, loadImage, fileUrl, cfg, PREVIEW_PX, packSheets, exportSheets, exportMap, showSheets, safeName, inlineEdit, matMode, cycleMat, MAT_NAME, MAT_ICON, winDialog, revealFolder, serverIsCurrent, SERVER_OLD_MSG } from './_app/mesa.js';
+import { sheetOverlay } from './_app/mesa.js';
+import { A, SIZES, LIENZO, Mesa, History, prefs, savePrefs, mountIcons, icon, extent, clampXY, isOutside, spansInBand, pieceInPoly, pointInPoly, listDir, loadPreview, loadImage, fileUrl, cfg, PREVIEW_PX, packSheets, exportSheets, exportMap, showSheets, safeName, inlineEdit, matMode, cycleMat, MAT_NAME, MAT_ICON, winDialog, revealFolder, serverIsCurrent, SERVER_OLD_MSG } from './_app/mesa.js';
 import { createCollab } from './_app/collab.js';
+import { roomJoinHTML as baseRoomJoinHTML, mountRoomJoin as mountBaseRoomJoin } from './_app/room-join.js';
+import { pasteText } from './_app/clipboard.js';
 import { play, SOUNDS } from './_app/sound.js';
+import { paperIn, revealNew, mountMotion } from './_app/motion.js';
 import { startTutorial } from './_app/tutorial.js';
+import { mountArtTools, paintArt, artPNG, editingArt } from './_app/art-tools.js';
+import { normalizePyramid, preparePhoto } from './_app/illusion-engine.js';
+import { mountIllusionTool } from './_app/illusion-tool.js';
+
+function mountTicketWave(root) {
+  const ticket = root.querySelector('.room-ticket');
+  if (!ticket) return;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const id = 'ticket-wave-' + Math.random().toString(36).slice(2);
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.style.cssText = 'position:absolute;width:0;height:0;pointer-events:none';
+  svg.innerHTML = `<defs><filter id="${id}" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feImage preserveAspectRatio="none" result="waveMap"/><feDisplacementMap in="SourceGraphic" in2="waveMap" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter></defs>`;
+  root.append(svg);
+  const filter = svg.querySelector('filter'), image = svg.querySelector('feImage'), displacement = svg.querySelector('feDisplacementMap');
+  const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 48;
+  const ctx = canvas.getContext('2d'), pixels = ctx.createImageData(128, 48);
+  let frame = 0, started = 0;
+  function stop() {
+    cancelAnimationFrame(frame); frame = 0; started = 0;
+    ticket.style.removeProperty('filter');
+  }
+  function animate(now) {
+    if (!ticket.isConnected || document.hidden || reduced.matches) return stop();
+    const progress = Math.min(1, (now - started) / 1000);
+    if (progress >= 1) return stop();
+    const amount = Math.sin(Math.PI * progress) ** 2 * (1 + .2 * Math.sin(4 * Math.PI * progress));
+    const w = ticket.offsetWidth, h = ticket.offsetHeight, pad = 28;
+    for (const el of [filter, image]) {
+      el.setAttribute('x', -pad); el.setAttribute('y', -pad);
+      el.setAttribute('width', w + pad * 2); el.setAttribute('height', h + pad * 2);
+    }
+    const phase = progress * Math.PI * 2.7;
+    for (let x = 0; x < 128; x++) {
+      const u = Math.max(0, Math.min(1, (x / 127 * (w + pad * 2) - pad) / w));
+      // Una onda ancha y redonda: todo el ticket se mueve como papel de caricatura.
+      const strength = .72 + .28 * Math.sin(u * Math.PI), angle = u * Math.PI * 2 - phase;
+      for (let y = 0; y < 48; y++) {
+        const i = (y * 128 + x) * 4, bend = (y / 47 - .5) * .18;
+        const wave = Math.sin(angle + bend) + .12 * Math.sin(2 * (angle + bend));
+        pixels.data[i] = Math.round(127.5 + 22 * Math.cos(angle + bend) * strength);
+        pixels.data[i + 1] = Math.round(127.5 + 112 * wave * strength);
+        pixels.data[i + 2] = 128; pixels.data[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(pixels, 0, 0);
+    image.setAttribute('href', canvas.toDataURL('image/png'));
+    displacement.setAttribute('scale', (40 * amount).toFixed(3));
+    ticket.style.filter = `url(#${id}) drop-shadow(4px 4px 0 var(--text))`;
+    frame = requestAnimationFrame(animate);
+  }
+  ticket.addEventListener('pointerenter', e => {
+    if (reduced.matches || e.pointerType === 'touch') return;
+    if (frame) return;
+    started = performance.now();
+    frame = requestAnimationFrame(animate);
+  });
+  ticket.addEventListener('ticket-clear', stop);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+  reduced.addEventListener('change', () => { if (reduced.matches) stop(); });
+}
+
+// Descarte con una malla de papel: pliegues por ejes, caras y reverso.
+function crumpleTicket(ticket, form) {
+  const w = ticket.offsetWidth, h = ticket.offsetHeight, ratio = 2, pad = 64;
+  const source = document.createElement('canvas'); source.width = Math.ceil(w * ratio); source.height = Math.ceil(h * ratio);
+  const ink = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+  const paper = getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim();
+  const ctx = source.getContext('2d'); ctx.scale(ratio, ratio);
+  const body = ticket.querySelector('.ticket-body'), style = getComputedStyle(body);
+  const stub = parseFloat(style.getPropertyValue('--stub')) || 64, cut = w - stub;
+  ctx.fillStyle = style.backgroundColor; ctx.beginPath();
+  ctx.roundRect(0,0,w,h,parseFloat(style.borderTopLeftRadius)||22); ctx.fill();
+  ctx.globalCompositeOperation = 'destination-out';
+  for (const y of [0,h]) { ctx.beginPath(); ctx.arc(cut,y,9,0,Math.PI*2); ctx.fill(); }
+  ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = ink;
+  ctx.save(); ctx.globalAlpha = .5; ctx.lineWidth = 3; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(cut,12); ctx.lineTo(cut,h-12); ctx.stroke(); ctx.restore();
+  const bounds = ticket.getBoundingClientRect();
+  function label(el, text) {
+    const r=el.getBoundingClientRect(), s=getComputedStyle(el);
+    ctx.fillStyle=ink;ctx.font=s.font;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(text,r.left-bounds.left+r.width/2,r.top-bounds.top+r.height/2-1);
+  }
+  const title=ticket.querySelector('.room-ticket-title'); label(title,title.textContent);
+  const value=ticket.querySelector('input').value.toUpperCase();
+  ticket.querySelectorAll('.room-code-slots>span').forEach((slot,i)=>{
+    const r=slot.getBoundingClientRect(); if(value[i])label(slot,value[i]);
+    ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(r.left-bounds.left,r.bottom-bounds.top-1);ctx.lineTo(r.right-bounds.left,r.bottom-bounds.top-1);ctx.stroke();
+  });
+  const icon=ticket.querySelector('.ticket-stub svg');
+  if(icon){
+    const r=icon.getBoundingClientRect();ctx.save();ctx.translate(r.left-bounds.left,r.top-bounds.top);ctx.scale(r.width/24,r.height/24);
+    ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.lineCap='round';ctx.lineJoin='round';
+    icon.querySelectorAll('path,rect').forEach(el=>{
+      if(el.tagName.toLowerCase()==='path')ctx.stroke(new Path2D(el.getAttribute('d')));
+      else{ctx.beginPath();ctx.roundRect(+el.getAttribute('x'),+el.getAttribute('y'),+el.getAttribute('width'),+el.getAttribute('height'),+el.getAttribute('rx')||0);ctx.stroke();}
+    });ctx.restore();
+  }
+  const back=document.createElement('canvas');back.width=source.width;back.height=source.height;
+  const bc=back.getContext('2d');bc.drawImage(source,0,0);bc.globalCompositeOperation='source-in';bc.fillStyle=paper;bc.fillRect(0,0,back.width,back.height);
+  const ghost=document.createElement('div');ghost.className='ticket-discard';ghost.setAttribute('aria-hidden','true');
+  ghost.style.cssText=`left:${ticket.offsetLeft}px;top:${ticket.offsetTop}px;width:${w}px;height:${h}px`;
+  const canvas=document.createElement('canvas');canvas.width=(w+pad*2)*ratio;canvas.height=(h+pad*2)*ratio;
+  canvas.style.cssText=`position:absolute;left:-${pad}px;top:-${pad}px;width:${w+pad*2}px;height:${h+pad*2}px;filter:drop-shadow(4px 4px 0 ${ink})`;
+  ghost.append(canvas);form.append(ghost);const out=canvas.getContext('2d');
+  const nx=20,ny=8, vertices=[], faces=[];
+  for(let y=0;y<=ny;y++)for(let x=0;x<=nx;x++)vertices.push({u:x/nx,v:y/ny});
+  for(let y=0;y<ny;y++)for(let x=0;x<nx;x++){
+    const a=y*(nx+1)+x,b=a+1,c=a+nx+1,d=c+1;
+    if((x+y)%2)faces.push([a,b,c],[b,d,c]);else faces.push([a,b,d],[a,d,c]);
+  }
+  // Las primeras bisagras recogen los bordes; las diagonales pliegan el bulto.
+  const creases=[
+    [Math.PI/2,w*.23,1,1.95,0],[Math.PI/2,-w*.23,-1,-2.05,.05],
+    [0,-h*.16,-1,-1.85,.12],[0,h*.19,1,2.1,.17],
+    [.72,h*.05,1,2.05,.25],[-.95,-h*.09,-1,-2.25,.34],
+    [1.8,h*.06,1,1.9,.43],[-.35,0,-1,-1.85,.5]
+  ].map(([a,d,side,angle,start])=>({nx:-Math.sin(a),ny:Math.cos(a),d,side,angle,start}));
+  const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
+  function vertex(p,amount){
+    const ox=(p.u-.5)*w,oy=(p.v-.5)*h;let x=ox,y=oy,z=0;
+    for(const c of creases){
+      const sideDistance=(ox*c.nx+oy*c.ny-c.d)*c.side;
+      if(sideDistance<=0)continue;
+      const hinge=smooth(sideDistance/Math.max(10,Math.min(w,h)*.2));
+      const a=c.angle*hinge*smooth((amount-c.start)/(1-c.start)),cs=Math.cos(a),sn=Math.sin(a);
+      const distance=x*c.nx+y*c.ny-c.d, next=distance*cs-z*sn;
+      z=distance*sn+z*cs;x+=(next-distance)*c.nx;y+=(next-distance)*c.ny;
+    }
+    return {x,y,z,u:p.u,v:p.v};
+  }
+  function triangle(a,b,c,texture){
+    const sx=a.u*source.width,sy=a.v*source.height;
+    const ux=(b.u-a.u)*source.width,uy=(b.v-a.v)*source.height,vx=(c.u-a.u)*source.width,vy=(c.v-a.v)*source.height,det=ux*vy-uy*vx;
+    const ax=b.px-a.px,ay=b.py-a.py,bx=c.px-a.px,by=c.py-a.py;
+    const m0=(ax*vy-bx*uy)/det,m2=(bx*ux-ax*vx)/det,m1=(ay*vy-by*uy)/det,m3=(by*ux-ay*vx)/det;
+    const mx=(a.px+b.px+c.px)/3,my=(a.py+b.py+c.py)/3;
+    const edge=p=>{const dx=p.px-mx,dy=p.py-my,k=1+.45/(Math.hypot(dx,dy)||1);return [mx+dx*k,my+dy*k];};
+    out.save();out.beginPath();out.moveTo(...edge(a));out.lineTo(...edge(b));out.lineTo(...edge(c));out.closePath();out.clip();
+    out.transform(m0,m1,m2,m3,a.px-m0*sx-m2*sy,a.py-m1*sx-m3*sy);out.drawImage(texture,0,0);out.restore();
+  }
+  const started=performance.now(), exit=bounds.top+h+100;
+  function draw(now){
+    if(!form.isConnected||document.hidden){ghost.remove();return;}
+    const t=Math.min(1,(now-started)/1150),amount=smooth(t/.7),points=vertices.map(p=>vertex(p,amount));
+    const center=points.reduce((a,p)=>({x:a.x+p.x/points.length,y:a.y+p.y/points.length,z:a.z+p.z/points.length}),{x:0,y:0,z:0});
+    const rot=.35*amount,cs=Math.cos(rot),sn=Math.sin(rot),camera=Math.max(600,w*3);
+    for(const p of points){
+      const x=p.x-center.x,y=p.y-center.y,z=p.z-center.z;
+      p.x=x;p.y=y*cs-z*sn;p.z=y*sn+z*cs;
+      const perspective=camera/(camera-p.z);p.px=pad+w/2+p.x*perspective;p.py=pad+h/2+p.y*perspective;
+    }
+    out.setTransform(ratio,0,0,ratio,0,0);out.clearRect(0,0,w+pad*2,h+pad*2);
+    const sorted=faces.slice().sort((a,b)=>a.reduce((z,i)=>z+points[i].z,0)-b.reduce((z,i)=>z+points[i].z,0));
+    for(const face of sorted){
+      const [a,b,c]=face.map(i=>points[i]);
+      const ux=b.x-a.x,uy=b.y-a.y,uz=b.z-a.z,vx=c.x-a.x,vy=c.y-a.y,vz=c.z-a.z;
+      const normal={x:uy*vz-uz*vy,y:uz*vx-ux*vz,z:ux*vy-uy*vx},length=Math.hypot(normal.x,normal.y,normal.z)||1;
+      triangle(a,b,c,normal.z>=0?source:back);
+      const shade=amount*.46*(1-Math.abs((normal.x*-.3+normal.y*-.4+normal.z*.866)/length));
+      if(shade>.015){out.save();out.globalCompositeOperation='source-atop';out.fillStyle=`rgba(22,19,15,${shade})`;out.beginPath();out.moveTo(a.px,a.py);out.lineTo(b.px,b.py);out.lineTo(c.px,c.py);out.closePath();out.fill();out.restore();}
+    }
+    const fly=smooth((t-.68)/.32);ghost.style.transform=`translateY(-${exit*fly}px) rotate(${-15*fly}deg)`;
+    if(t<1)requestAnimationFrame(draw);else ghost.remove();
+  }
+  requestAnimationFrame(draw);
+}
+
+function roomJoinHTML() {
+  const template = document.createElement('template'); template.innerHTML = baseRoomJoinHTML();
+  template.content.querySelector('form').noValidate = true;
+  const codeInput = template.content.querySelector('input');
+  for (const attribute of ['required','minlength','pattern','title']) codeInput.removeAttribute(attribute);
+  codeInput.setAttribute('aria-required', 'true');
+  const old = template.content.querySelector('.room-ticket');
+  const ticket = document.createElement('div'); ticket.className = 'ticket room-ticket';
+  const body = document.createElement('div'); body.className = 'ticket-body';
+  const main = document.createElement('label'); main.className = 'ticket-main';
+  main.append(old.querySelector('.room-ticket-title'), old.querySelector('.room-code-field'));
+  const paste = template.content.querySelector('.room-paste');
+  paste.classList.add('ticket-stub'); paste.setAttribute('aria-label', 'Pegar código de la sala');
+  paste.innerHTML = icon('paste');
+  body.append(main, paste); ticket.append(body); old.replaceWith(ticket);
+  template.content.querySelector('.room-join-actions').remove();
+  const section = template.content.querySelector('.room-join');
+  const terminal = document.createElement('section'); terminal.className = 'lan-terminal';
+  terminal.setAttribute('aria-label', 'Conexiones locales');
+  terminal.innerHTML = '<div class="lan-terminal-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg><span>Conexiones locales</span><span class="lan-prompt" aria-hidden="true">&gt;_</span></div><div class="lan-screen"></div><div class="lan-terminal-foot">Misma red · wifi o cable</div>';
+  terminal.querySelector('.lan-screen').append(section.querySelector('.room-status'), section.querySelector('.room-near'));
+  section.querySelector(':scope > p.cb-hint')?.remove();
+  section.append(terminal);
+  return template.innerHTML;
+}
+function mountRoomJoin(root, options) {
+  mountBaseRoomJoin(root, options);
+  mountTicketWave(root);
+  const form = root.querySelector('form'), input = form.querySelector('input'), paste = form.querySelector('.room-paste');
+  const status = root.querySelector('.room-status');
+  const slots = [...form.querySelectorAll('.room-code-slots>span')];
+  const reducedStamp = matchMedia('(prefers-reduced-motion: reduce)');
+  let previousCode = input.value.toUpperCase();
+  function stampCharacters() {
+    const code = input.value.toUpperCase();
+    slots.forEach((slot,i) => {
+      if (code[i] === previousCode[i]) return;
+      clearTimeout(slot._stampTimer); slot.classList.remove('stamping'); delete slot.dataset.stampChar;
+      if (code[i] && !reducedStamp.matches) {
+        slot.dataset.stampChar = code[i]; void slot.offsetWidth;
+        slot.classList.add('stamping');
+        slot._stampTimer = setTimeout(() => { slot.classList.remove('stamping'); delete slot.dataset.stampChar; }, 340);
+      }
+    });
+    previousCode = code;
+  }
+  let timer, pasting = false, pasteGeneration = 0;
+  const enterComplete = () => {
+    clearTimeout(timer);
+    if (pasting || !/^[A-Z0-9]{6}$/i.test(input.value.trim()) || paste.disabled) return;
+    timer = setTimeout(() => { if (form.isConnected && !paste.disabled) form.requestSubmit(); }, 180);
+  };
+  input.addEventListener('input', e => { if (!e.isComposing) { stampCharacters(); enterComplete(); } });
+  input.addEventListener('compositionend', () => { stampCharacters(); enterComplete(); });
+  input.addEventListener('keydown', e => {
+    if (e.key !== 'Delete' || e.isComposing) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (paste.disabled || !input.value) return;
+    clearTimeout(timer); ++pasteGeneration; pasting = false; input.readOnly = false;
+    const ticket = form.querySelector('.room-ticket');
+    ticket.dispatchEvent(new Event('ticket-clear'));
+    if (!reducedStamp.matches) crumpleTicket(ticket, form);
+    input.value = ''; input.dispatchEvent(new Event('input',{bubbles:true})); input.focus();
+    status.textContent = 'Ticket vacío. Escribí o pegá otro código.';
+  }, true);
+  async function typePastedCode(value) {
+    const code = value.trim().toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(code)) throw Error('El portapapeles no tiene un código de seis caracteres.');
+    const run = ++pasteGeneration;
+    clearTimeout(timer); pasting = true; input.readOnly = true; input.focus();
+    const update = value => { input.value = value; input.dispatchEvent(new Event('input', { bubbles: true })); };
+    try {
+      update('');
+      if (reducedStamp.matches) update(code);
+      else for (let i = 1; i <= code.length; i++) {
+        if (i > 1) await new Promise(resolve => setTimeout(resolve, 55));
+        if (run !== pasteGeneration || !form.isConnected) return;
+        update(code.slice(0, i));
+      }
+    } finally {
+      if (run === pasteGeneration) { pasting = false; input.readOnly = false; if (form.isConnected) enterComplete(); }
+    }
+  }
+  input.addEventListener('paste', e => {
+    e.preventDefault();
+    if (paste.disabled || pasting) return;
+    typePastedCode(e.clipboardData?.getData('text') || '').catch(error => { status.textContent = error.message; });
+  });
+  // Reutiliza la búsqueda y la validación de salas; pegar también dispara el ingreso.
+  paste.addEventListener('click', async e => {
+    e.preventDefault(); e.stopImmediatePropagation(); clearTimeout(timer);
+    try {
+      await typePastedCode(await pasteText());
+    } catch (error) { status.textContent = error.message; input.focus(); }
+  }, true);
+  const terminal = root.querySelector('.lan-terminal');
+  if (terminal) root.closest('.welcome-card').insertBefore(terminal, root.nextElementSibling);
+}
 
 const CYCLE = ['A7', 'A6', 'A5', 'A4']; // tamaños del clic con la herramienta Tamaño (A3 desde el menú)
 // ?p=<carpeta>: proyecto en su propia carpeta (fotos, armado e historial adentro) · ?nuevo: bienvenida
 const QS = new URLSearchParams(location.search), PROJ = QS.get('p'), WELCOME = !PROJ; // sin proyecto abierto: bienvenida
 const DIR = PROJ || 'Fotos MDP';
-const STATE = PROJ ? PROJ + '\\mesa.json' : 'mesa-fotos.json', HIST = PROJ ? PROJ + '\\mesa.historial.json' : 'mesa-fotos.historial.json';
+let neoPath = null, projectReady = false, projectLoad = Promise.resolve(), saveSerial = Promise.resolve(), saveSeq = 0;
 // invitado de una sala (entró con el enlace / QR de otra compu): no guarda, no exporta; la mesa es de quien abrió la sala
 const GUEST = /^[A-Z0-9]{4,12}$/.test(QS.get('sala') || '') ? QS.get('sala') : '';
 if (GUEST) document.documentElement.classList.add('guest');
-let collab = null;
+let collab = null, illusionTool = null;
 const loading = new Set(); // fotos que se están cargando
 const imgUrl = f => PROJ ? '/api/img?path=' + encodeURIComponent(PROJ + '\\' + f) : fileUrl(DIR, f); // (la de siempre)
 const prevUrl = f => imgUrl(f) + (PROJ ? `&w=${PREVIEW_PX[cfg().preview]}&cap=${cfg().cap}` : '');   // la que se ve en la mesa
@@ -455,7 +933,7 @@ function selectLienzo(id) {
   renderLayers(); mesa.invalidate();
 }
 // capas ocultas (ojito): no se ven, no se tocan y no se imprimen
-const isHidden = it => { const lz = lzOf(it); return lz ? !!lz.hidden : !!S.looseHidden; };
+const isHidden = it => { if (it.art) return !!S.artHidden; const lz = lzOf(it); return lz ? !!lz.hidden : !!S.looseHidden; };
 const openLz = new Set();                     // lienzos desplegados en el panel
 const thumbs = new Map();                     // miniaturas para el panel
 // pasa el formato viejo (una sola forma) a lienzos
@@ -474,6 +952,7 @@ function normalize(s) {
     s.migrated1m = true;
   }
   s.items.forEach(it => { it.id ||= uid(); });  // cada foto en el mat tiene su id (puede haber copias)
+  s.items.forEach(it => { if(it.illusion)it.illusion={...normalizePyramid(it.illusion),name:String(it.illusion.name||'Pirámide').slice(0,80)}; });
   if (s.shape) {
     const lz = { id: 'l' + Date.now().toString(36), name: 'Lienzo 1', pts: s.shape };
     s.lienzos.push(lz);
@@ -489,6 +968,7 @@ const mosLz = it => S.lienzos.find(l => l.id === it.mos && l.kind === 'mosaico')
 const baseName = () => 'Libre'; // las fotos sueltas (no se renombra)
 // en qué lienzo cae una foto al soltarla (el de más arriba si se superponen)
 function assignByPos(it) {
+  if (it.art) { it.lienzo = null; return; }
   if (it.mos) { it.lienzo = it.mos; return; }
   const lz = [...S.lienzos].reverse().find(l => l.kind !== 'mosaico' && pointInPoly(it.x, it.y, l.pts));
   it.lienzo = lz ? lz.id : null;
@@ -510,6 +990,8 @@ const bounds = () => null; // ya no hay lienzo fijo de 1 m: los lienzos se dibuj
 
 // --- medidas: la foto entra completa en el formato A con un marco parejo ---
 function dims(it) {
+  if(it.illusion){const c=normalizePyramid(it.illusion),odd=it.rot%2;return{w:odd?c.height:c.width,h:odd?c.width:c.height,iw:odd?c.height:c.width,ih:odd?c.width:c.height,dpi:300};}
+  if (it.art) { const k = it.art.format && A[it.size] ? A[it.size][0] / A[it.art.format][0] : 1, odd = it.rot % 2; const w = it.art.w*k, h = it.art.h*k; return { w: odd?h:w, h:odd?w:h, iw:odd?h:w, ih:odd?w:h, dpi:300 }; }
   if (it.mos) { // pieza de mosaico
     const [w, h] = MOS_DIM[it.size] || MOS_DIM.A5, f = S.frame, lz = mosLz(it), m = meta.get(it.file);
     return { w, h, iw: w - 2 * f, ih: h - 2 * f, dpi: lz && m ? m.w / (lz.src.w / 25.4) : 300 };
@@ -528,6 +1010,17 @@ function dims(it) {
 const letters = j => (j >= 26 ? letters(Math.floor(j / 26) - 1) : '') + String.fromCharCode(65 + (j % 26));
 
 // --- filas (1, 2, 3…) y orden dentro de la fila (A, B, C…) según dónde están en el mat ---
+// ¿hay tinta cerca de este punto del dibujo? (máscara chica del PNG, con 4 px de tolerancia)
+const inkMasks = new WeakMap();
+function inkAt(it, lx, ly, w, h) {
+  const bmp = images.get(it.file); if (!bmp) return true;
+  let m = inkMasks.get(bmp);
+  if (!m) { const k = Math.min(1, 256 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k)); const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(bmp, 0, 0, c.width, c.height); m = { w: c.width, h: c.height, a: x.getImageData(0, 0, c.width, c.height).data }; inkMasks.set(bmp, m); }
+  const a = -(it.rot || 0) * Math.PI / 2, ux = lx * Math.cos(a) - ly * Math.sin(a), uy = lx * Math.sin(a) + ly * Math.cos(a), odd = it.rot % 2, dw = odd ? h : w, dh = odd ? w : h;
+  const px = Math.floor((ux / dw + .5) * m.w), py = Math.floor((uy / dh + .5) * m.h);
+  for (let y = py - 4; y <= py + 4; y++) for (let x = px - 4; x <= px + 4; x++) if (x >= 0 && y >= 0 && x < m.w && y < m.h && m.a[(y * m.w + x) * 4 + 3] > 20) return true;
+  return false;
+}
 function build() {
   const ps = S.items.map(it => ({ it, ...dims(it) }));
   const rows = [];
@@ -543,13 +1036,16 @@ function build() {
     const { it, w, h, iw, ih } = p;
     const ang = it.ang || 0, box = { x: it.x, y: it.y, w, h, ang }; // giro sobre el mat (en la hoja sale derecha)
     return {
-      ref: it, x: it.x, y: it.y, ang, w, h, f: S.frame, label: p.code, order: p.order, key: it.file, size: it.size,
-      tag: `${it.size} – ${it.file.replace(/\.[^.]+$/, '').slice(0, 30)}`, // al pasar el mouse: tamaño – nombre
+      ref: it, x: it.x, y: it.y, ang, w, h, f: it.art||it.illusion ? 0 : S.frame, label: it.art ? '' : (it.illusion?'△ ':'')+p.code, order: p.order, key: it.file, size: it.size,
+      tag: it.art ? (it.art.kind==='text'?'Texto':(it.art.name||'Dibujo')) : `${it.illusion?'Ilusión 3D':it.size} – ${it.file.replace(/\.[^.]+$/, '').slice(0, 30)}`, // al pasar el mouse: tamaño – nombre
       alpha: it.mos && (mosLz(it)?.op ?? 100) < 100 ? mosLz(it).op / 100 : undefined, // opacidad de las piezas del mosaico
+      solidAt: it.art?.kind === 'ink' ? (lx, ly) => inkAt(it, lx, ly, w, h) : undefined,
       warn: !it.mos && p.dpi < 200,
       hidden: isHidden(it),
       out: lzOf(it) ? !pieceInPoly(box, lzOf(it).pts) : !!(b && isOutside(box, b)),
       draw(ctx, imgs) {
+        if(it.illusion){const image=imgs.get(it.file);if(!image)return;const tex=preparePhoto(image,it.illusion.image),odd=it.rot%2,dw=odd?ih:iw,dh=odd?iw:ih;ctx.rotate(it.rot*Math.PI/2);ctx.drawImage(tex,-dw/2,-dh/2,dw,dh);return;}
+        if(it.art){if(editingArt.has(it))return;ctx.save();ctx.rotate(it.rot*Math.PI/2);const odd=it.rot%2,dw=odd?ih:iw,dh=odd?iw:ih;ctx.translate(-dw/2,-dh/2);ctx.scale(dw/it.art.w,dh/it.art.h);paintArt(ctx,it.art);ctx.restore();return;}
         if (it.mos) { // pieza de mosaico: el pedazo de la foto entera que le toca
           const lz = mosLz(it), im = imgs.get(it.file); if (!lz || !im) return;
           const s = lz.src; ctx.rotate(-(it.ang || 0)); ctx.translate(-it.x, -it.y); ctx.drawImage(im, s.x - s.w / 2, s.y - s.h / 2, s.w, s.h); return;
@@ -825,8 +1321,26 @@ function sortBy(name, keep = false) {
   toast(msg, 4000);
 }
 
-// --- guardado automático: el estado y el historial de Ctrl+Z ---
-const saveAll = () => { if (GUEST) return; saveState(STATE, S); saveState(HIST, hist.dump()); };
+// Un único guardado: .neo con el armado y el historial de Ctrl+Z juntos.
+function saveAll(destination) {
+  if (GUEST || WELCOME || !projectReady) return Promise.resolve({ ok: false, error: 'El proyecto todavía se está abriendo.' });
+  const body = JSON.stringify({ estado: S, historial: hist.dump() });
+  const seq = saveSeq = Math.max(saveSeq + 1, Date.now() * 1000);
+  const job = saveSerial.then(async () => {
+    const params = new URLSearchParams({ dir: PROJ, seq });
+    const target = destination || neoPath;
+    if (target) params.set('file', target);
+    const r = await fetch('/api/project?' + params, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: body.length < 60000 });
+    const data = await r.json();
+    if (!r.ok) throw Error(data.error || 'No se pudo guardar el proyecto.');
+    neoPath = data.path; syncProj();
+    const url = new URL(location.href); url.searchParams.set('neo', neoPath); url.searchParams.delete('browserNeo');
+    history.replaceState(null, '', url.href);
+    return { ...data, ok: true };
+  });
+  saveSerial = job.catch(() => {});
+  return job.catch(error => { toast('No se pudo guardar: ' + error.message, 8000); return { ok: false, error: error.message }; });
+}
 const hist = new History(() => JSON.stringify(S), s => { S = normalize(JSON.parse(s)); mesa.sel = null; syncUI(); }, () => { dirty(); saveAll(); renderLayers(); collab?.local(true); }, cfg().steps);
 
 const mesa = new Mesa($('mesa'), {
@@ -863,7 +1377,7 @@ const mesa = new Mesa($('mesa'), {
   },
   undo: () => hist.undo(), redo: () => hist.redo(),
   changed: () => { cache = null; collab?.local(false); },
-  onSize(refs, back) { hist.run(() => refs.forEach(it => { const i = CYCLE.indexOf(it.size), n = CYCLE.length; it.size = CYCLE[((i < 0 ? 0 : i) + (back ? n - 1 : 1)) % n]; keepInside(it); })); },
+  onSize(refs, back) { if(refs.some(it=>it.illusion))toast('El tamaño de la pirámide se cambia en Ilusión 3D.',2500);hist.run(() => refs.filter(it=>!it.illusion&&!it.art).forEach(it => { const i = CYCLE.indexOf(it.size), n = CYCLE.length; it.size = CYCLE[((i < 0 ? 0 : i) + (back ? n - 1 : 1)) % n]; keepInside(it); })); },
   onRotate(refs, dir) { rot90(refs, dir); },
   onWheelRotate(refs, dir) { const ms = refs.filter(r => r.mos); if (ms.length) hist.run(() => ms.forEach(it => { it.ang = (it.ang || 0) + dir * 3 * Math.PI / 180; })); },
   drawMode: () => prefs.drawMode || 'rect',
@@ -976,7 +1490,11 @@ const mesa = new Mesa($('mesa'), {
       labelRects.push({ id: lz.id, x0, y0: ty, x1: x0 + tw, y1: ty + th });
     }
   },
-  onTool: t => document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t)),
+  onTool: t => {
+    const previous = document.querySelector('[data-tool].on')?.dataset.tool;
+    document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t));
+    if (previous && previous !== t) play('tocar');
+  },
 });
 // recordar si el clic en el mat viene con Ctrl/Shift (para no perder el lienzo seleccionado al sumar fotos)
 $('mesa').addEventListener('pointerdown', e => {
@@ -1027,9 +1545,10 @@ function updateStats() {
   let L = all, head = '';
   if (lzs.length) { const ids = new Set(lzs.map(l => l.id)); L = all.filter(p => ids.has(p.ref.lienzo)); head = lzs.map(l => l.name).join(' + ') + ' · '; }
   else if (sel.size) { L = all.filter(p => sel.has(p.ref)); }
-  const fmt = sheetFmt(), n = packSheets(L, fmt).length, low = L.filter(p => p.warn).length, out = L.filter(p => p.out).length;
+  const fmt = sheetFmt(), n = packSheets(L.filter(p=>!p.ref.illusion&&!p.ref.art), fmt).length, low = L.filter(p => p.warn).length, out = L.filter(p => p.out).length;
   syncAlign();
   syncMos();
+  illusionTool?.sync();
   $('flow').classList.toggle('dim', !canFlow());
   $('stats').innerHTML = head + `${L.length} foto${L.length === 1 ? '' : 's'}${!lzs.length && sel.size ? ` seleccionada${L.length === 1 ? '' : 's'}` : ''} · ${n} hoja${n === 1 ? '' : 's'} ${fmt}` +
     (low ? ` · ${low} con baja resolución` : '') + (out ? ` · <span style="color:var(--stamp)">${out} afuera</span>` : '');
@@ -1068,26 +1587,28 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 function renderLayers() {
   const L = list(), byRef = new Map(L.map(p => [p.ref, p]));
   // primero el lienzo base de 1 × 1 m (las fotos sueltas), después los dibujados a mano alzada
-  const base = { id: '__none', name: baseName(), lz: null, items: S.items.filter(it => !lzOf(it)) };
-  const groups = [base, ...S.lienzos.map(lz => ({ id: lz.id, name: lz.name, lz, items: S.items.filter(it => it.lienzo === lz.id) }))];
+  const base = { id: '__none', name: baseName(), lz: null, items: S.items.filter(it => !lzOf(it) && !it.art) };
+  const art = { id: '__art', name: 'Dibujo', lz: null, art: true, items: S.items.filter(it => it.art) }; // capas de dibujo y textos
+  const groups = [base, ...S.lienzos.map(lz => ({ id: lz.id, name: lz.name, lz, items: S.items.filter(it => it.lienzo === lz.id && !it.art) })), art];
   $('lzList').innerHTML = groups.filter(g => g.lz || g.items.length).map(g => {
     const rows = g.items.map(it => byRef.get(it)).filter(Boolean).sort((a, b) => a.order - b.order);
     const bad = rows.filter(p => p.out).length;
     const isActive = g.lz ? g.id === active : false;
-    const hid = g.lz ? !!g.lz.hidden : !!S.looseHidden;
+    const hid = g.lz ? !!g.lz.hidden : g.art ? !!S.artHidden : !!S.looseHidden;
     return `<div class="lz${isActive ? ' active' : ''}${openLz.has(g.id) ? ' open' : ''}${hid ? ' hidden' : ''}" data-id="${g.id}">
       <div class="lz-pill">
         <button class="lz-btn lz-chev" data-act="open" title="Ver fotos">${icon('chev')}</button>
         <span class="lz-swatch${g.lz ? '' : ' base'}"></span>
         <span class="lz-name" title="${esc(g.name)}${g.lz ? ' · doble clic para renombrar · Supr para borrar' : ''}">${esc(g.name)}</span>
-        <span class="lz-count${bad ? ' bad' : ''}" title="${bad ? bad + ' afuera' : ''}">${rows.length}</span>
+        ${g.art ? `<button class="lz-btn" data-act="newlayer" data-tip="Capa nueva|Los próximos trazos van a otro dibujo">${icon('plus')}</button>` : ''}<span class="lz-count${bad ? ' bad' : ''}" title="${bad ? bad + ' afuera' : ''}">${rows.length}</span>
         <button class="lz-btn lz-eye" data-act="eye" data-tip="${hid ? 'Mostrar' : 'Ocultar|No se imprime'}">${icon(hid ? 'eyeOff' : 'eye')}</button>
       </div>
       <div class="lz-items">${rows.length ? rows.map(p => `<div class="lz-row${mesa.selection.has(p.ref) ? ' sel' : ''}${p.out ? ' out' : ''}" data-id="${p.ref.id}" title="${esc(p.ref.file)}">
-          <img src="${thumbs.get(p.ref.file) || ''}" alt=""><b>${p.label}</b><span class="nm">${esc(p.ref.file.replace(/\.[^.]+$/, ''))} · ${p.size}</span></div>`).join('')
-        : `<div class="lz-empty">${g.lz ? 'Vacío. Arrastrá fotos adentro de la forma, o seleccioná fotos y dibujá un lienzo nuevo.' : ''}</div>`}</div>
+          <img src="${thumbs.get(p.ref.file) || ''}" alt=""><b>${p.label}</b><span class="nm">${p.ref.art ? esc(p.ref.art.kind === 'text' ? '“' + (p.ref.art.text?.content || '').slice(0, 28) + '”' : p.ref.art.name || 'Capa') : esc(p.ref.file.replace(/\.[^.]+$/, '')) + ' · ' + p.size}</span></div>`).join('')
+        : `<div class="lz-empty">${g.art ? 'Todavía no hay dibujos ni textos.' : g.lz ? 'Vacío. Arrastrá fotos adentro de la forma, o seleccioná fotos y dibujá un lienzo nuevo.' : ''}</div>`}</div>
     </div>`;
   }).join('');
+  revealNew($('lzList'), '.lz', el => el.dataset.id);
 }
 function makeThumb(bmp) { // miniatura cuadrada de 80 px para el panel
   const c = document.createElement('canvas'); c.width = c.height = 80;
@@ -1110,7 +1631,14 @@ $('lzList').addEventListener('click', e => {
   const id = g.dataset.id, lz = S.lienzos.find(l => l.id === id) || null;
   const act = e.target.closest('[data-act]')?.dataset.act;
   const row = e.target.closest('.lz-row');
-  if (act === 'open') { openLz.has(id) ? openLz.delete(id) : openLz.add(id); return renderLayers(); }
+  if (act === 'open') {
+    openLz.has(id) ? openLz.delete(id) : openLz.add(id);
+    renderLayers();
+    if (openLz.has(id)) paperIn([...$('lzList').children].find(el => el.dataset.id === id)?.querySelector('.lz-items'));
+    play('tocar'); return;
+  }
+  if (act === 'newlayer') { artTools?.newLayer(); play('tocar'); return; }
+  if (act === 'eye' && id === '__art') { hist.run(() => { S.artHidden = !S.artHidden; }); if (S.artHidden) { mesa.selection = new Set(mesa.selRefs().filter(r => !r.art)); mesa.selChanged(); } dirty(); return renderLayers(); }
   if (act === 'eye') { // ocultar / mostrar la capa
     hist.run(() => { if (lz) S.lienzos.find(l => l.id === id).hidden = !lz.hidden; else S.looseHidden = !S.looseHidden; });
     const nowHidden = lz ? S.lienzos.find(l => l.id === id)?.hidden : S.looseHidden;
@@ -1125,6 +1653,7 @@ $('lzList').addEventListener('click', e => {
     else mesa.sel = it;
     return;
   }
+  if (id === '__art' && e.target.closest('.lz-pill')) { mesa.selection = new Set(S.items.filter(it => it.art && !isHidden(it))); mesa.selChanged(); return; }
   if (e.target.closest('.lz-pill')) { // tocar la píldora: queda activo, seleccionado y con sus fotos
     // doble clic: renombrar. Se detecta acá porque el primer clic redibuja el panel y el navegador
     // ya no reconoce el segundo como doble clic.
@@ -1251,7 +1780,7 @@ const syncMat = () => { $('night').innerHTML = icon(MAT_ICON[matMode()]); $('nig
 $('night').onclick = () => { const m = cycleMat(); syncMat(); mesa.invalidate(); toast(`Fondo ${MAT_NAME[m]}.`, 1500); };
 syncMat();
 // configuración: ventana en el medio, como los atajos
-const CFG_KEY = { preview: 'preview', cap: 'capMP', steps: 'undoSteps', pointer: 'pointer', tips: 'tips', sound: 'sound' };
+const CFG_KEY = { preview: 'preview', cap: 'capMP', steps: 'undoSteps', pointer: 'pointer', tips: 'tips', sound: 'sound', roomApproval: 'roomApproval', chatSeconds:'chatSeconds' };
 function syncCfg() { const c = cfg(); document.querySelectorAll('[data-cfg]').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(c[g.dataset.cfg]) === b.dataset.v))); }
 $('sndList').innerHTML = Object.entries(SOUNDS).map(([k, x]) => `<button class="snd-try" data-snd="${k}">${x.name}</button>`).join('');
 $('sndList').onclick = e => { const b = e.target.closest('[data-snd]'); if (b) play(b.dataset.snd, true); };
@@ -1299,17 +1828,30 @@ let printSel = null, previewForExport = false;
 const sheetFmt = () => prefs.sheetFmt === 'A4' ? 'A4' : 'A3'; // formato de las hojas finales            // printSel: ids de lienzos ('__none' = sin lienzo)
 const groupOf = it => lzOf(it)?.id || '__none';
 function printGroups() { // lienzos visibles que tienen fotos
-  const L = list().filter(p => !p.hidden);
+  const L = list().filter(p => !p.hidden && !p.ref.illusion && !p.ref.art);
   const gs = [...S.lienzos.filter(l => !l.hidden).map(l => ({ id: l.id, name: l.name })), { id: '__none', name: baseName() }];
   return gs.map(g => ({ ...g, n: L.filter(p => groupOf(p.ref) === g.id).length })).filter(g => g.n);
 }
-const printable = () => list().filter(p => !p.hidden && (!printSel || printSel.has(groupOf(p.ref)))); // ocultas nunca
+const printArt = () => ({ ink: !!prefs.printArt?.ink, text: !!prefs.printArt?.text });
+sheetOverlay.fn = (ctx, p) => {
+  const on = printArt(); if (!on.ink && !on.text) return;
+  for (const q of list()) {
+    const it = q.ref; if (!it.art || q.hidden || !(it.art.kind === 'text' ? on.text : on.ink)) continue;
+    if (Math.hypot(q.x - p.x, q.y - p.y) > (Math.hypot(p.w, p.h) + Math.hypot(q.w, q.h)) / 2) continue;
+    ctx.save(); ctx.rotate(-(p.ang || 0)); ctx.translate(q.x - p.x, q.y - p.y); ctx.rotate(q.ang || 0); q.draw(ctx, images); ctx.restore();
+  }
+};
+const printable = () => list().filter(p => !p.hidden && !p.ref.illusion && !p.ref.art && (!printSel || printSel.has(groupOf(p.ref)))); // las ilusiones tienen su propia plantilla
 // nombre de la exportación: el título; si va un solo lienzo (y hay otros), el título + su nombre
 function exportName() {
   const gs = printGroups(), chosen = gs.filter(g => printSel?.has(g.id));
   return chosen.length === 1 && gs.length > 1 ? `${S.title} - ${chosen[0].name}` : S.title;
 }
 function openPreview(forExport) {
+  const selected=mesa.selRefs();
+  if(selected.length===1&&selected[0].illusion)return illusionTool?.open(selected[0],{sheets:true});
+  const visible=list().filter(p=>!p.hidden);
+  if(visible.length===1&&visible[0].ref.illusion)return illusionTool?.open(visible[0].ref,{sheets:true});
   previewForExport = forExport;
   const gs = printGroups(), picked = S.lienzos.filter(l => selLz.has(l.id) && !l.hidden && gs.some(g => g.id === l.id)).map(l => l.id);
   printSel = new Set(picked.length ? picked : gs.map(g => g.id)); // lienzo seleccionado → solo ese; si no, todos
@@ -1324,7 +1866,9 @@ function renderPreview() {
     <div class="pv-head">Lienzos a imprimir</div>
     <div class="pv-all"><button data-pv="all">Todos</button><button data-pv="none">Ninguno</button></div>` +
     gs.map(g => `<button class="pv-lz${printSel.has(g.id) ? ' on' : ''}" data-g="${g.id}"><span class="ck">${printSel.has(g.id) ? icon('check') : ''}</span><span class="nm">${esc(g.name)}</span><span class="n">${g.n}</span></button>`).join('') +
-    (hid ? `<div class="pv-hint">${hid} foto${hid === 1 ? '' : 's'} en capas ocultas: no aparecen acá.</div>` : '');
+    (hid ? `<div class="pv-hint">${hid} foto${hid === 1 ? '' : 's'} en capas ocultas: no aparecen acá.</div>` : '') +
+    (S.items.some(it=>it.art)?'<div class="pv-head">Encima de las fotos</div>'+[['ink','Dibujos'],['text','Textos']].filter(([k])=>S.items.some(it=>it.art&&(it.art.kind==='text')===(k==='text'))).map(([k,n])=>`<button class="pv-lz${printArt()[k]?' on':''}" data-art="${k}"><span class="ck">${printArt()[k]?icon('check'):''}</span><span class="nm">${n}</span></button>`).join(''):'')+
+    (S.items.some(it=>it.illusion)?'<div class="pv-head">Plantillas 3D</div>'+S.items.filter(it=>it.illusion&&!isHidden(it)).map(it=>`<button class="pv-lz on" data-illusion="${esc(it.id)}">${icon('pyramid')}<span class="nm">${esc(it.illusion.name||'Pirámide')}</span></button>`).join('')+'<div class="pv-hint">Cada pirámide tiene su plantilla con pliegues y pestañas.</div>':'');
   $('ovTitle').textContent = !L.length ? 'Elegí al menos un lienzo' : previewForExport ? `Exportación · ${n} hoja${n === 1 ? '' : 's'} ${fmt}` : `${n} hoja${n === 1 ? '' : 's'} ${fmt} · para recortar`;
   $('ovNote').textContent = L.length ? `${L.length} foto${L.length === 1 ? '' : 's'} · al exportar elegís dónde: se crea la carpeta "${safeName(exportName())}" · tocá una hoja o el mapa para verlos grandes` : 'No hay nada tildado para imprimir.';
   $('ovExport').disabled = !L.length;
@@ -1332,6 +1876,8 @@ function renderPreview() {
   else $('sheets').innerHTML = '';
 }
 $('pvSide').addEventListener('click', e => {
+  const illusion=e.target.closest('[data-illusion]');if(illusion){const item=S.items.find(it=>it.id===illusion.dataset.illusion);$('overlay').classList.remove('show');if(item)illusionTool?.open(item,{sheets:true});return;}
+  const artBtn = e.target.closest('[data-art]'); if (artBtn) { prefs.printArt = { ...printArt(), [artBtn.dataset.art]: !printArt()[artBtn.dataset.art] }; savePrefs(); return renderPreview(); }
   const all = e.target.closest('[data-pv]'), g = e.target.closest('[data-g]'), f = e.target.closest('[data-fmt]');
   if (f) { prefs.sheetFmt = f.dataset.fmt; savePrefs(); updateStats(); }
   else if (all) printSel = new Set(all.dataset.pv === 'all' ? printGroups().map(x => x.id) : []);
@@ -1380,9 +1926,10 @@ function openCtx(refs, cx, cy, w) {
   if (n) {
     const sizes = new Set(ctxRefs.map(r => r.size));
     m.innerHTML = `<div class="menu-title">Tamaño${n > 1 ? ` · ${n} fotos` : ''}</div>
-      <div class="ctx-sizes">${['A3', 'A4', 'A5', 'A6', 'A7'].map(z => `<button data-ctx="size" data-v="${z}" class="${sizes.size === 1 && sizes.has(z) ? 'on' : ''}">${z}</button>`).join('')}</div>
-      <button data-ctx="crop" ${n > 1 || ctxRefs[0].mos ? 'disabled' : ''}>${icon('crop')}<span>Recortar…</span>${n > 1 ? kbd('de a una') : ''}</button>
-      ${n === 1 && !ctxRefs[0].mos ? `<button data-ctx="mosaic">${icon('mosaic')}<span>Partir en mosaico…</span>${kbd('como el ojo')}</button>` : ''}
+      <div class="ctx-sizes">${['A3', 'A4', 'A5', 'A6', 'A7'].map(z => `<button data-ctx="size" data-v="${z}" ${ctxRefs.some(r=>r.illusion)?'disabled':''} class="${sizes.size === 1 && sizes.has(z) ? 'on' : ''}">${z}</button>`).join('')}</div>
+      <button data-ctx="crop" ${n > 1 || ctxRefs[0].mos || ctxRefs[0].illusion ? 'disabled' : ''}>${icon('crop')}<span>Recortar…</span>${n > 1 ? kbd('de a una') : ''}</button>
+      ${n === 1 && !ctxRefs[0].mos && !ctxRefs[0].illusion ? `<button data-ctx="mosaic">${icon('mosaic')}<span>Partir en mosaico…</span>${kbd('como el ojo')}</button>` : ''}
+      ${n === 1 && !ctxRefs[0].mos ? `<button data-ctx="illusion">${icon('pyramid')}<span>${ctxRefs[0].illusion?'Editar ilusión 3D…':'Ilusión 3D · Pirámide…'}</span></button>` : ''}
       <button data-ctx="rotL">${icon('rotateL')}<span>Rotar 90° a la izquierda</span></button>
       <button data-ctx="rotR">${icon('rotate')}<span>Rotar 90° a la derecha</span>${kbd('Ctrl+clic der.')}</button>
       <hr>
@@ -1409,9 +1956,10 @@ $('ctxMenu').addEventListener('click', e => {
   if (!b || b.disabled) return;
   const a = b.dataset.ctx, refs = ctxRefs;
   $('ctxMenu').classList.remove('show');
-  if (a === 'size') { hist.run(() => refs.forEach(r => { r.size = b.dataset.v; keepInside(r); })); toast(`${refs.length === 1 ? 'Foto' : refs.length + ' fotos'} en ${b.dataset.v}.`, 1800); }
+  if (a === 'size') { hist.run(() => refs.filter(r => !r.art).forEach(r => { r.size = b.dataset.v; keepInside(r); })); toast(`${refs.length === 1 ? 'Foto' : refs.length + ' fotos'} en ${b.dataset.v}.`, 1800); }
   if (a === 'crop') openCrop(refs[0]);
   if (a === 'mosaic') mosaicFromPhoto(refs[0]);
+  if (a === 'illusion') illusionTool?.open(refs[0]);
   if (a === 'rotL' || a === 'rotR') rot90(refs, a === 'rotL' ? -1 : 1);
   if (a === 'cut') copySel(true);
   if (a === 'copy') copySel(false);
@@ -1626,13 +2174,12 @@ addEventListener('keydown', e => cropKeys(e, true), true);
 addEventListener('keyup', e => cropKeys(e, false), true);
 
 
-// --- proyecto .neo: guardar / abrir (con el explorador de Windows) ---
-let neoPath = null, photosDir = '';
-if (PROJ) photosDir = PROJ; else fetch('/api/root').then(r => r.json()).then(r => { photosDir = r.photos; }).catch(() => {});
+// --- proyecto .neo: guardar / abrir ---
 const baseName_ = p => p.split(/[\\/]/).pop();
-function syncProj() { $('projWhere').textContent = neoPath ? baseName_(neoPath) : 'Todavía no se guardó como .neo'; }
+function syncProj() { $('projWhere').textContent = neoPath ? baseName_(neoPath) + ' · guardado automático' : 'Abriendo proyecto…'; }
 async function saveNeo(as) {
   $('projMenu').classList.remove('show');
+  if (!projectReady) return toast('Esperá a que termine de abrirse el proyecto.', 2500);
   let p = !as && neoPath;
   if (!p) {
     toast('Elegí dónde guardar el proyecto…');
@@ -1640,37 +2187,75 @@ async function saveNeo(as) {
     catch (e) { return toast('No se pudo abrir el explorador: ' + e.message, 6000); }
     if (!p) return toast('Guardado cancelado.', 1800);
   }
-  const data = { formato: 'neo', version: 1, app: 'Kyro Neo Board', guardado: new Date().toISOString(), fotos: photosDir, estado: S };
-  const r = await fetch('/api/file?path=' + encodeURIComponent(p), { method: 'POST', body: JSON.stringify(data, null, 1) });
-  if (!r.ok) { if (!as && neoPath) { neoPath = null; return saveNeo(true); } return toast('No se pudo guardar: ' + ((await r.json()).error || ''), 6000); }
-  neoPath = p; prefs.lastNeoDir = p.replace(/[\\/][^\\/]*$/, ''); savePrefs(); syncProj();
+  const result = await saveAll(p);
+  if (!result.ok) return;
+  prefs.lastNeoDir = p.replace(/[\\/][^\\/]*$/, ''); savePrefs(); syncProj();
   toast(`Proyecto guardado: ${baseName_(p)}`, 3000);
+  play('guardar');
 }
 async function openNeo() {
+  if (!/Electron\//.test(navigator.userAgent)) {
+    $('projMenu').classList.remove('show');
+    $('neoBrowserPick').value = '';
+    $('neoBrowserPick').click();
+    return;
+  }
+  const button = $('wOpenNeo');
+  if (button.disabled) return;
+  button.disabled = true;
   $('projMenu').classList.remove('show');
   toast('Elegí el proyecto que querés abrir…');
   let p;
   try { p = await winDialog('open', { start: prefs.lastNeoDir || '' }); } catch (e) { return toast('No se pudo abrir el explorador: ' + e.message, 6000); }
+  finally { button.disabled = false; }
   if (!p) return toast('Cancelado.', 1500);
   if (WELCOME) return openNeoFromWelcome(p);
   return loadNeoFile(p);
 }
 async function loadNeoFile(p) {
-  let d;
-  try { d = await (await fetch('/api/file?path=' + encodeURIComponent(p))).json(); } catch { d = null; }
-  if (!d || d.formato !== 'neo' || !d.estado?.items) return toast('Ese archivo no es un proyecto .neo válido.', 5000);
-  const norm = x => String(x || '').replace(/[\\/]+$/, '').replace(/\//g, '\\').toLowerCase();
-  if (d.fotos && photosDir && norm(d.fotos) !== norm(photosDir)) return openNeoFromWelcome(p); // es de otra carpeta: abrir esa mesa
-  const have = new Set(images.keys()), missing = d.estado.items.filter(it => !have.has(it.file)).length;
-  hist.run(() => { S = normalize({ ...d.estado, migrated1m: d.estado.migrated1m ?? true, items: d.estado.items.filter(it => have.has(it.file)) }); });
-  neoPath = p; prefs.lastNeoDir = p.replace(/[\\/][^\\/]*$/, ''); savePrefs();
-  mesa.sel = null; clearLz(); syncUI(); syncProj(); dirty(); renderLayers(); mesa.fit();
-  toast(`Proyecto abierto: ${baseName_(p)}` + (missing ? ` · ${missing} foto${missing === 1 ? '' : 's'} no están en la carpeta` : ''), missing ? 5000 : 2000);
+  // Cargar otro archivo nunca se registra como una edición de la mesa anterior.
+  await saveSerial;
+  return openNeoFromWelcome(p);
+}
+$('neoBrowserPick').onchange = async e => {
+  const file=e.target.files?.[0];if(!file)return;
+  const button=$('wOpenNeo');button.disabled=true;toast('Abriendo '+file.name+'…');
+  try{
+    if(!/\.neo$/i.test(file.name))throw Error('Elegí un archivo .neo.');
+    const text=await file.text(),data=JSON.parse(text);
+    if(data?.formato!=='neo'||!Array.isArray(data.estado?.items))throw Error('Ese archivo no es un proyecto .neo válido.');
+    if (!(await globalThis.KyroSaveProject()).ok) throw Error('No se pudo guardar la mesa actual. Se mantuvo abierta.');
+    const r=await fetch('/api/adopt',{method:'POST',headers:{'Content-Type':'application/json','X-Neo-Name':encodeURIComponent(file.name)},body:text}),j=await r.json();
+    if(!r.ok)throw Error(j.error||'No se pudo abrir el proyecto.');
+    if(!j.neo)throw Error('El servidor necesita reiniciarse para abrir archivos desde el navegador.');
+    location.href='/?p='+encodeURIComponent(j.fotos)+'&neo='+encodeURIComponent(j.neo);
+  }catch(error){toast(error.message,7000);}finally{button.disabled=false;}
+};
+async function loadBrowserNeo(){
+  const token=QS.get('browserNeo');if(!token)return;
+  try{
+    const r=await fetch('/api/opened-project?token='+encodeURIComponent(token)),data=await r.json();
+    if(!r.ok)throw Error(data.error);
+    // Compatibilidad con una pestaña que conservó la URL del selector anterior.
+    const clean=new URL(location.href);clean.searchParams.delete('browserNeo');history.replaceState(null,'',clean.href);
+  }catch(error){toast('No se pudo abrir: '+error.message,7000);}
 }
 $('projBtn').onclick = () => { syncProj(); openMenu('projMenu'); };
-document.querySelectorAll('[data-proj]').forEach(b => b.onclick = () => (b.dataset.proj === 'home' ? (location.href = '/') : b.dataset.proj === 'open' ? openNeo() : saveNeo(b.dataset.proj === 'saveAs')));
+globalThis.KyroSaveProject = async () => {
+  if (WELCOME || GUEST) return { ok: true };
+  if (!projectReady) await projectLoad;
+  if (!projectReady) return { ok: true }; // Un archivo que no se pudo leer jamás se sobrescribe.
+  if (document.activeElement?.isContentEditable) document.activeElement.blur();
+  hist.commit();
+  return saveAll();
+};
+document.querySelectorAll('[data-proj]').forEach(b => b.onclick = async () => {
+  if (b.dataset.proj === 'home') { if ((await globalThis.KyroSaveProject()).ok) location.href = '/'; return; }
+  return b.dataset.proj === 'open' ? openNeo() : saveNeo(b.dataset.proj === 'saveAs');
+});
 // Ctrl+S / Ctrl+Shift+S / Ctrl+O (en vez de los del navegador)
 addEventListener('keydown', e => {
+  if(illusionTool?.visible)return; // El visor 3D maneja sus propios atajos y guarda su edición.
   if (!(e.ctrlKey || e.metaKey) || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
   const k = e.key.toLowerCase();
   if (k === 's') { e.preventDefault(); e.stopImmediatePropagation(); saveNeo(e.shiftKey); }
@@ -1934,17 +2519,26 @@ function grabLzHandle(w, e) {
 async function showWelcome() {
   document.title = 'Kyro Neo Board';
   $('welcome').classList.add('show');
-  setTimeout(() => $('wName').select(), 50);
+  $('wRoomJoin').innerHTML = roomJoinHTML();
+  mountRoomJoin($('wRoomJoin'), { toast });
+  if (QS.get('conexion') === 'fallida') toast('No se pudo conectar a la sala. Revisá el código, la red y que siga abierta.', 8000);
   let list = [];
   try { list = await (await fetch('/api/projects')).json(); } catch {}
-  $('wRecent').innerHTML = list.length ? '<div class="w-head">Proyectos recientes</div>' + list.slice(0, 8).map(p =>
-    `<a class="w-proj" href="/?p=${encodeURIComponent(p.path)}"><b>${esc(p.name)}</b><small>${esc(p.path)}</small><span>${p.photos} foto${p.photos === 1 ? '' : 's'}</span></a>`).join('') : '';
+  $('wRecent').innerHTML = list.length ? list.map(p =>
+    `<a class="w-proj" href="/?p=${encodeURIComponent(p.path)}"><b>${esc(p.name)}</b><small>${esc(p.path)}</small><span>${p.photos} foto${p.photos === 1 ? '' : 's'}</span></a>`).join('') : '<p class="cb-hint">Todavía no hay proyectos recientes.</p>';
+  revealNew($('wRecent'), '.w-proj', el => el.getAttribute('href'));
 }
+let creating = false;
 async function newProject() {
-  const name = $('wName').value.trim() || 'Proyecto nuevo';
-  toast('Elegí dónde crear la carpeta del proyecto…');
+  const name = $('wName').value.trim();
+  if (!name) { $('wName').focus(); return toast('Escribí un nombre para el proyecto.', 2500); }
+  if (creating) return; // la ventana del explorador ya está abierta
+  creating = true; $('wGo').setAttribute('aria-busy', 'true');
+  toast('Se abrió el explorador: elegí la carpeta donde guardar el proyecto.');
   let parent;
-  try { parent = await winDialog('folder', { start: prefs.lastProjDir || '' }); } catch (e) { return toast('No se pudo abrir el explorador: ' + e.message, 6000); }
+  try { parent = await winDialog('folder', { start: prefs.lastProjDir || '', title: 'Elegí dónde crear la carpeta del proyecto' }); }
+  catch (e) { return toast('No se pudo abrir el explorador: ' + e.message, 6000); }
+  finally { creating = false; $('wGo').removeAttribute('aria-busy'); }
   if (!parent) return toast('Cancelado.', 1500);
   prefs.lastProjDir = parent; savePrefs();
   const r = await fetch(`/api/new-project?parent=${encodeURIComponent(parent)}&name=${encodeURIComponent(name)}`, { method: 'POST' }), j = await r.json();
@@ -1952,11 +2546,49 @@ async function newProject() {
   location.href = '/?p=' + encodeURIComponent(j.path) + '&creado=1';
 }
 async function openNeoFromWelcome(p) { // abre la mesa del proyecto de ese .neo y lo carga
+  if (!(await globalThis.KyroSaveProject()).ok) return;
   const r = await fetch('/api/adopt?neo=' + encodeURIComponent(p), { method: 'POST' }), j = await r.json();
   if (!r.ok) return toast('No se pudo abrir: ' + j.error, 6000);
-  location.href = (j.root ? '/?' : '/?p=' + encodeURIComponent(j.fotos) + '&') + 'neo=' + encodeURIComponent(p);
+  location.href = '/?p=' + encodeURIComponent(j.fotos) + '&neo=' + encodeURIComponent(j.neo || p);
 }
 $('wNew').onclick = newProject;
+$('wGo').onclick = e => { e.stopPropagation(); newProject(); };
+if(PROJ){
+  illusionTool=mountIllusionTool({button:$('illusionBtn'),getSelected:()=>mesa.selRefs(),getImage:file=>images.get(file),loadFull:file=>loadImage(fullUrl(file)),toast,guest:!!GUEST,projectTitle:()=>S.title,flush:()=>globalThis.KyroSaveProject(),commit:async(source,config,editing)=>{
+    const original=S.items.find(it=>it.id===(editing||source.id));
+    if(!original||original.file!==source.file)throw Error('La foto cambió o se quitó de la mesa. Volvé a seleccionarla.');
+    let item;
+    hist.run(()=>{
+      if(editing){item=original;item.illusion=config;}
+      else{const d=dims(original);item={id:uid(),file:source.file,x:original.x+d.w/2+config.width/2+20,y:original.y,size:'A4',rot:0,illusion:config};S.items.push(item);}
+    });
+    mesa.sel=item;renderLayers();frameBox({x0:item.x-dims(item).w/2,y0:item.y-dims(item).h/2,x1:item.x+dims(item).w/2,y1:item.y+dims(item).h/2});
+    return item;
+  }});
+  mesa.c.addEventListener('dblclick',e=>{
+    const r=mesa.c.getBoundingClientRect(),p=mesa.toWorld(e.clientX-r.left,e.clientY-r.top),hit=mesa.hit(p.x,p.y);
+    if(hit?.ref.illusion){e.preventDefault();e.stopImmediatePropagation();illusionTool.open(hit.ref);}
+  },true);
+}
+// Dibujo y texto: cada capa o texto se guarda como su versión vectorial (art) y un PNG (miniatura y red local).
+// Son libres: no tienen tamaño de hoja ni límite.
+async function uploadArt(art){
+  const blob=await artPNG(art),name='arte-'+Date.now()+'-'+uid()+'.png';
+  const r=await fetch('/api/upload?dir='+encodeURIComponent(DIR)+'&name='+encodeURIComponent(name),{method:'POST',headers:{'Content-Type':'image/png'},body:blob}),j=await r.json();if(!r.ok)throw Error(j.error);
+  const {bmp,meta:m}=await loadPrev(j.name);images.set(j.name,bmp);meta.set(j.name,m);looks.set(j.name,analyze(bmp));thumbs.set(j.name,makeThumb(bmp));
+  return j.name;
+}
+const artTools=PROJ&&mountArtTools({mesa,toast,getList:list,commit:async(art,at,existing,opt={})=>{
+  const file=await uploadArt(art),pose={x:at.x,y:at.y,...(at.ang!=null?{ang:at.ang,rot:0}:{})};
+  let item;hist.run(()=>{if(existing){item=existing;S.hidden.push(item.file);Object.assign(item,{file,art,...pose});}else{item={id:uid(),file,art,size:'A6',rot:0,ang:0,...pose};assignByPos(item);S.items.push(item);}});
+  $('empty').classList.remove('show');if(opt.select!==false){mesa.selection=new Set([item]);mesa.selChanged();}dirty();renderLayers();
+  return item;
+},commitMany:async changes=>{ // la goma: todas las capas que tocó, en un solo paso de deshacer
+  const files=[];for(const c of changes)files.push(await uploadArt(c.art));
+  hist.run(()=>changes.forEach((c,i)=>{const it=c.existing;S.hidden.push(it.file);Object.assign(it,{file:files[i],art:c.art});}));
+  dirty();renderLayers();
+}});
+if(PROJ&&QS.has('kyrotest'))globalThis.__art=artTools;
 $('wName').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') newProject(); });
 $('wOpenNeo').onclick = () => openNeo();
 // mesa vacía: el + abre el explorador para elegir fotos
@@ -1995,25 +2627,42 @@ function replaceS(st) { // entrar a una sala: la mesa de quien la abrió
   syncUI(); dirty(); renderLayers(); ensureImages(); mesa.fit();
 }
 if (PROJ) collab = createCollab({ el: $('collab'), btn: $('collabBtn'), gate: $('cbGate'), getS: () => S, replaceS, afterRemote, hist, mesa, proj: PROJ,
+  beforeJoin: async () => { const saved = await saveAll(); if (!saved.ok) throw new Error('No se pudo guardar el proyecto antes de entrar a la sala. Intentá de nuevo.'); },
   projName: () => S.title || projName, toast, guestCode: GUEST, back: /^http:\/\/127\.0\.0\.1:\d+\/$/.test(QS.get('volver') || '') ? QS.get('volver') : '' });
 else $('collabBtn').hidden = true;
-if (QS.has('kyrotest')) globalThis.__mesa = { mesa, state: () => S, hist, list, collab: () => collab, images }; // solo para las pruebas automáticas
+if (QS.has('kyrotest')) globalThis.__mesa = { mesa, state: () => S, hist, list, collab: () => collab, images, illusion:()=>illusionTool }; // solo para las pruebas automáticas
+mountMotion();
 
 try { if (!GUEST && !sessionStorage.getItem('knb-hola')) { sessionStorage.setItem('knb-hola', '1'); setTimeout(() => play('hola'), 350); } } catch {}
 
 serverIsCurrent().then(ok => { if (!ok) toast(SERVER_OLD_MSG, 30000); }); // ¿quedó un servidor viejo corriendo?
-(async () => {
+projectLoad = (async () => {
   syncUI();
   if (WELCOME && QS.get('neo')) return openNeoFromWelcome(QS.get('neo')); // se abrió un .neo
   if (WELCOME) return showWelcome();
   if (PROJ) { if (!GUEST) fetch('/api/projects?path=' + encodeURIComponent(PROJ), { method: 'POST' }).catch(() => {}); S.title = projName; syncUI(); }
+  if (!GUEST) {
+    if (QS.has('browserNeo')) await loadBrowserNeo();
+    const params = new URLSearchParams({ dir: PROJ });
+    if (QS.get('neo')) params.set('file', QS.get('neo'));
+    const r = await fetch('/api/project?' + params), saved = await r.json();
+    if (!r.ok) throw Error(saved.error || 'No se pudo leer el proyecto.');
+    neoPath = saved.path;
+    if (saved.data) {
+      S = normalize({ ...S, ...saved.data.estado, migrated1m: saved.data.estado.migrated1m ?? true });
+      cache = null; // las piezas de la mesa deben apuntar al estado recién abierto
+      hist.restore(saved.data.historial);
+    }
+    syncUI(); syncProj();
+  }
   const files = await listDir(DIR);
+  if (!Array.isArray(files)) throw Error(files.error || 'No se pudo leer la carpeta de fotos.');
   if (!files.length) {
     $('emptyTitle').textContent = QS.has('creado') ? `Listo: "${projName}"` : 'Arrastrá fotos acá';
     $('emptyText').textContent = QS.has('creado') ? 'Arrastrá fotos acá o tocá el +' : 'o tocá el +';
     $('empty').classList.add('show'); $('stats').textContent = '0 fotos';
-    if (PROJ && !GUEST) { const saved = await loadState(STATE); if (saved?.title) { S.title = saved.title; syncUI(); } }
     placeLayers(); renderLayers();
+    if (!GUEST) { projectReady = true; await saveAll(); }
     if (!GUEST && !prefs.tutorialDone && !QS.has('kyrotest')) setTimeout(() => startTutorial({ onEnd: tutorialDone }), 700);
     return;
   }
@@ -2027,6 +2676,7 @@ serverIsCurrent().then(ok => { if (!ok) toast(SERVER_OLD_MSG, 30000); }); // ¿q
       catch { console.warn('No se pudo leer', f); }
       loading.delete(f);
       toast(`Cargando fotos ${++done}/${files.length}…`);
+      cache = null; // ya están disponibles las medidas reales y la textura de esta foto
       mesa.invalidate();
     }
   }));
@@ -2036,11 +2686,7 @@ serverIsCurrent().then(ok => { if (!ok) toast(SERVER_OLD_MSG, 30000); }); // ¿q
     syncUI(); dirty(); placeLayers(); renderLayers(); if (S.items.length) mesa.fit();
     return;
   }
-  const [saved, savedHist, ex] = await Promise.all([loadState(STATE), loadState(HIST), fetch('/api/exif?dir=' + encodeURIComponent(DIR)).then(r => r.json()).catch(() => ({}))]);
-  exif = ex;
-  // (un proyecto guardado sin la marca "migrated1m" todavía tiene el lienzo de 1 m viejo: se convierte)
-  if (saved?.items) S = normalize({ ...S, migrated1m: false, ...saved, items: saved.items.filter(it => files.includes(it.file)) });
-  hist.restore(savedHist);
+  exif = await fetch('/api/exif?dir=' + encodeURIComponent(DIR)).then(r => r.json()).catch(() => ({}));
   const known = new Set([...S.items.map(it => it.file), ...S.hidden]); // las sacadas a propósito no vuelven
   const fresh = files.filter(f => !known.has(f)).map(file => ({ id: uid(), file, x: 0, y: 0, size: 'A6', rot: 0 }));
   if (fresh.length) {
@@ -2050,12 +2696,14 @@ serverIsCurrent().then(ok => { if (!ok) toast(SERVER_OLD_MSG, 30000); }); // ¿q
     S.items.push(...fresh);
     cache = null;
     flow(fresh, bottom === -Infinity ? 0 : bottom + 10 - (S.base?.y || 0), true, false);
-    saveAll();
   }
   syncUI(); dirty(); placeLayers(); renderLayers(); mesa.fit();
+  projectReady = true;
+  await saveAll();
+  const missing = S.items.filter(it => !images.has(it.file)).length;
+  if (missing) toast(`${missing} foto${missing === 1 ? '' : 's'} no están disponibles. Sus posiciones siguen guardadas en el .neo.`, 7000);
   if (!GUEST && !prefs.tutorialDone && !QS.has('kyrotest')) setTimeout(() => startTutorial({ onEnd: tutorialDone }), 700);
-  if (QS.get('neo')) loadNeoFile(QS.get('neo'));
-})();
+})().catch(error => { projectReady = false; toast('No se pudo abrir el proyecto: ' + error.message, 30000); });
 </script>
 </body>
 </html>

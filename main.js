@@ -3,6 +3,7 @@
 const { app, BrowserWindow, Menu, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { roomLink } = require('./web/_app/room-link.js');
 
 const SELFTEST = process.argv.includes('--selftest');
 
@@ -15,6 +16,15 @@ process.env.MESA_CACHE = path.join(app.getPath('userData'), 'vistas-previas'); /
 const server = require('./web/_app/server.js');
 
 let win = null, port = 0;
+async function flushWindow() {
+  if (!win || win.isDestroyed()) return true;
+  try {
+    const result = await win.webContents.executeJavaScript('globalThis.KyroSaveProject ? globalThis.KyroSaveProject() : ({ok:true})');
+    if (result?.ok !== false) return true;
+    dialog.showErrorBox('No se pudo guardar el proyecto', result.error || 'La ventana seguirá abierta para que puedas volver a guardar.');
+  } catch (error) { dialog.showErrorBox('No se pudo guardar el proyecto', error.message); }
+  return false;
+}
 const neoArg = argv => argv.slice(1).find(a => /\.neo$/i.test(a) && fs.existsSync(a));
 
 function urlFor(neo) {
@@ -24,11 +34,11 @@ function urlFor(neo) {
 }
 
 // el explorador de Windows, con la ventana del programa como dueña
-server.setDialog(async (kind, { name, start }) => {
+server.setDialog(async (kind, { name, start, title }) => {
   const def = start && fs.existsSync(start) ? start : app.getPath('documents');
   const neo = [{ name: 'Proyecto Neo', extensions: ['neo'] }];
   if (kind === 'folder') {
-    const r = await dialog.showOpenDialog(win, { title: 'Elegí una carpeta', defaultPath: def, properties: ['openDirectory', 'createDirectory'] });
+    const r = await dialog.showOpenDialog(win, { title: title || 'Elegí una carpeta', defaultPath: def, properties: ['openDirectory', 'createDirectory'] });
     return r.canceled ? '' : r.filePaths[0];
   }
   if (kind === 'save') {
@@ -51,16 +61,45 @@ function createWindow(neo) {
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, spellcheck: false },
   });
   // la mesa propia, o la sala de otra compu de la misma red (en equipo)
-  const own = u => u.startsWith(`http://127.0.0.1:${port}/`) || /^http:\/\/(10\.\d+|192\.168|172\.(1[6-9]|2\d|3[01]))\.\d+\.\d+:\d+\//.test(u);
+  const home = `http://127.0.0.1:${port}`;
+  let roomOrigin = '';
+  const own = value => {
+    try {
+      const u = new URL(value);
+      if (u.origin === home || u.origin === roomOrigin) return true;
+      // Solo un enlace de invitación puede abrir un servidor distinto.
+      roomLink(value);
+      roomOrigin = u.origin;
+      return true;
+    } catch { return false; }
+  };
   // links de afuera: en el navegador de siempre; nunca ventanas nuevas dentro del programa
-  win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/i.test(url) && !own(url)) shell.openExternal(url); return { action: 'deny' }; });
+  win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/i.test(url)) shell.openExternal(url); return { action: 'deny' }; });
   // soltar un archivo fuera de la mesa no tiene que "navegar" hacia él
-  win.webContents.on('will-navigate', (e, url) => { if (!own(url)) e.preventDefault(); });
+  win.webContents.on('will-navigate', (e, url) => {
+    e.preventDefault();
+    if (own(url)) flushWindow().then(ok => { if (ok && win && !win.isDestroyed()) win.loadURL(url); });
+  });
   win.webContents.on('will-redirect', (e, url) => { if (!own(url)) e.preventDefault(); });
+  win.webContents.on('did-fail-load', (_e, code, _description, url, mainFrame) => {
+    if (!mainFrame || code === -3 || !roomOrigin || !url.startsWith(roomOrigin + '/')) return;
+    roomOrigin = '';
+    win.loadURL(home + '/?conexion=fallida');
+  });
   // el título lo pone la mesa (nombre del proyecto · Kyro Neo Board)
   win.webContents.setVisualZoomLevelLimits(1, 1); // pellizcar el trackpad hace zoom en la mesa, no en toda la ventana
   win.once('ready-to-show', () => { if (!SELFTEST) { win.maximize(); win.show(); } });
   win.on('closed', () => { win = null; });
+  let closing = false;
+  win.on('close', e => {
+    e.preventDefault();
+    if (closing) return;
+    closing = true;
+    flushWindow().then(ok => {
+      closing = false;
+      if (ok && win && !win.isDestroyed()) win.destroy();
+    });
+  });
 
   if (SELFTEST) { // prueba automática: carga sin mostrar, junta errores y sale
     const errs = [];
@@ -85,16 +124,16 @@ function createWindow(neo) {
       app.exit(errs.length ? 1 : 0);
     }, Number(process.env.KNB_TEST_WAIT) || 2500));
   }
-  if (SELFTEST && process.env.KNB_TEST_DIR) { server.allowPath(process.env.KNB_TEST_DIR); return win.loadURL(`http://127.0.0.1:${port}/?p=${encodeURIComponent(process.env.KNB_TEST_DIR)}`); }
+  if (SELFTEST && process.env.KNB_TEST_DIR) { server.allowPath(process.env.KNB_TEST_DIR); return win.loadURL(`http://127.0.0.1:${port}/?p=${encodeURIComponent(process.env.KNB_TEST_DIR)}&kyrotest`); }
   win.loadURL(urlFor(neo));
 }
 
-app.on('second-instance', (_e, argv) => {
+app.on('second-instance', async (_e, argv) => {
   if (!win) return;
   if (win.isMinimized()) win.restore();
   win.focus();
   const neo = neoArg(argv);
-  if (neo) win.loadURL(urlFor(neo));
+  if (neo && await flushWindow()) win?.loadURL(urlFor(neo));
 });
 
 app.whenReady().then(async () => {

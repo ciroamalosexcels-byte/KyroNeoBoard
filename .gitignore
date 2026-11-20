@@ -1,5 +1,7 @@
 node_modules/
 dist/
 dist-win7/
+.build-cache/
+.test-output/
 web/_app/proyectos.json
 *.tmp-*

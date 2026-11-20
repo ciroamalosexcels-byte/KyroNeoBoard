@@ -4,18 +4,24 @@
 // Lo de los demás no se deshace con tu Ctrl+Z (se copia también en tu historial).
 import { AV } from './avatars.js';
 import { play } from './sound.js';
+import { revealNew } from './motion.js';
+import { cfg, prefs, savePrefs, icon } from './mesa.js';
+import { roomJoinHTML, mountRoomJoin } from './room-join.js';
+import { copyText } from './clipboard.js';
 
 export const AV_ICONS = Object.keys(AV);
 export const AV_COLORS = ['#d9381a', '#f08a24', '#ffe14d', '#7cb342', '#2b6b58', '#0f9fb0', '#2f5aa8', '#5b4fd0', '#7a4fd0', '#e86aa6', '#8a5a3c', '#16130f'];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ink = hex => { const n = parseInt(hex.slice(1).padEnd(6, '0').slice(0, 6), 16); return (0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) > 160 ? '#16130f' : '#fffaf0'; };
 export const avSvg = (icon, px) => `<svg viewBox="0 0 24 24" width="${px}" height="${px}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${AV[icon] || AV.smile}</svg>`;
-export const avHTML = (icon, color, px = 24) => `<span class="av" style="width:${px}px;height:${px}px;background:${esc(color)};color:${ink(color)}">${avSvg(icon, Math.round(px * 0.62))}</span>`;
+const CROWN = '<span class="host-crown" role="img" aria-label="Anfitrión" data-tip="Anfitrión"><svg viewBox="0 0 24 20" aria-hidden="true"><path d="M2 5 7 8 12 2 17 8 22 5 19 18H5Z"/></svg></span>';
+export const avHTML = (icon, color, px = 24, host = false) => `<span class="av${host ? ' av-host' : ''}" style="width:${px}px;height:${px}px;background:${esc(color)};color:${ink(color)}">${host ? CROWN : ''}${avSvg(icon, Math.round(px * 0.62))}</span>`;
 const device = () => matchMedia('(pointer:coarse)').matches ? (Math.min(screen.width, screen.height) < 600 ? 'phone' : 'tablet') : 'pc';
 const SVG = d => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const X_ICON = SVG('<path d="M18 6 6 18M6 6l12 12"/>');
 const QR_ICON = SVG('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/>');
 const SEND_ICON = SVG('<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>');
+const CHAT_ICON = SVG('<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"/>');
 const DEVICE_NAME = { pc: 'compu', phone: 'celu', tablet: 'tablet' };
 
 /* ---------- qué cambió: foto por foto, lienzo por lienzo ---------- */
@@ -63,7 +69,7 @@ export function createCollab(app) {
   // app: { el, btn, getS, replaceS(s), afterRemote(op), hist, mesa, proj, projName(), toast, guestCode, back }
   const $ = s => app.el.querySelector(s);
   const C = { on: false, ws: null, id: '', peers: {}, cursors: {}, sels: {}, base: null, commitBase: null, queue: [], busy: false,
-    chat: [], unread: 0, host: !app.guestCode, awaiting: false, info: null, liveT: 0, curT: 0, selT: 0, retry: 0, open: false, near: [] };
+    chat: [], draft: '', chatOnly: false, unread: 0, host: !app.guestCode, awaiting: false, info: null, liveT: 0, curT: 0, selT: 0, retry: 0, open: false, pending: [] };
   C.id = (crypto.randomUUID?.() || Date.now() + '-' + Math.random().toString(36).slice(2)).slice(0, 36);
   // perfil: nombre, ícono y color (se recuerdan)
   const prof = (() => {
@@ -108,7 +114,10 @@ export function createCollab(app) {
   async function openRoom() {
     if (!prof.name.trim()) { app.toast('Falta tu nombre.', 2000); $('#cbName')?.focus(); return; }
     try {
-      const r = await fetch(`/api/lan/start?dir=${encodeURIComponent(app.proj)}&name=${encodeURIComponent(app.projName())}`, { method: 'POST' });
+      const r = await fetch(`/api/lan/start?dir=${encodeURIComponent(app.proj)}&name=${encodeURIComponent(app.projName())}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approval: cfg().roomApproval === 'on', password: $('#cbPassword')?.value || '' }),
+      });
       C.info = await r.json(); if (!r.ok) throw new Error(C.info.error);
       await connect();
     } catch (e) { app.toast('No se pudo abrir la sala: ' + e.message, 5000); return; }
@@ -138,7 +147,7 @@ export function createCollab(app) {
     clearTimeout(C.liveT); clearTimeout(C.helloT); C.liveT = 0;
     const was = C.on; C.on = false; C.awaiting = false;
     try { C.ws?.close(); } catch {} C.ws = null;
-    C.peers = {}; C.cursors = {}; C.sels = {}; C.queue = [];
+    C.peers = {}; C.cursors = {}; C.sels = {}; C.queue = []; C.pending = []; C.chatOnly = false; C.draft = '';
     if (C.host && was && !silent) { await fetch('/api/lan/stop', { method: 'POST' }).catch(() => {}); app.toast('Sala cerrada.', 1500); play('cerrada'); }
     app.mesa.invalidate(); render();
   }
@@ -173,6 +182,7 @@ export function createCollab(app) {
       app.replaceS(p.state);
       C.base = C.commitBase = snapOf(app.getS());
       if (Array.isArray(p.chat) && !C.chat.length) { C.chat = p.chat; renderChat(); }
+      renderDock();
       play('sala');
       return app.toast(`Entraste a la sala de ${hostName() || 'la mesa'}.`, 2500);
     }
@@ -266,32 +276,87 @@ export function createCollab(app) {
   function addChat(m) {
     C.chat.push(m); if (C.chat.length > 200) C.chat.shift();
     if (m.from !== C.id) play('mensaje');
-    if (!C.open && m.from !== C.id) { C.unread++; app.toast(`${m.name}: ${m.text}`, 3500); }
+    if (!C.open && !C.chatOnly && m.from !== C.id) { C.unread++; app.toast(`${m.name}: ${m.text}`, 3500); }
     renderChat(); paintBtn();
   }
   function sendChat(text) {
     text = String(text || '').trim().slice(0, 400); if (!text || !C.on) return;
+    if (C.awaiting || C.ws?.readyState !== 1) { app.toast('Esperá a que vuelva la conexión para enviar.', 2500); return false; }
     send('chat', { text });
     addChat({ from: C.id, text, ts: Date.now(), name: prof.name, icon: prof.icon, color: prof.color });
+    return true;
   }
   function renderChat() {
-    const log = $('#cbChat'); if (!log) return;
-    log.innerHTML = C.chat.length ? C.chat.map(m => `<div class="chat-msg${m.from === C.id ? ' me' : ''}">${avHTML(m.icon, m.color, 22)}<div class="chat-body"><b class="chat-who">${esc(m.name)}</b><span>${esc(m.text)}</span></div></div>`).join('')
+    const log = $('#cbChat');
+    if (log) {
+      log.innerHTML = C.chat.length ? C.chat.map(m => `<div class="chat-msg${m.from === C.id ? ' me' : ''}">${avHTML(m.icon, m.color, 22)}<div class="chat-body"><b class="chat-who">${esc(m.name)}</b><span>${esc(m.text)}</span></div></div>`).join('')
       : '<div class="cb-hint cb-empty">Sin mensajes.</div>';
-    log.scrollTop = log.scrollHeight;
-    requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; }); // después de que se acomode el panel
+      revealNew(app.el, '#cbChat .chat-msg', (_, i) => C.chat[i]);
+      log.scrollTop = log.scrollHeight;
+      requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
+    }
+    renderDock();
   }
+
+  // Solo el campo lleva fondo: los dos mensajes flotan centrados sobre la mesa.
+  const dock = document.createElement('section');
+  dock.className = 'cb-chat-dock'; dock.hidden = true; dock.setAttribute('aria-label', 'Solo chat');
+  dock.innerHTML = `<div class="dock-messages" role="log" aria-label="Últimos dos mensajes" aria-live="polite" aria-relevant="additions text"></div><form class="dock-compose" autocomplete="off"><button class="dock-tool" type="button" data-dock="panel" aria-label="Abrir panel En equipo" data-tip="En equipo">${icon('users')}</button><input id="cbDockMsg" aria-label="Mensaje a la sala" maxlength="400" placeholder="Mensaje"><button class="cb-send" aria-label="Enviar mensaje" data-tip="Enviar · Enter">${SEND_ICON}</button></form>`;
+  document.body.append(dock);
+  const dockInput = dock.querySelector('input');
+  setInterval(() => { if (C.chatOnly) renderDock(); }, 250);
+  function renderDock() {
+    dock.hidden = !C.on || !C.chatOnly;
+    if (dock.hidden) return;
+    const log = dock.querySelector('.dock-messages');
+    const life = cfg().chatSeconds * 1000;
+    const visible = C.chat.filter(m => !life || Date.now() - m.ts < life).slice(-2);
+    // Conservar los mensajes que siguen a la vista: su transparencia y su animación
+    // no vuelven a empezar cada vez que llega otro o vence el anterior.
+    for (const el of [...log.children]) if (!visible.includes(el._message)) el.remove();
+    visible.forEach((m, i) => {
+      let el = [...log.children].find(el => el._message === m);
+      if (!el) {
+        el = document.createElement('p'); el.className = 'dock-message'; el._message = m;
+        el.innerHTML = `${avHTML(m.icon, m.color, 18)}<b style="color:${esc(m.color)}">${esc(m.name)}</b><span>${esc(m.text)}</span>`;
+      }
+      if (log.children[i] !== el) log.insertBefore(el, log.children[i] || null);
+    });
+    [...log.children].forEach((el,i)=>{el.style.opacity = life ? Math.min(.8,Math.max(0,(life-(Date.now()-visible[i].ts))/1000)) : .8;});
+    revealNew(log, '.dock-message', (_, i) => visible[i]);
+    if (dockInput.value !== C.draft) dockInput.value = C.draft;
+    dockInput.disabled = C.awaiting || !!C.retry;
+    dock.querySelector('.cb-send').disabled = C.awaiting || !!C.retry;
+  }
+  function chatOnly() {
+    if (!C.on) return;
+    C.chatOnly = true; C.unread = 0;
+    setOpen(false); renderDock(); dockInput.focus();
+  }
+  function submitChat(input) {
+    if (!sendChat(input.value)) return;
+    C.draft = ''; input.value = ''; const other = input === dockInput ? $('#cbMsg') : dockInput;
+    if (other) other.value = '';
+    input.focus();
+  }
+  dock.addEventListener('submit', e => { e.preventDefault(); submitChat(dockInput); });
+  dock.addEventListener('input', () => { C.draft = dockInput.value; const input = $('#cbMsg'); if (input) input.value = C.draft; });
+  dock.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') { C.chatOnly = false; dock.hidden = true; app.btn.focus(); } });
+  dock.addEventListener('click', e => {
+    const action = e.target.closest('[data-dock]')?.dataset.dock;
+    if (action === 'panel') setOpen(true);
+    if (action === 'close') { C.chatOnly = false; dock.hidden = true; app.btn.focus(); }
+  });
 
   /* --- QR del enlace (sin internet), en una ventana en el medio --- */
   const qrModal = document.createElement('div');
-  qrModal.className = 'cb-qr'; qrModal.innerHTML = '<div class="cb-qr-box" role="dialog" aria-label="QR de la sala"><button class="cb-x" id="cbQRClose" aria-label="Cerrar" data-tip="Cerrar · Esc">' + X_ICON + '</button><canvas id="cbQR"></canvas><b id="cbQRCode"></b><span id="cbQRUrl"></span></div>';
+  qrModal.className = 'cb-qr'; qrModal.innerHTML = '<div class="cb-qr-box" role="dialog" aria-label="QR de la sala"><button class="cb-x" id="cbQRClose" aria-label="Cerrar" data-tip="Cerrar · Esc">' + X_ICON + '</button><canvas id="cbQR"></canvas><b id="cbQRCode"></b><span class="cb-hint">Escaneá para entrar desde el celu o la tablet.</span></div>';
   document.body.append(qrModal);
   const showQR = open => {
     qrModal.classList.toggle('show', open);
     if (!open) return;
     drawQR();
     qrModal.querySelector('#cbQRCode').textContent = C.info?.code || '';
-    qrModal.querySelector('#cbQRUrl').textContent = (C.info?.urls?.[0] || '').replace(/^https?:\/\//, '');
   };
   qrModal.addEventListener('click', e => { if (e.target === qrModal || e.target.closest('#cbQRClose')) showQR(false); });
   addEventListener('keydown', e => { if (e.key === 'Escape' && qrModal.classList.contains('show')) { showQR(false); e.stopImmediatePropagation(); } }, true);
@@ -316,30 +381,47 @@ export function createCollab(app) {
     const head = `<div class="cb-head"><div><b>En equipo</b><span class="cb-chip">red local</span></div><button class="cb-x" id="cbClose" aria-label="Cerrar panel" data-tip="Cerrar · Esc">${X_ICON}</button></div>`;
     if (!C.on) {
       app.el.innerHTML = head + profileHTML() + (C.host ? `
+        <div class="cb-security"><label>Ingreso<select id="cbApproval"><option value="on"${cfg().roomApproval === 'on' ? ' selected' : ''}>Pedir aprobación</option><option value="off"${cfg().roomApproval === 'off' ? ' selected' : ''}>Entrada directa</option></select></label>
+        <label>Contraseña (opcional)<input class="cb-input" id="cbPassword" type="password" maxlength="128" autocomplete="new-password" placeholder="Sin contraseña"></label></div>
         <button class="cb-big" id="cbOpen"${app.proj ? '' : ' disabled'}>Abrir sala</button>
         <p class="cb-hint">Para trabajar de a varios en la misma red (wifi o cable). Las fotos quedan en esta compu.</p>
-        <div class="cb-near"><div class="cb-label">Salas cerca</div><div id="cbNear">${nearHTML()}</div></div>` : '');
+        ${roomJoinHTML()}` : '');
+      if (C.host) mountRoomJoin(app.el, { beforeJoin: app.beforeJoin, toast: app.toast });
     } else {
       const people = Object.entries(C.peers).sort(([a], [b]) => (C.peers[b].host - C.peers[a].host) || a.localeCompare(b));
       app.el.innerHTML = head + `
-        <div class="ticket"><div class="ticket-body"><div class="ticket-main"><div class="cb-code">${esc(C.info?.code || '')}</div><div class="ticket-rule"></div><div class="ticket-project">${esc(app.projName())}</div></div><div class="ticket-stub"></div></div></div>
-        <button class="cb-leave" id="cbLeave">${C.host ? 'Cerrar sala' : 'Salir de la sala'}</button>
+        <div class="ticket"><div class="ticket-body"><div class="ticket-main"><div class="cb-code">${esc(C.info?.code || '')}</div><div class="ticket-rule"></div><div class="ticket-project">${esc(app.projName())}</div>${C.host && C.info?.urls?.length ? `<div class="ticket-foot"><button class="ticket-qr" id="cbQRBtn" aria-label="Mostrar QR de la sala" data-tip="QR de la sala">${QR_ICON}</button></div>` : ''}</div><button class="ticket-stub" id="cbCopyCode" aria-label="Copiar código de la sala" data-tip="Copiar código">${icon('copy')}</button></div></div>
+        <div class="cb-room-actions"><button class="cb-chat-mode" id="cbChatOnly">${CHAT_ICON}Solo chat</button><button class="cb-leave" id="cbLeave">${C.host ? 'Cerrar sala' : 'Salir de la sala'}</button></div>
+        ${C.host ? `<p class="cb-hint">${C.info?.approval ? 'Ingreso con aprobación' : 'Entrada directa'}${C.info?.password ? ' · con contraseña' : ''}</p><div class="cb-requests" id="cbRequests" aria-live="polite"></div>` : ''}
         ${C.retry ? '<div class="cb-warn">Sin conexión. Reintentando…</div>' : ''}
-        ${C.host && C.info?.urls?.length ? `<div class="cb-share"><button class="cb-url" data-url="${esc(C.info.urls[0])}" data-tip="Copiar enlace">${esc(C.info.urls[0].replace(/^https?:\/\//, ''))}</button><button class="cb-round" id="cbQRBtn" aria-label="QR" data-tip="QR">${QR_ICON}</button></div>`
-          : C.host ? '<div class="cb-warn">Sin conexión a una red.</div>' : ''}
-        <div class="cb-peers">${people.map(([id, p]) => `<span class="cb-peer">${avHTML(p.icon, p.color, 24)}<span class="nm">${esc(p.name || '…')}${id === C.id ? ' (vos)' : ''}</span>${p.host ? '<span class="cb-tag">anfitrión</span>' : p.device !== 'pc' ? `<span class="cb-tag">${DEVICE_NAME[p.device]}</span>` : ''}</span>`).join('')}</div>
-        <div class="chat"><div id="cbChat"></div><form id="cbChatForm" autocomplete="off"><input class="cb-input" id="cbMsg" maxlength="400" placeholder="Mensaje"><button class="cb-send" aria-label="Enviar" data-tip="Enviar · Enter">${SEND_ICON}</button></form></div>`;
+        ${C.host && !C.info?.urls?.length ? '<div class="cb-warn">Sin conexión a una red.</div>' : ''}
+        <div class="cb-peers">${people.map(([id, p]) => `<span class="cb-peer" data-id="${esc(id)}">${avHTML(p.icon, p.color, 24, p.host)}<span class="nm">${esc(p.name || '…')}${id === C.id ? ' (vos)' : ''}</span>${p.device !== 'pc' ? `<span class="cb-tag">${DEVICE_NAME[p.device] || ''}</span>` : ''}</span>`).join('')}</div>
+        <div class="chat"><div id="cbChat"></div><form id="cbChatForm" autocomplete="off"><input class="cb-input" id="cbMsg" aria-label="Mensaje a la sala" maxlength="400" placeholder="Mensaje" value="${esc(C.draft)}"><button class="cb-send" aria-label="Enviar" data-tip="Enviar · Enter">${SEND_ICON}</button></form></div>`;
       renderChat();
+      renderRequests();
+      revealNew(app.el, '.cb-peer');
     }
+    renderDock();
   }
-  const nearHTML = () => C.near.length ? C.near.map(n => `<div class="cb-room"><div><b>${esc(n.project || 'Mesa')}</b><small>${esc(n.name)} · ${n.people} ${n.people === 1 ? 'persona' : 'personas'}</small></div><button class="cb-go" data-url="${esc(n.url)}">Entrar</button></div>`).join('')
-    : '<span class="cb-hint">Ninguna sala abierta.</span>';
-  async function pollNear() {
-    if (!C.open || C.on || !C.host) return;
-    try { C.near = await (await fetch('/api/lan/peers')).json(); } catch { C.near = []; }
-    const box = $('#cbNear'); if (box) box.innerHTML = nearHTML();
+  function renderRequests() {
+    const box = $('#cbRequests'); if (!box) return;
+    box.innerHTML = C.pending.map(r => `<div class="cb-request"><b>${esc(r.name)} quiere entrar</b><button data-request="${esc(r.id)}" data-allow="yes">Aceptar</button><button data-request="${esc(r.id)}" data-allow="no">Rechazar</button></div>`).join('');
+    revealNew(app.el, '#cbRequests .cb-request', (_, i) => C.pending[i].id);
   }
-  setInterval(pollNear, 3000);
+  async function pollRequests() {
+    if (!C.on || !C.host) return;
+    try {
+      const r = await fetch('/api/lan/requests'); if (!r.ok) return;
+      const pending = await r.json();
+      if (!C.on || !C.host) return;
+      const added = pending.filter(r => !C.pending.some(old => old.id === r.id));
+      const changed = JSON.stringify(pending) !== JSON.stringify(C.pending);
+      C.pending = pending;
+      if (added.length) { app.toast(`${added[0].name} quiere entrar a la sala.`, 4000); play('mensaje'); if (!C.open) setOpen(true); }
+      if (changed) renderRequests();
+    } catch {}
+  }
+  setInterval(pollRequests, 1500);
   // la dirección de esta compu puede cambiar (se reconectó el wifi): enlace y QR al día
   setInterval(async () => {
     if (!C.on || !C.host) return;
@@ -357,26 +439,36 @@ export function createCollab(app) {
     app.btn.classList.toggle('unread', C.unread > 0);
   }
   function setOpen(open) {
+    if (open) C.chatOnly = false;
     C.open = open; app.el.classList.toggle('show', open); app.btn.classList.toggle('on', open);
-    if (open) { C.unread = 0; render(); pollNear(); }
+    if (open) { C.unread = 0; render(); pollRequests(); }
     paintBtn();
+    renderDock();
   }
   // eventos (uno solo para todo el panel y para la puerta de entrada)
   function onClick(e) {
     const t = e.target.closest('button'); if (!t) return;
     if (t.id === 'cbClose') return setOpen(false);
     if (t.id === 'cbQRBtn') return showQR(true);
+    if (t.id === 'cbChatOnly') return chatOnly();
+    if (t.id === 'cbCopyCode') {
+      copyText(C.info?.code || '').then(() => app.toast('Código copiado.', 1500), e => app.toast(e.message, 4000));
+      return;
+    }
     if (t.id === 'cbAv') { const g = t.closest('.cb-box, .collab-panel').querySelector('#cbIcons'); g.hidden = !g.hidden; return; }
     if (t.dataset.c) { prof.color = t.dataset.c; saveProf(); return rerenderProfile(t); }
     if (t.dataset.i) { prof.icon = t.dataset.i; saveProf(); return rerenderProfile(t); }
     if (t.id === 'cbOpen') return openRoom();
     if (t.id === 'cbEnter') return joinAsGuest();
     if (t.id === 'cbRetry') return location.reload();
+    if (t.id === 'cbHome' && app.back) return location.href = app.back;
     if (t.id === 'cbLeave') { showQR(false); return C.host ? stop() : leaveAsGuest(); }
-    if (t.classList.contains('cb-url')) { navigator.clipboard.writeText(t.dataset.url).then(() => app.toast('Enlace copiado.', 1500), () => window.prompt('Copiá este enlace', t.dataset.url)); return; }
-    if (t.classList.contains('cb-go')) { // entrar a la sala de otra compu (sale de esta mesa: queda guardada)
-      const back = location.origin + '/';
-      location.href = t.dataset.url + '?volver=' + encodeURIComponent(back);
+    if (t.dataset.request && C.host) {
+      t.disabled = true;
+      fetch(`/api/lan/decide?id=${encodeURIComponent(t.dataset.request)}&allow=${t.dataset.allow === 'yes' ? '1' : '0'}`, { method: 'POST' })
+        .then(r => r.json()).then(r => { if (r.error) app.toast(r.error, 3000); pollRequests(); })
+        .catch(() => { t.disabled = false; app.toast('No se pudo responder. Intentá de nuevo.', 3000); });
+      return;
     }
   }
   function rerenderProfile(t) {
@@ -386,13 +478,17 @@ export function createCollab(app) {
     box.querySelectorAll('.cb-ic').forEach(b => b.classList.toggle('on', b.dataset.i === prof.icon));
     if (t.dataset.i) box.querySelector('#cbIcons').hidden = true;
   }
-  const onInput = e => { if (e.target.id === 'cbName') { prof.name = e.target.value.trim().slice(0, 24); saveProf(); } };
+  const onInput = e => {
+    if (e.target.id === 'cbName') { prof.name = e.target.value.trim().slice(0, 24); saveProf(); }
+    if (e.target.id === 'cbMsg') { C.draft = e.target.value; dockInput.value = C.draft; }
+  };
   const onKey = e => { e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'cbName' && app.gate?.contains(e.target)) joinAsGuest(); };
   for (const el of [app.el, app.gate].filter(Boolean)) {
     el.addEventListener('click', onClick);
     el.addEventListener('input', onInput);
+    el.addEventListener('change', e => { if (e.target.id === 'cbApproval') { prefs.roomApproval = e.target.value; savePrefs(); } });
     el.addEventListener('keydown', onKey);
-    el.addEventListener('submit', e => { e.preventDefault(); const i = el.querySelector('#cbMsg'); sendChat(i.value); i.value = ''; i.focus(); });
+    el.addEventListener('submit', e => { if (e.target.id !== 'cbChatForm') return; e.preventDefault(); submitChat(el.querySelector('#cbMsg')); });
   }
   app.btn.addEventListener('click', () => setOpen(!C.open));
 
@@ -402,7 +498,7 @@ export function createCollab(app) {
     g.classList.add('show');
     const box = g.querySelector('.cb-box');
     if (kind === 'closed' || kind === 'left') {
-      box.innerHTML = `<h3>${kind === 'left' ? 'Saliste de la sala' : 'La sala se cerró'}</h3><button class="cb-big" id="cbRetry">Volver a entrar</button>`;
+      box.innerHTML = `<h3>${kind === 'left' ? 'Saliste de la sala' : 'La sala se cerró'}</h3><button class="cb-big" id="cbRetry">Volver a entrar</button>${app.back ? '<button class="pill" id="cbHome">Volver al inicio</button>' : ''}`;
       return;
     }
     box.innerHTML = `<h3>Sala ${esc(app.guestCode)}</h3>${profileHTML()}<button class="cb-big" id="cbEnter">Entrar</button>`;

@@ -3,6 +3,9 @@
 // ataque corto y caída larga, a veces una pulsación leve, y un eco corto con filtro.
 import { cfg } from './mesa.js';
 
+// Misma melodía, dos octavas más grave, tanto en vivo como en las muestras WAV.
+export const PITCH = 2 ** -2;
+
 // [frecuencias (Hz), separación entre notas (s), caída de cada nota (s), volumen, pulsación (Hz)]
 export const SOUNDS = {
   hola:    { name: 'Bienvenida',        f: [523.25, 659.25, 987.77],    gap: 0.15, d: 1.6,  v: 0.9 },  // do · mi · si
@@ -13,6 +16,9 @@ export const SOUNDS = {
   lienzo:  { name: 'Lienzo nuevo',      f: [392.00, 587.33, 783.99],    gap: 0.07, d: 0.45, v: 0.45 }, // sol · re · sol, bajito
   listo:   { name: 'Exportación lista', f: [523.25, 783.99, 1046.50],   gap: 0.13, d: 1.3,  v: 0.8 },
   cerrada: { name: 'Sala cerrada',      f: [783.99, 587.33, 392.00],    gap: 0.12, d: 0.9,  v: 0.6 },
+  tocar:   { name: 'Herramientas y opciones', f: [880, 1108.73, 1318.51], gap: 0.025, d: 0.16, v: 0.16 },
+  papel:   { name: 'Abrir panel',      f: [698.46, 880, 1046.50],     gap: 0.045, d: 0.28, v: 0.22 },
+  guardar: { name: 'Proyecto guardado', f: [523.25, 659.25, 783.99], gap: 0.07, d: 0.55, v: 0.45 },
 };
 
 // cadena: voces → filtro suave → (directo + eco) → volumen general
@@ -37,30 +43,49 @@ function note(ctx, out, f, t, d, v = 1, pulse = 0) {
   const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = f;
   const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 2.005; // armónico apenas desafinado: tibio
   const g2 = ctx.createGain(); g2.gain.value = 0.12;
+  const nodes = [g, o1, o2, g2];
   o1.connect(g); o2.connect(g2); g2.connect(g);
   let last = g;
   if (pulse) { // pulsación: el volumen late suave
     const trem = ctx.createGain(), lfo = ctx.createOscillator(), depth = ctx.createGain();
     lfo.frequency.value = pulse; depth.gain.value = 0.35; trem.gain.value = 0.65;
     lfo.connect(depth); depth.connect(trem.gain); g.connect(trem); last = trem;
+    nodes.push(trem, lfo, depth);
     lfo.start(t); lfo.stop(t + d + 0.05);
   }
   last.connect(out);
   o1.start(t); o2.start(t); o1.stop(t + d + 0.05); o2.stop(t + d + 0.05);
+  o1.onended = () => nodes.forEach(n => n.disconnect());
 }
-function schedule(ctx, out, s, t0) { s.f.forEach((f, i) => note(ctx, out, f, t0 + i * s.gap, s.d, s.v, s.pulse || 0)); }
+function schedule(ctx, out, s, t0) { s.f.forEach((f, i) => note(ctx, out, f * PITCH, t0 + i * s.gap, s.d, s.v, s.pulse || 0)); }
 
-let live = null, liveOut = null;
+let live = null, liveOut = null, welcomePending = false;
+const lastPlayed = new Map();
 export function play(name, force) {
   if (!force && cfg().sound === 'off') return;
   const s = SOUNDS[name]; if (!s) return;
   if (!live) {
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-    live = new AC(); liveOut = chain(live, live.destination);
+    try { live = new AC(); liveOut = chain(live, live.destination); } catch { return; }
   }
-  if (live.state === 'suspended') live.resume();
-  schedule(live, liveOut, s, live.currentTime + 0.03);
+  const start = () => {
+    if (live.state !== 'running' || (!force && cfg().sound === 'off')) return;
+    const now = performance.now();
+    if (!force && now - (lastPlayed.get(name) ?? -Infinity) < 120) return;
+    lastPlayed.set(name, now);
+    if (welcomePending && name !== 'hola' && cfg().sound !== 'off') schedule(live, liveOut, SOUNDS.hola, live.currentTime + 0.03);
+    welcomePending = false;
+    schedule(live, liveOut, s, live.currentTime + 0.03);
+  };
+  if (live.state === 'running') return start();
+  if (name === 'hola') welcomePending = true;
+  // Chrome espera el primer gesto. No se acumulan clics viejos mientras está suspendido.
+  if (navigator.userActivation && !navigator.userActivation.isActive) return;
+  live.resume().then(start).catch(() => {});
 }
+const unlock = () => { if (welcomePending) play('hola'); };
+addEventListener('pointerdown', unlock, { passive: true });
+addEventListener('keydown', unlock);
 
 // para escucharlos sin abrir el programa (pruebas): el sonido como WAV
 export async function renderWav(name, rate = 44100) {
